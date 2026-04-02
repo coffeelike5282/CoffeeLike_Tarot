@@ -3,7 +3,6 @@ import { Coffee, Sparkles, Loader2, RefreshCcw, CreditCard, ChevronRight, Heart,
 import { useAuth } from './hooks/useAuth';
 import TarotCard from './components/TarotCard';
 import BaristaDashboard from './components/BaristaDashboard';
-import tarotData from './data/tarot.json';
 import { supabase } from './lib/supabaseClient';
 
 import backImage from './assets/card_back.png';
@@ -27,8 +26,30 @@ function App() {
   const [requestStatus, setRequestStatus] = useState(null); // 'pending', 'approved', 'idle'
   const [requestId, setRequestId] = useState(null);
   const [deepResult, setDeepResult] = useState(null);
+  const [cards, setCards] = useState([]);
+  const [isDataLoading, setIsDataLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const { login, user, loading, logout: authLogout } = useAuth();
+
+  // 타로 카드 데이터를 DB에서 가져옵니다.
+  useEffect(() => {
+    const fetchTarotCards = async () => {
+      setIsDataLoading(true);
+      const { data, error } = await supabase
+        .from('tb_tarot_card')
+        .select('*');
+      
+      if (error) {
+        console.error('Error fetching tarot cards:', error.message);
+        alert('타로 데이터를 불러오는 데 실패했습니다.');
+      } else {
+        setCards(data);
+      }
+      setIsDataLoading(false);
+    };
+
+    fetchTarotCards();
+  }, []);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -52,9 +73,9 @@ function App() {
   };
 
   const shuffleAndDraw = () => {
+    if (cards.length === 0) return;
     setIsCasting(true);
     setTimeout(() => {
-      const cards = tarotData.tarot_interpretations;
       const randomCard = cards[Math.floor(Math.random() * cards.length)];
       setSelectedCard(randomCard);
       setIsCasting(false);
@@ -318,9 +339,17 @@ function App() {
                       <h3 className="text-white font-bold text-lg tracking-tight">당신의 커피 향기를 읽어드립니다.</h3>
                       <p className="text-xs text-coffee-light/40 font-medium">바리스타가 직접 내려주는 오늘의 커피 타로</p>
                     </div>
-                    <button onClick={shuffleAndDraw} disabled={isCasting} className="w-full group bg-coffee-light hover:bg-white text-coffee-dark font-black text-lg py-5 rounded-2xl transition-all shadow-xl shadow-black/30 flex items-center justify-center gap-3">
-                      <RefreshCcw className={isCasting ? "animate-spin text-tech-blue" : "group-hover:rotate-180 transition-transform duration-1000"} />
-                      운명의 카드 뽑기
+                    <button 
+                      onClick={shuffleAndDraw} 
+                      disabled={isCasting || isDataLoading} 
+                      className="w-full group bg-coffee-light hover:bg-white text-coffee-dark font-black text-lg py-5 rounded-2xl transition-all shadow-xl shadow-black/30 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isDataLoading ? (
+                        <Loader2 className="animate-spin" />
+                      ) : (
+                        <RefreshCcw className={isCasting ? "animate-spin text-tech-blue" : "group-hover:rotate-180 transition-transform duration-1000"} />
+                      )}
+                      {isDataLoading ? "데이터 로딩 중..." : "운명의 카드 뽑기"}
                     </button>
                   </div>
                 </div>
