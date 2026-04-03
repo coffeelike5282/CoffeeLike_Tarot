@@ -13,7 +13,7 @@ const TarotCard = ({ card, backImage, frontImage, onFlip }) => {
 
   return (
     <div 
-      className="perspective-1000 w-64 h-96 cursor-pointer"
+      className="perspective-1000 w-64 aspect-[9/16] cursor-pointer"
       onClick={handleFlip}
     >
       <motion.div
@@ -22,23 +22,20 @@ const TarotCard = ({ card, backImage, frontImage, onFlip }) => {
       >
         {/* Front of the Card (Hidden initially) */}
         <div 
-          className="absolute inset-0 w-full h-full backface-hidden flex flex-col items-center justify-between p-6 bg-coffee-dark border-2 border-tech-blue rounded-2xl shadow-2xl overflow-hidden"
+          className="absolute inset-0 w-full h-full backface-hidden flex flex-col items-center justify-between p-4 bg-coffee-dark border-2 border-tech-blue rounded-2xl shadow-2xl overflow-hidden"
           style={{ transform: 'rotateY(180deg)' }}
         >
-          <div className="absolute inset-0 opacity-20 bg-cover bg-center" style={{ backgroundImage: `url(${frontImage})` }} />
-          <div className="relative z-10 flex flex-col items-center gap-4 text-center">
-            <h3 className="font-heading text-2xl font-bold text-tech-blue uppercase tracking-widest">{card.name}</h3>
-            <div className="w-12 h-0.5 bg-tech-purple/50" />
-            <p className="text-xs text-coffee-light/60 font-body uppercase tracking-tighter">
-              {card.keywords.join(' • ')}
-            </p>
-          </div>
+          {/* Card Illustration Background */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110" 
+            style={{ backgroundImage: `url(${card.image_url})` }} 
+          />
           
-          <div className="relative z-10 bg-coffee-dark/80 p-3 rounded-xl border border-white/5 backdrop-blur-sm">
-            <p className="text-sm font-body text-coffee-light italic leading-relaxed">
-              "{card.fortune_telling[0]}"
-            </p>
-          </div>
+          {/* Overlay for readability - Adjusted for cleaner look */}
+          <div className="absolute inset-0 bg-gradient-to-t from-coffee-dark/80 via-transparent to-coffee-dark/20 opacity-40" />
+
+          {/* Premium holographic effect on front too */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-white/5 opacity-30 pointer-events-none" />
         </div>
 
         {/* Back of the Card (Shown initially) */}

@@ -5,19 +5,9 @@ import TarotCard from './components/TarotCard';
 import BaristaDashboard from './components/BaristaDashboard';
 import { supabase } from './lib/supabaseClient';
 
-import backImage from './assets/card_back.png';
-import foolImage from './assets/the_fool.png';
-import magicianImage from './assets/the_magician.png';
-import sunImage from './assets/the_sun.png';
-import moonImage from './assets/the_moon.png';
+import backImage from './assets/card_back.jpg';
 
-const cardImages = {
-  'The Fool': foolImage,
-  'The Magician': magicianImage,
-  'The Sun': sunImage,
-  'The Moon': moonImage,
-  // Add more mappings as needed
-};
+// Now using DB-driven image_url for all 78 cards
 
 function App() {
   const [receipt, setReceipt] = useState('');
@@ -234,15 +224,19 @@ function App() {
                 
                 <div className="flex flex-col items-center gap-2">
                    <div className="px-4 py-1 bg-tech-purple/20 border border-tech-purple/40 rounded-full text-[10px] text-tech-purple font-black tracking-widest uppercase">Deep Insight Unlocked</div>
-                   <h2 className="text-3xl font-black text-gradient-gold uppercase italic">{selectedCard.name}</h2>
                 </div>
 
                 <div className="space-y-6 text-left">
-                  <section className="space-y-2">
-                    <h3 className="text-[10px] font-bold text-tech-blue uppercase tracking-widest flex items-center gap-2">
-                      <Zap size={12} /> Barista's Oracle
-                    </h3>
-                    <p className="text-lg font-medium text-white leading-snug">"{deepResult.mainFortune}"</p>
+                  <section className="space-y-3">
+                    <div className="space-y-1">
+                      <div className="text-[10px] font-black text-tech-blue/60 uppercase tracking-[0.3em] flex items-center gap-2">
+                        <div className="w-4 h-px bg-tech-blue/30" /> {selectedCard.name}
+                      </div>
+                      <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
+                        <Zap size={14} className="text-tech-blue shadow-glow" /> Barista's Oracle
+                      </h3>
+                    </div>
+                    <p className="text-lg font-medium text-white leading-snug pl-1 border-l-2 border-tech-blue/20">"{deepResult.mainFortune}"</p>
                   </section>
 
                   <section className="space-y-2 p-5 bg-white/5 rounded-2xl border border-white/5">
@@ -279,7 +273,6 @@ function App() {
                   <TarotCard 
                     card={selectedCard} 
                     backImage={backImage} 
-                    frontImage={cardImages[selectedCard.name] || foolImage} 
                   />
                   
                   <div className="w-full glass-panel p-8 space-y-6">
