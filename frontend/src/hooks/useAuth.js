@@ -5,14 +5,14 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
 
-  const login = async (receiptLast4) => {
+  const login = async (phoneNumber) => {
     setLoading(true);
     try {
       // 1. Check if customer exists
       const { data: customer, error: fetchError } = await supabase
         .from('tb_customer')
         .select('*')
-        .eq('receipt_last4', receiptLast4)
+        .eq('phone_number', phoneNumber)
         .single();
 
       if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
@@ -35,7 +35,7 @@ export const useAuth = () => {
         // 3. Create new customer with initial points (Welcome Bonus!)
         const { data: newCustomer, error: insertError } = await supabase
           .from('tb_customer')
-          .insert([{ receipt_last4: receiptLast4, point_balance: 10000 }])
+          .insert([{ phone_number: phoneNumber, point_balance: 10000 }])
           .select()
           .single();
 

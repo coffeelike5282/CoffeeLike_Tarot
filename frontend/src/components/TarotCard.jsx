@@ -1,8 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
-const TarotCard = ({ card, backImage, frontImage, onFlip }) => {
-  const [flipped, setFlipped] = useState(false);
+const TarotCard = ({ card, backImage, frontImage, onFlip, size = 'default', isFlipped = false }) => {
+  const [flipped, setFlipped] = useState(isFlipped);
+  
+  useEffect(() => {
+    if (isFlipped && !flipped) {
+      setFlipped(true);
+    } else if (!isFlipped && flipped) {
+      setFlipped(false);
+    }
+  }, [isFlipped]);
+  
+  const sizeClasses = {
+    small: 'w-32 sm:w-40',
+    medium: 'w-44 sm:w-52',
+    default: 'w-64'
+  };
 
   const handleFlip = () => {
     if (!flipped) {
@@ -13,7 +27,7 @@ const TarotCard = ({ card, backImage, frontImage, onFlip }) => {
 
   return (
     <div 
-      className="perspective-1000 w-64 aspect-[9/16] cursor-pointer"
+      className={`perspective-1000 ${sizeClasses[size]} aspect-[9/16] cursor-pointer group`}
       onClick={handleFlip}
     >
       <motion.div

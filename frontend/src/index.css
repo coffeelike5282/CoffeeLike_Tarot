@@ -99,3 +99,15 @@ body {
  .animate-shimmer-fast {
    animation: shimmer-fast 1.5s infinite;
  }
+ 
+ /* --- Hide Scrollbar for Premium App Experience --- */
+ /* Chrome, Safari, Opera */
+ ::-webkit-scrollbar {
+   display: none;
+ }
+ 
+ /* IE, Edge, Firefox */
+ * {
+   -ms-overflow-style: none; /* IE and Edge */
+   scrollbar-width: none; /* Firefox */
+ }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, Coffee, Users, Clock, Zap, LogOut, RefreshCcw } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { generateAIInterpretation } from '../services/aiOracleService';
 
 const BaristaDashboard = ({ onLogout }) => {
   const [requests, setRequests] = useState([]);
@@ -9,6 +10,7 @@ const BaristaDashboard = ({ onLogout }) => {
   const [activeTab, setActiveTab] = useState('queue'); // 'queue', 'history'
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ pending: 0, completed: 0, rejected: 0 });
+  const [isGenerating, setIsGenerating] = useState({}); // 각 요청별 AI 생성 로딩 상태
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -64,21 +66,65 @@ const BaristaDashboard = ({ onLogout }) => {
     };
   }, []);
 
-  const handleAction = async (id, newStatus) => {
-    const { error } = await supabase
-      .from('tb_tarot_request')
-      .update({ 
-        status: newStatus,
-        approved_at: new Date().toISOString() // 승인이든 거절이든 처리 시간 기록!
-      })
-      .eq('req_id', id);
+  const handleAction = async (id, newStatus, requestData = null) => {
+    if (newStatus === 1 && requestData) {
+      setIsGenerating(prev => ({ ...prev, [id]: true }));
+      
+      try {
+        // 1. 카드 상세 정보 가져오기
+        const { data: cards, error: cardError } = await supabase
+          .from('tb_tarot_card')
+          .select('*')
+          .in('name', [requestData.tarot_card_name, requestData.tarot_card2_name]);
 
-    if (error) {
-      alert('상태 업데이트 중 오류가 발생했슴다, 큰형님!');
+        if (cardError || !cards || cards.length < 2) {
+          throw new Error('카드 정보를 가져오지 못했슴다, 큰형님!');
+        }
+
+        const card1 = cards.find(c => c.name === requestData.tarot_card_name);
+        const card2 = cards.find(c => c.name === requestData.tarot_card2_name);
+
+        // 2. AI 해설 생성
+        const aiResult = generateAIInterpretation(card1, card2);
+
+        // 3. DB 업데이트 (해설 포함)
+        const { error: updateError } = await supabase
+          .from('tb_tarot_request')
+          .update({ 
+            status: 1,
+            approved_at: new Date().toISOString(),
+            ai_tarot_result: JSON.stringify(aiResult)
+          })
+          .eq('req_id', id);
+
+        if (updateError) throw updateError;
+        
+        // 성공 시 성공 처리
+        setRequests(prev => prev.filter(r => r.req_id !== id));
+        setStats(prev => ({ ...prev, completed: prev.completed + 1 }));
+
+      } catch (err) {
+        console.error('AI Oracle Error:', err);
+        alert(err.message || 'AI 해설 생성 중 사고가 났슴다!');
+      } finally {
+        setIsGenerating(prev => ({ ...prev, [id]: false }));
+      }
     } else {
-      // 로컬 상태에서도 즉시 제거 (실시간 구독이 있으나 빠른 반응성을 위해)
-      setRequests(prev => prev.filter(r => r.req_id !== id));
-      if (newStatus === 1) setStats(prev => ({ ...prev, completed: prev.completed + 1 }));
+      // 거절 또는 단순 상태 변경
+      const { error } = await supabase
+        .from('tb_tarot_request')
+        .update({ 
+          status: newStatus,
+          approved_at: new Date().toISOString()
+        })
+        .eq('req_id', id);
+
+      if (error) {
+        alert('상태 업데이트 중 오류가 발생했슴다, 큰형님!');
+      } else {
+        setRequests(prev => prev.filter(r => r.req_id !== id));
+        if (newStatus === 2) setStats(prev => ({ ...prev, rejected: prev.rejected + 1 }));
+      }
     }
   };
 
@@ -99,42 +145,50 @@ const BaristaDashboard = ({ onLogout }) => {
     }
   };
 
+  const formatPhone = (phone) => {
+    if (!phone) return 'Unknown';
+    return phone.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+  };
+
   return (
-    <div className="w-full max-w-4xl mx-auto flex flex-col gap-6 animate-in fade-in duration-700">
+    <div className="w-full max-w-[720px] mx-auto flex flex-col gap-6 animate-in fade-in duration-700">
       
       {/* Dashboard Header Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <div className="glass-panel p-6 border-tech-blue/20 flex flex-col items-center gap-2">
           <div className="p-3 bg-tech-blue/10 rounded-full">
             <Clock className="text-tech-blue w-6 h-6" />
           </div>
-          <span className="text-[10px] text-coffee-light/40 font-black uppercase tracking-widest">Pending</span>
+          <span className="text-[10px] text-coffee-light/40 font-black uppercase tracking-widest">대기 중</span>
           <span className="text-3xl font-black text-white">{stats.pending}</span>
         </div>
         <div className="glass-panel p-6 border-tech-purple/20 flex flex-col items-center gap-2">
           <div className="p-3 bg-tech-purple/10 rounded-full">
             <Check className="text-tech-purple w-6 h-6" />
           </div>
-          <span className="text-[10px] text-coffee-light/40 font-black uppercase tracking-widest">Approved</span>
+          <span className="text-[10px] text-coffee-light/40 font-black uppercase tracking-widest">상담 완료</span>
           <span className="text-3xl font-black text-white">{stats.completed}</span>
         </div>
         <div className="glass-panel p-6 border-red-500/20 flex flex-col items-center gap-2">
           <div className="p-3 bg-red-500/10 rounded-full">
             <X className="text-red-500 w-6 h-6" />
           </div>
-          <span className="text-[10px] text-coffee-light/40 font-black uppercase tracking-widest">Rejected</span>
+          <span className="text-[10px] text-coffee-light/40 font-black uppercase tracking-widest">반려됨</span>
           <span className="text-3xl font-black text-white">{stats.rejected}</span>
         </div>
         <div className="hidden md:flex glass-panel p-6 border-amber-500/20 flex-col items-center gap-2">
           <div className="p-3 bg-amber-500/10 rounded-full">
             <Users className="text-amber-500 w-6 h-6" />
           </div>
-          <span className="text-[10px] text-coffee-light/40 font-black uppercase tracking-widest">Online</span>
+          <span className="text-[10px] text-coffee-light/40 font-black uppercase tracking-widest">온라인</span>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             <span className="text-3xl font-black text-white">LIVE</span>
           </div>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
         <button 
           onClick={onLogout}
           className="glass-panel p-6 border-red-500/20 hover:bg-red-500/10 transition-all flex flex-col items-center gap-2 group"
@@ -142,18 +196,18 @@ const BaristaDashboard = ({ onLogout }) => {
           <div className="p-3 bg-red-500/10 rounded-full group-hover:bg-red-500/20">
             <LogOut className="text-red-500 w-6 h-6" />
           </div>
-          <span className="text-[10px] text-red-500/60 font-black uppercase tracking-widest">Logout</span>
-          <span className="text-xs font-bold text-white uppercase italic">Exit Room</span>
+          <span className="text-[10px] text-red-500/60 font-black uppercase tracking-widest">로그아웃</span>
+          <span className="text-xs font-bold text-white uppercase italic">방 나가기</span>
         </button>
       </div>
 
       {/* Main Order Queue */}
-      <div className="glass-panel p-8 min-h-[500px] flex flex-col gap-6 bg-black/40 backdrop-blur-xl border-white/5">
+      <div className="glass-panel p-10 min-h-[500px] flex flex-col gap-6 bg-black/40 backdrop-blur-xl border-white/5">
         <div className="flex flex-col md:flex-row justify-between items-center border-b border-white/5 pb-6 gap-6">
           <div className="flex items-center gap-4">
             <div className={`w-2 h-8 ${activeTab === 'queue' ? 'bg-tech-blue' : 'bg-tech-purple'} rounded-full transition-all`} />
             <h2 className="text-2xl font-black text-white tracking-tight italic uppercase">
-              {activeTab === 'queue' ? 'Barista Oracle Queue' : 'Operation History'}
+              {activeTab === 'queue' ? '바리스타 오라클 대기열' : '상담 이력 관리'}
             </h2>
           </div>
 
@@ -162,13 +216,13 @@ const BaristaDashboard = ({ onLogout }) => {
               onClick={() => setActiveTab('queue')}
               className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'queue' ? 'bg-tech-blue text-white shadow-lg' : 'text-coffee-light/40 hover:text-white'}`}
             >
-              Queue ({requests.length})
+              대기열 ({requests.length})
             </button>
             <button 
               onClick={() => setActiveTab('history')}
               className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-tech-purple text-white shadow-lg' : 'text-coffee-light/40 hover:text-white'}`}
             >
-              History
+              히스토리
             </button>
             <div className="w-[1px] h-4 bg-white/10 mx-2" />
             <button 
@@ -190,7 +244,7 @@ const BaristaDashboard = ({ onLogout }) => {
                   className="flex flex-col items-center justify-center py-20 text-coffee-light/20 gap-4"
                 >
                   <Zap size={48} strokeWidth={1} />
-                  <p className="font-heading text-lg font-bold italic uppercase tracking-widest">No orders in queue, Sir!</p>
+                  <p className="font-heading text-lg font-bold italic uppercase tracking-widest">현재 대기 중인 주문이 없습니다, 큰형님!</p>
                 </motion.div>
               ) : (
                 requests.map((order, index) => (
@@ -209,11 +263,11 @@ const BaristaDashboard = ({ onLogout }) => {
                       </div>
                       <div className="flex flex-col gap-1 text-left">
                         <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 bg-tech-blue/20 text-tech-blue text-[9px] font-black rounded uppercase tracking-widest">VIP CLIENT</span>
-                          <span className="text-white font-bold text-lg">#{order.receipt_last4}</span>
+                          <span className="px-2 py-0.5 bg-tech-blue/20 text-tech-blue text-[9px] font-black rounded uppercase tracking-widest">VIP 회원</span>
+                          <span className="text-white font-bold text-lg">{formatPhone(order.phone_number)}</span>
                         </div>
-                        <span className="text-coffee-light font-black text-xs uppercase italic tracking-tighter">
-                          Requesting Deep Insight: <span className="text-tech-purple">{order.tarot_card_name || "Unknown Card"}</span>
+                        <span className="text-coffee-light font-black text-[10px] uppercase italic tracking-tighter">
+                          심층 조합: <span className="text-tech-blue">{order.tarot_card_name}</span> + <span className="text-tech-purple">{order.tarot_card2_name}</span>
                         </span>
                         <span className="text-[11px] text-coffee-light/60 font-medium">
                           주문: {formatDate(order.created_at)}
@@ -223,17 +277,28 @@ const BaristaDashboard = ({ onLogout }) => {
 
                     <div className="flex items-center gap-3">
                       <button 
-                        onClick={() => handleAction(order.req_id, 2)}
-                        className="p-4 bg-white/5 hover:bg-red-500/20 text-coffee-light/40 hover:text-red-500 rounded-2xl border border-white/5 transition-all group/btn"
+                        onClick={() => handleAction(order.req_id, 2, order)}
+                        disabled={isGenerating[order.req_id]}
+                        className="p-4 bg-white/5 hover:bg-red-500/20 text-coffee-light/40 hover:text-red-500 rounded-2xl border border-white/5 transition-all group/btn disabled:opacity-50"
                       >
                         <X size={24} />
                       </button>
                       <button 
-                        onClick={() => handleAction(order.req_id, 1)}
-                        className="flex items-center gap-3 px-8 py-4 bg-tech-blue hover:bg-white text-white hover:text-tech-blue font-black rounded-2xl transition-all shadow-lg hover:shadow-tech-blue/20 group/btn"
+                        onClick={() => handleAction(order.req_id, 1, order)}
+                        disabled={isGenerating[order.req_id]}
+                        className="flex items-center gap-3 px-8 py-4 bg-tech-blue hover:bg-white text-white hover:text-tech-blue font-black rounded-2xl transition-all shadow-lg hover:shadow-tech-blue/20 group/btn disabled:opacity-80 disabled:cursor-wait"
                       >
-                        <Check size={24} />
-                        <span className="uppercase italic tracking-tighter">Approve</span>
+                        {isGenerating[order.req_id] ? (
+                          <>
+                            <RefreshCcw size={24} className="animate-spin" />
+                            <span className="uppercase italic tracking-tighter">AI 신탁 생성 중...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check size={24} />
+                            <span className="uppercase italic tracking-tighter">승인</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </motion.div>
@@ -243,7 +308,7 @@ const BaristaDashboard = ({ onLogout }) => {
               history.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-coffee-light/20 gap-4">
                   <Clock size={48} strokeWidth={1} />
-                  <p className="font-heading text-lg font-bold italic uppercase tracking-widest">No past records, Sir!</p>
+                  <p className="font-heading text-lg font-bold italic uppercase tracking-widest">이전 상담 기록이 없습니다, 큰형님!</p>
                 </div>
               ) : (
                 history.map((order, index) => (
@@ -260,18 +325,18 @@ const BaristaDashboard = ({ onLogout }) => {
                         </div>
                         <div className="flex flex-col text-left">
                           <div className="flex items-center gap-2">
-                            <span className="text-white font-black text-xl">#{order.receipt_last4}</span>
+                            <span className="text-white font-black text-xl">{formatPhone(order.phone_number)}</span>
                             <div className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${order.status === 1 ? 'bg-tech-purple/20 text-tech-purple' : 'bg-red-500/20 text-red-500'}`}>
-                              {order.status === 1 ? 'Approved' : 'Rejected'}
+                              {order.status === 1 ? '처리 완료' : '반려됨'}
                             </div>
                           </div>
-                          <span className="text-tech-purple text-xs font-black uppercase italic tracking-tighter">
-                            {order.tarot_card_name || "Card Name Lost"}
+                          <span className="text-tech-purple text-[10px] font-black uppercase italic tracking-tighter">
+                            {order.tarot_card_name} + {order.tarot_card2_name}
                           </span>
                         </div>
                       </div>
                       <div className="text-right flex flex-col items-end">
-                        <span className="text-[9px] text-coffee-light/20 font-mono uppercase tracking-widest">ORDER TRACKING</span>
+                        <span className="text-[9px] text-coffee-light/20 font-mono uppercase tracking-widest">주문 추적</span>
                         <span className="text-[10px] text-white/40 font-mono italic">{order.req_id.slice(0, 8)}...</span>
                       </div>
                     </div>
@@ -294,9 +359,7 @@ const BaristaDashboard = ({ onLogout }) => {
         </div>
       </div>
 
-      <p className="text-[9px] text-coffee-light/20 font-mono uppercase tracking-[0.3em]">
-        © 2026 COFFEELIKE BACKEND SYSTEM. SECURED BY HOLOGRAPHIC BARISTA AI.
-      </p>
+
     </div>
   );
 };

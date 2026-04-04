@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Coffee, Sparkles, Loader2, RefreshCcw, CreditCard, ChevronRight, Heart, Zap, Shield, Moon, Sun } from 'lucide-react';
+import { Coffee, Sparkles, Loader2, RefreshCcw, ChevronRight, Zap, Shield, Moon } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import TarotCard from './components/TarotCard';
 import BaristaDashboard from './components/BaristaDashboard';
@@ -7,18 +7,23 @@ import { supabase } from './lib/supabaseClient';
 
 import backImage from './assets/card_back.jpg';
 
-// Now using DB-driven image_url for all 78 cards
-
 function App() {
-  const [receipt, setReceipt] = useState('');
+  const [phonePart2, setPhonePart2] = useState('');
+  const [phonePart3, setPhonePart3] = useState('');
   const [selectedCard, setSelectedCard] = useState(null);
+  const [selectedCard2, setSelectedCard2] = useState(null);
   const [isCasting, setIsCasting] = useState(false);
+  const [isCasting2, setIsCasting2] = useState(false);
   const [requestStatus, setRequestStatus] = useState(null); // 'pending', 'approved', 'idle'
   const [requestId, setRequestId] = useState(null);
+  const [waitNumber, setWaitNumber] = useState('');
   const [deepResult, setDeepResult] = useState(null);
   const [cards, setCards] = useState([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [firstCardFlipped, setFirstCardFlipped] = useState(false);
+  const [isResultCard1Flipped, setIsResultCard1Flipped] = useState(false);
+  const [isResultCard2Flipped, setIsResultCard2Flipped] = useState(false);
   const { login, user, loading, logout: authLogout } = useAuth();
 
   // 타로 카드 데이터를 DB에서 가져옵니다.
@@ -43,15 +48,18 @@ function App() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (receipt === '9999') {
+    const fullPhone = `010${phonePart2}${phonePart3}`;
+    
+    // 관리자 전용 번호 (01000009999 대응)
+    if (fullPhone === '01000009999') {
       setIsAdmin(true);
       return;
     }
     
-    if (receipt.length === 4) {
-      login(receipt);
+    if (phonePart2.length === 4 && phonePart3.length === 4) {
+      login(fullPhone);
     } else {
-      alert('영수증 번호 뒷 4자리를 입력해주세요!');
+      alert('휴대폰 번호 8자리를 모두 입력해주세요!');
     }
   };
 
@@ -59,67 +67,85 @@ function App() {
     setIsAdmin(false);
     authLogout();
     setSelectedCard(null);
+    setSelectedCard2(null);
     setRequestStatus(null);
+    setFirstCardFlipped(false);
+    setIsResultCard1Flipped(false);
+    setIsResultCard2Flipped(false);
+    setDeepResult(null);
   };
 
   const shuffleAndDraw = () => {
     if (cards.length === 0) return;
     setIsCasting(true);
+    setFirstCardFlipped(false);
     setTimeout(() => {
       const randomCard = cards[Math.floor(Math.random() * cards.length)];
       setSelectedCard(randomCard);
       setIsCasting(false);
+      
+      // 3초 후 자동 뒤집기
+      setTimeout(() => {
+        setFirstCardFlipped(true);
+      }, 3000);
     }, 1500);
   };
 
-  const generateDeepResult = (card) => {
-    // 78장 전수 주입된 프리미엄 심층 해설 데이터를 가져옵니다.
-    const deep = card.deep_interpretation;
-    
-    if (!deep) {
-      // 혹시라도 데이터가 없는 경우를 대비한 가디언 로직
-      return {
-        mainFortune: card.fortune_telling[0],
-        deepInsight: card.meanings.light[0],
-        caution: card.meanings.shadow[0],
-        coffee: { name: "바리스타 추천 커피", desc: "당신의 운명에 가장 잘 어울리는 한 잔을 준비하겠슴다." }
-      };
-    }
 
-    return {
-      mainFortune: deep.oracle_message,
-      deepInsight: deep.spiritual_insight,
-      caution: deep.special_caution,
-      coffee: deep.coffee_pairing
-    };
+  const performDeepTarotRequest = async (c1, c2) => {
+    if (!user || !c1 || !c2) return;
+    
+    try {
+      const { data, error } = await supabase
+        .rpc('process_deep_tarot_request', {
+          p_phone_number: user.phone_number,
+          p_tarot_card1_name: c1.name,
+          p_tarot_card2_name: c2.name
+        });
+
+      setIsCasting2(false);
+
+      if (error) {
+        console.error('RPC Error:', error.message);
+        alert(error.message || '요청 중 오류가 발생했습니다, 큰형님!');
+        setRequestStatus(null);
+        setSelectedCard2(null);
+        return;
+      }
+
+      if (data && data.req_id) {
+        setRequestId(data.req_id);
+        setWaitNumber(data.wait_number || '??');
+        setRequestStatus('pending');
+      } else {
+        console.error('Unexpected RPC Result:', data);
+        alert('서버 응답이 올바르지 않슴다, 큰형님!');
+        setRequestStatus(null);
+        setSelectedCard2(null);
+      }
+    } catch (err) {
+      console.error('Network/Internal Error:', err);
+      setIsCasting2(false);
+      setRequestStatus(null);
+      setSelectedCard2(null);
+      alert('통신 중 문제가 발생했슴다. 다시 시도해 주세요!');
+    }
   };
 
-
-  const requestDeepTarot = async () => {
-    if (!user || !selectedCard) return;
+  const startDeepProcess = () => {
+    if (cards.length === 0 || !selectedCard) return;
     
-    // RPC 함수 호출로 포인트 차감 및 요청 생성을 한 번에 처리합니다.
-    const { data: newId, error } = await supabase
-      .rpc('process_deep_tarot_request', {
-        p_receipt_last4: user.receipt_last4,
-        p_tarot_card_name: selectedCard.name
-      });
-
-    if (error) {
-      console.error('RPC Error:', error.message);
-      alert(error.message || '요청 중 오류가 발생했습니다.');
-      return;
-    }
-
-    if (newId) {
-      setRequestId(newId);
-      setRequestStatus('pending');
-      
-      // 포인트 차감 후 로컬 사용자 정보 갱신 (3,000P 차감 시뮬레이션 및 실제 데이터 동기화 권장)
-      // 간단히 3,000P를 뺀 상태로 로컬 상태를 업데이트합니다.
-      // (실제 데이터는 다음 로그인이나 명시적 fetch 시 동기화됩니다.)
-      // user.point_balance -= 3000; // Note: user object should be handled as immutable if using hooks properly
-    }
+    // 2번째 카드 자동 추첨
+    let randomCard;
+    do {
+      randomCard = cards[Math.floor(Math.random() * cards.length)];
+    } while (randomCard.name === selectedCard.name);
+    
+    setSelectedCard2(randomCard);
+    setIsCasting2(true);
+    
+    // 즉시 서버 요청 수행
+    performDeepTarotRequest(selectedCard, randomCard);
   };
 
   // Poll for approval status
@@ -129,180 +155,295 @@ function App() {
       interval = setInterval(async () => {
         const { data, error } = await supabase
           .from('tb_tarot_request')
-          .select('status')
+          .select('status, ai_tarot_result')
           .eq('req_id', requestId)
           .single();
 
-        if (data && data.status === 1) { // Approved
-          setDeepResult(generateDeepResult(selectedCard));
-          setRequestStatus('approved');
-          clearInterval(interval);
+        if (data && data.status === 1 && data.ai_tarot_result) { // Approved & AI Result Ready
+          try {
+            const parsedResult = typeof data.ai_tarot_result === 'string' 
+              ? JSON.parse(data.ai_tarot_result) 
+              : data.ai_tarot_result;
+            
+            setDeepResult(parsedResult);
+            setRequestStatus('approved');
+            clearInterval(interval);
+          } catch (e) {
+            console.error('JSON Parsing Error for AI result:', e);
+          }
         }
       }, 3000);
     }
     return () => clearInterval(interval);
-  }, [requestStatus, requestId, selectedCard]);
+  }, [requestStatus, requestId]);
+
+  // Handle sequential flipping in approved state
+  useEffect(() => {
+    if (requestStatus === 'approved') {
+      setIsResultCard1Flipped(false);
+      setIsResultCard2Flipped(false);
+
+      const timer1 = setTimeout(() => {
+        setIsResultCard1Flipped(true);
+      }, 2000);
+
+      const timer2 = setTimeout(() => {
+        setIsResultCard2Flipped(true);
+      }, 4000);
+
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+      };
+    }
+  }, [requestStatus]);
 
   return (
     <div className="min-h-screen w-full coffee-gradient-bg flex flex-col items-center justify-center p-4 overflow-x-hidden">
-      <div className="max-w-[480px] w-full flex flex-col items-center gap-10 text-center relative">
+      <div className="max-w-[720px] w-full flex flex-col items-center gap-10 text-center relative mx-auto">
         
         {/* Animated Background Decor */}
         <div className="absolute -top-20 -left-20 w-64 h-64 bg-tech-blue/10 rounded-full blur-[80px] animate-pulse-subtle" />
         <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-tech-purple/10 rounded-full blur-[80px] animate-pulse-subtle" />
 
         {/* Logo & Header */}
-        <header className="flex flex-col items-center gap-4 z-10">
-          <div className="w-20 h-20 bg-coffee-dark rounded-full flex items-center justify-center border border-coffee-light/20 shadow-xl neon-shadow">
-            <Coffee className="text-coffee-light w-10 h-10" />
-          </div>
-          <h1 className="font-heading text-4xl font-bold tracking-tighter holographic-text">
-            COFFEELIKE TAROT
-          </h1>
-          {user && (
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex items-center gap-2 px-4 py-1.5 glass-panel border-none shadow-sm">
-                <div className="w-2 h-2 rounded-full bg-tech-blue animate-pulse" />
-                <span className="text-[10px] text-coffee-light/80 font-bold uppercase tracking-[0.2em]">VIP: {user.receipt_last4}</span>
-              </div>
-              <div className="px-3 py-1 bg-tech-blue/20 rounded-full border border-tech-blue/30 scale-90">
-                <span className="text-[10px] font-black text-tech-blue tracking-widest">{user.point_balance?.toLocaleString()} P</span>
-              </div>
+        <header className="flex flex-col items-center gap-4 z-10 w-full">
+            <div className="w-20 h-20 bg-coffee-dark rounded-full flex items-center justify-center border border-coffee-light/20 shadow-xl neon-shadow">
+                <Coffee className="text-coffee-light w-10 h-10" />
             </div>
-          )}
+            <h1 className="font-heading text-4xl font-bold tracking-tighter text-white/90 drop-shadow-lg">
+                COFFEELIKE <span className="text-tech-blue">TAROT</span>
+            </h1>
         </header>
 
-        {/* Main Interface System */}
         <div className="w-full z-10 transition-all duration-700">
           {isAdmin ? (
             <BaristaDashboard onLogout={handleLogout} />
           ) : !user ? (
-            <main className="w-full flex flex-col gap-8 glass-panel p-10">
-              <form onSubmit={handleLogin} className="space-y-6">
-                <div className="space-y-2">
-                  <h2 className="font-heading text-2xl font-bold text-white tracking-tight">Secret Tarot Access</h2>
-                  <p className="text-sm text-coffee-light/40 font-medium">영수증 번호 뒷 4자리를 입력하고 운명을 확인하세요.</p>
+            <main className="w-full flex flex-col items-center justify-center p-6 relative">
+              <div 
+                className="fixed inset-0 z-[-1] bg-cover bg-center transition-all duration-1000 scale-105"
+                style={{ backgroundImage: 'url("/assets/tarot_bg.png")' }}
+              />
+              <div className="fixed inset-0 z-[-1] bg-gradient-to-b from-coffee-dark/40 via-coffee-dark/80 to-coffee-dark backdrop-blur-[2px]" />
+              
+              <div className="w-full max-w-[720px] glass-panel p-10 space-y-8 animate-in fade-in zoom-in duration-700 shadow-2xl shadow-black/80">
+                <div className="flex flex-col items-center gap-4 mb-4">
+                  <div className="p-4 bg-coffee-dark/50 rounded-full border border-coffee-light/10 shadow-lg glow-coffee">
+                    <Coffee className="text-coffee-light w-10 h-10" />
+                  </div>
+                  <h1 className="text-3xl font-black text-white tracking-widest uppercase italic bg-clip-text text-transparent bg-gradient-to-r from-coffee-light to-white">COFFEELIKE TAROT</h1>
                 </div>
-                <div className="relative group">
-                  <input 
-                    type="text" maxLength={4} value={receipt}
-                    onChange={(e) => setReceipt(e.target.value.replace(/[^0-9]/g, ''))}
-                    placeholder="0000"
-                    className="w-full bg-coffee-dark/50 border border-coffee-light/10 focus:border-tech-blue rounded-2xl py-5 px-6 text-center text-3xl font-heading tracking-[0.5em] outline-none transition-all duration-500 text-white shadow-inner"
-                  />
-                </div>
-                <button disabled={loading} className="w-full bg-coffee-light text-coffee-dark font-black text-lg py-5 rounded-2xl transition-all hover:bg-white active:scale-[0.98] shadow-lg shadow-black/20 flex items-center justify-center gap-3">
-                  {loading ? <Loader2 className="animate-spin" /> : <>ENTER THE ORACLE <ChevronRight size={20} /></>}
-                </button>
-              </form>
+
+                <form onSubmit={handleLogin} className="space-y-8">
+                  <div className="space-y-2 text-center">
+                    <h2 className="font-heading text-2xl font-bold text-white tracking-tight">시크릿 타로룸 접속</h2>
+                    <p className="text-sm text-coffee-light/40 font-medium">휴대폰 번호를 입력하고 운명을 확인하세요.</p>
+                  </div>
+                  <div className="flex items-center justify-center gap-3">
+                    <div className="bg-coffee-dark/50 border border-coffee-light/10 rounded-xl py-4 px-3 text-xl font-heading text-white/50 w-20">
+                      010
+                    </div>
+                    <span className="text-coffee-light/20">-</span>
+                    <input 
+                      type="text" maxLength={4} value={phonePart2}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, '');
+                        setPhonePart2(val);
+                        if (val.length === 4) document.getElementById('phone-part3')?.focus();
+                      }}
+                      placeholder="0000"
+                      className="w-24 bg-coffee-dark/50 border border-coffee-light/10 focus:border-tech-blue rounded-xl py-4 px-2 text-center text-xl font-heading outline-none transition-all duration-500 text-white"
+                    />
+                    <span className="text-coffee-light/20">-</span>
+                    <input 
+                      id="phone-part3"
+                      type="text" maxLength={4} value={phonePart3}
+                      onChange={(e) => setPhonePart3(e.target.value.replace(/[^0-9]/g, ''))}
+                      placeholder="0000"
+                      className="w-24 bg-coffee-dark/50 border border-coffee-light/10 focus:border-tech-blue rounded-xl py-4 px-2 text-center text-xl font-heading outline-none transition-all duration-500 text-white"
+                    />
+                  </div>
+                  <button disabled={loading} className="w-full bg-coffee-light text-coffee-dark font-black text-lg py-5 rounded-2xl transition-all hover:bg-white active:scale-[0.98] shadow-lg shadow-black/20 flex items-center justify-center gap-3">
+                    {loading ? <Loader2 className="animate-spin" /> : <>운명의 문 열기 <ChevronRight size={20} /></>}
+                  </button>
+                </form>
+              </div>
             </main>
-          ) : requestStatus === 'pending' ? (
-            <main className="w-full flex flex-col items-center gap-10 glass-panel p-12">
-              <div className="relative flex items-center justify-center">
-                <div className="w-36 h-36 rounded-full border-[6px] border-tech-blue/10 border-t-tech-blue animate-spin" />
-                <div className="absolute w-24 h-24 bg-tech-blue/5 rounded-full flex items-center justify-center backdrop-blur-sm">
-                  <CreditCard className="text-tech-blue w-12 h-12" />
+          ) : (requestStatus === 'pending' || isCasting2) ? (
+            <main className="w-full max-w-[720px] flex flex-col items-center gap-10 glass-panel p-10 animate-in fade-in zoom-in duration-500 mx-auto">
+              {isCasting2 ? (
+                <div className="flex flex-col items-center gap-6 py-10">
+                  <div className="relative">
+                    <Loader2 className="animate-spin text-tech-purple w-16 h-16" />
+                    <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-tech-purple w-6 h-6 animate-pulse" />
+                  </div>
+                  <h2 className="text-xl font-black text-tech-purple uppercase tracking-[0.2em] animate-pulse">운명의 향기를 조합 중...</h2>
+                </div>
+              ) : (
+                <>
+                  <div className="relative flex items-center justify-center">
+                    <div className="w-40 h-40 rounded-full border-[6px] border-tech-blue/10 border-t-tech-blue animate-spin" />
+                    <div className="absolute w-28 h-28 bg-coffee-dark border border-tech-blue/30 rounded-full flex flex-col items-center justify-center backdrop-blur-sm shadow-2xl">
+                      <span className="text-[10px] text-tech-blue font-black uppercase tracking-widest mb-1">YOUR NO.</span>
+                      <span className="text-4xl font-black text-tech-blue animate-pulse">{waitNumber}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <h2 className="font-heading text-3xl font-black text-white uppercase tracking-tighter italic">바리스타 승인 대기 중</h2>
+                    <p className="text-coffee-light/60 text-base leading-relaxed mx-auto font-bold">
+                      카운터 바리스타에게 <span className="text-tech-blue font-black underline underline-offset-4 decoration-2">"{waitNumber}번 대기 중"</span>이라고 말씀해주세요. 
+                    </p>
+                  </div>
+                  <div className="w-full p-5 bg-black/30 rounded-2xl border border-white/5 text-[10px] text-coffee-light/40 flex justify-between items-center font-mono">
+                    <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-tech-blue animate-pulse" /> 실시간 동기화 중</span>
+                    <span>ID: {requestId}</span>
+                  </div>
+                </>
+              )}
+            </main>
+          ) : (requestStatus === 'approved' && deepResult) ? (
+            <main className="w-full max-w-[720px] flex flex-col items-center gap-6 animate-in slide-in-from-bottom duration-1000 pb-10 mx-auto">
+              <div className="flex gap-4 mb-4 scale-90 sm:scale-100">
+                <div className="flex flex-col items-center gap-3">
+                  <span className="text-sm text-coffee-light/60 font-black uppercase tracking-[0.2em]">현재의 실타래</span>
+                  <TarotCard card={selectedCard} backImage={backImage} size="medium" isFlipped={isResultCard1Flipped} />
+                </div>
+                <div className="flex flex-col items-center justify-center pt-8">
+                  <div className="w-12 h-px bg-tech-purple animate-pulse" />
+                </div>
+                <div className="flex flex-col items-center gap-3">
+                  <span className="text-sm text-tech-purple/80 font-black uppercase tracking-[0.2em]">미래의 향기</span>
+                  <TarotCard card={selectedCard2} backImage={backImage} size="medium" isFlipped={isResultCard2Flipped} />
                 </div>
               </div>
-              <div className="space-y-4">
-                <h2 className="font-heading text-3xl font-black text-white uppercase tracking-tighter italic">Waiting for Barista</h2>
-                <p className="text-coffee-light/60 text-sm leading-relaxed max-w-[280px] mx-auto">
-                  카운터에서 <span className="text-tech-blue font-extrabold underline underline-offset-4">3,000P 장부 차감</span>을 말씀해주세요. 바리스타 승인 즉시 심층 상담이 시작됩니다.
-                </p>
-              </div>
-              <div className="w-full p-5 bg-black/30 rounded-2xl border border-white/5 text-[10px] text-coffee-light/40 flex justify-between items-center font-mono">
-                <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-tech-blue animate-pulse" /> LIVE SYNCING</span>
-                <span>ID: {requestId}</span>
-              </div>
-            </main>
-          ) : requestStatus === 'approved' && deepResult ? (
-            <main className="w-full flex flex-col items-center gap-6 animate-in slide-in-from-bottom duration-1000">
-              <div className="glass-panel p-8 w-full space-y-8 relative overflow-hidden">
+
+              <div className="glass-panel p-10 w-full space-y-8 relative overflow-hidden text-center">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                    <Zap size={80} className="text-tech-purple" />
                 </div>
                 
                 <div className="flex flex-col items-center gap-2">
-                   <div className="px-4 py-1 bg-tech-purple/20 border border-tech-purple/40 rounded-full text-[10px] text-tech-purple font-black tracking-widest uppercase">Deep Insight Unlocked</div>
+                   <div className="px-6 py-2 bg-tech-purple/20 border border-tech-purple/40 rounded-full text-lg text-tech-purple font-black tracking-[0.2em] uppercase">심층 조합 결과 오픈</div>
                 </div>
 
                 <div className="space-y-6 text-left">
-                  <section className="space-y-3">
-                    <div className="space-y-1">
-                      <div className="text-[10px] font-black text-tech-blue/60 uppercase tracking-[0.3em] flex items-center gap-2">
-                        <div className="w-4 h-px bg-tech-blue/30" /> {selectedCard.name}
+                  <section className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="text-2xl font-black text-tech-blue uppercase tracking-tighter flex flex-col gap-1 mb-4">
+                        <div className="flex items-center gap-2">
+                           <div className="w-8 h-px bg-tech-blue/50" /> {selectedCard.name}
+                        </div>
+                        <div className="flex items-center gap-2">
+                           <div className="w-8 h-px bg-tech-blue/50" /> {selectedCard2.name}
+                        </div>
                       </div>
-                      <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
-                        <Zap size={14} className="text-tech-blue shadow-glow" /> Barista's Oracle
+                      <h3 className="text-xl font-black text-white uppercase tracking-widest flex items-center gap-2">
+                        <Zap size={20} className="text-tech-blue shadow-glow" /> 바리스타의 신탁
                       </h3>
                     </div>
-                    <p className="text-lg font-medium text-white leading-snug pl-1 border-l-2 border-tech-blue/20">"{deepResult.mainFortune}"</p>
+                    <p className="text-xl font-bold text-white leading-tight pl-2 border-l-4 border-tech-blue/40">
+                      "{deepResult.mainFortune}"
+                    </p>
                   </section>
 
-                  <section className="space-y-2 p-5 bg-white/5 rounded-2xl border border-white/5">
-                    <h3 className="text-[10px] font-bold text-tech-purple uppercase tracking-widest flex items-center gap-2">
-                      <Moon size={12} /> Spiritual Insight
+                  <section className="space-y-3 p-6 bg-white/5 rounded-3xl border border-white/10 shadow-inner">
+                    <h3 className="text-lg font-black text-tech-purple uppercase tracking-widest flex items-center gap-2">
+                      <Moon size={18} /> 영적 통찰 (Insight)
                     </h3>
-                    <p className="text-sm text-coffee-light/80 leading-relaxed">{deepResult.deepInsight}</p>
+                    <p className="text-lg text-coffee-light/90 leading-relaxed font-medium">{deepResult.deepInsight}</p>
                   </section>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-black/20 rounded-xl space-y-1">
-                      <h4 className="text-[9px] font-bold text-amber-500 uppercase flex items-center gap-1"><Shield size={10} /> Watch Out</h4>
-                      <p className="text-[11px] text-white/60 leading-tight">{deepResult.caution}</p>
-                    </div>
-                    <div className="p-4 bg-coffee-light/5 rounded-xl space-y-1 border border-coffee-light/10">
-                      <h4 className="text-[9px] font-bold text-coffee-light uppercase flex items-center gap-1"><Coffee size={10} /> Coffee Pair</h4>
-                      <p className="text-[11px] text-white font-bold leading-tight">{deepResult.coffee.name}</p>
-                    </div>
-                  </div>
+                  <section className="space-y-3 p-6 bg-amber-500/10 rounded-3xl border border-amber-500/20">
+                    <h4 className="text-lg font-black text-amber-500 uppercase flex items-center gap-2">
+                      <Shield size={18} /> 주의사항 (Caution)
+                    </h4>
+                    <p className="text-base text-white/80 leading-relaxed font-bold">{deepResult.caution}</p>
+                  </section>
+
+                  {/* Coffee Pairing Section 추가 */}
+                  <section className="space-y-3 p-6 bg-tech-blue/10 rounded-3xl border border-tech-blue/20">
+                    <h4 className="text-lg font-black text-tech-blue uppercase flex items-center gap-2">
+                      <Coffee size={18} /> 추천 커피 페어링
+                    </h4>
+                    <p className="text-base text-white/90 leading-relaxed font-bold italic">"{deepResult.coffeePairing}"</p>
+                  </section>
                 </div>
 
-                <div className="pt-4">
-                  <p className="text-[10px] text-coffee-light/40 italic mb-4">"{deepResult.coffee.desc}"</p>
-                  <button onClick={() => { setRequestStatus('idle'); setSelectedCard(null); setDeepResult(null); }} className="w-full bg-white text-black font-black py-4 rounded-xl text-xs uppercase tracking-widest hover:bg-tech-blue hover:text-white transition-all shadow-xl">
-                    Finish Consultation
+                <div className="pt-6">
+                  <button 
+                    onClick={() => { 
+                      setRequestStatus(null); 
+                      setSelectedCard(null); 
+                      setSelectedCard2(null); 
+                      setDeepResult(null); 
+                      setFirstCardFlipped(false);
+                      setIsResultCard1Flipped(false);
+                      setIsResultCard2Flipped(false);
+                    }} 
+                    className="w-full bg-white text-black font-black py-4 rounded-2xl text-lg uppercase tracking-[0.2em] hover:bg-tech-blue hover:text-white transition-all shadow-2xl active:scale-[0.98]"
+                  >
+                    상담 종료
                   </button>
                 </div>
               </div>
             </main>
           ) : (
-            <main className="w-full flex flex-col items-center gap-8 min-h-[400px]">
+            <main className="w-full max-w-[720px] flex flex-col items-center gap-8 min-h-[400px] mx-auto">
               {selectedCard ? (
                 <div className="flex flex-col items-center gap-10 w-full animate-in fade-in zoom-in duration-700">
                   <TarotCard 
                     card={selectedCard} 
                     backImage={backImage} 
+                    isFlipped={firstCardFlipped}
+                    onFlip={() => setFirstCardFlipped(true)}
                   />
                   
-                  <div className="w-full glass-panel p-8 space-y-6">
-                    <div className="space-y-2">
-                      <h3 className="text-[10px] font-black text-tech-blue tracking-[0.3em] uppercase">Daily Oracle</h3>
+                  <div className="w-full glass-panel p-10 space-y-6">
+                    <div className="space-y-4">
+                      <div className="flex flex-col items-center gap-2 mb-2">
+                        <span className="text-tech-blue font-black text-2xl tracking-[0.1em] uppercase">
+                          {selectedCard.name.includes('(') ? selectedCard.name.split('(')[0].trim() : selectedCard.name}
+                        </span>
+                        {selectedCard.name.includes('(') && (
+                          <span className="text-tech-blue/40 font-bold text-base tracking-[0.2em] uppercase -mt-1">
+                            {selectedCard.name.split('(')[1].replace(')', '').trim()}
+                          </span>
+                        )}
+                        <h3 className="text-xl font-black text-white/40 tracking-[0.4em] uppercase italic mt-4 border-t border-white/5 pt-4 w-full">오늘의 신탁</h3>
+                      </div>
                       <p className="text-xl font-bold text-white tracking-tight leading-tight">
-                        {selectedCard.fortune_telling[0]}
+                        {selectedCard.fortune_telling?.[0] || '카드의 의미를 읽는 중입니다...'}
                       </p>
                     </div>
 
-                    <div className="pt-4 border-t border-white/5 space-y-4">
-                      <div className="text-center">
-                        <p className="text-[10px] text-tech-purple font-black uppercase tracking-[0.2em] mb-2 px-3 py-1 bg-tech-purple/10 inline-block rounded-full">Secret Chamber</p>
-                        <p className="text-xs text-coffee-light/50 font-medium leading-relaxed">
-                          더 깊은 운명의 향기와 <span className="text-white font-bold">바리스타의 특별 처방전</span>이<br/>필요하신가요?
+                    <div className="pt-4 border-t border-white/5 space-y-4 text-center">
+                        <p className="text-lg text-tech-purple font-bold leading-relaxed">
+                          더 깊은 운명의 향기를 알고 싶으시면<br/>
+                          신청 버튼을 누르고 바리스타에게 말씀해 보세요.
                         </p>
-                      </div>
-                      <button onClick={requestDeepTarot} className="w-full bg-tech-purple/20 hover:bg-tech-purple text-tech-purple hover:text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-3 group border border-tech-purple/30 shadow-lg shadow-tech-purple/10">
-                        심층 타로 신청 (3,000P)
+                        <div className="flex items-center justify-center gap-3 py-2 animate-in slide-in-from-bottom-2 duration-700">
+                          <span className="px-3 py-1 bg-tech-purple/5 border border-tech-purple/20 rounded-full text-[10px] font-black text-tech-purple/70 uppercase tracking-widest">
+                            3,000P 차감
+                          </span>
+                          <div className="w-1 h-1 rounded-full bg-tech-purple/20" />
+                          <span className="px-3 py-1 bg-tech-purple/5 border border-tech-purple/20 rounded-full text-[10px] font-black text-tech-purple/70 uppercase tracking-widest">
+                            결제 시 1,000원
+                          </span>
+                        </div>
+                      <button onClick={startDeepProcess} className="w-full bg-tech-purple/20 hover:bg-tech-purple text-tech-purple hover:text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-3 group border border-tech-purple/30 shadow-lg shadow-tech-purple/10">
+                        심층 타로 신청
                         <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
                       </button>
                     </div>
                   </div>
 
-                  <button onClick={() => setSelectedCard(null)} className="text-[10px] text-coffee-light/30 font-bold uppercase tracking-widest hover:text-white transition-colors">
+                  <button onClick={() => { setSelectedCard(null); setFirstCardFlipped(false); }} className="text-[10px] text-coffee-light/30 font-bold uppercase tracking-widest hover:text-white transition-colors">
                     카드 다시 섞기
                   </button>
                 </div>
               ) : (
-                <div className="w-full flex flex-col items-center gap-12 glass-panel p-12">
+                <div className="w-full max-w-[720px] flex flex-col items-center gap-12 glass-panel p-10 mx-auto">
                   <div className="relative group cursor-pointer" onClick={!isCasting ? shuffleAndDraw : null}>
                     <div className={`w-52 h-80 bg-coffee-dark border border-coffee-light/10 rounded-[2rem] flex items-center justify-center transition-all duration-700 ${isCasting ? 'scale-95 blur-sm' : 'hover:scale-105 hover:border-tech-blue/40 shadow-2xl'}`}>
                       {isCasting ? (
@@ -311,11 +452,10 @@ function App() {
                             <Loader2 className="animate-spin text-tech-blue w-12 h-12" />
                             <Coffee className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-tech-blue w-4 h-4 animate-bounce" />
                           </div>
-                          <span className="text-[10px] text-tech-blue font-black uppercase tracking-[0.3em] animate-pulse">Filtering your soul...</span>
+                          <span className="text-[10px] text-tech-blue font-black uppercase tracking-[0.3em] animate-pulse">영혼의 향기를 필터링 중...</span>
                         </div>
                       ) : (
                         <div className="relative w-full h-full p-4 flex flex-col items-center justify-center gap-2">
-                           {/* Decorative Card Shapes */}
                            <div className="w-20 h-28 bg-coffee-light/5 border border-coffee-light/10 rounded-xl rotate-[-15deg] absolute transform -translate-x-8 -translate-y-4" />
                            <div className="w-20 h-28 bg-coffee-light/5 border border-coffee-light/10 rounded-xl rotate-[15deg] absolute transform translate-x-8 -translate-y-4" />
                            <div className="w-24 h-36 bg-coffee-dark border-2 border-coffee-light/20 rounded-2xl relative z-10 flex items-center justify-center shadow-2xl">
@@ -324,13 +464,15 @@ function App() {
                         </div>
                       )}
                     </div>
-                    {!isCasting && <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 px-6 py-2 bg-tech-blue text-white text-[10px] font-black rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all uppercase tracking-tighter">Tap to draw</div>}
+                    {!isCasting && <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-6 py-2 bg-tech-blue text-white text-xs font-black rounded-full shadow-lg animate-bounce uppercase tracking-tighter z-20 whitespace-nowrap">터치하여 카드 뽑기</div>}
                   </div>
                   
                   <div className="space-y-6 w-full">
                     <div className="space-y-2">
-                      <h3 className="text-white font-bold text-lg tracking-tight">당신의 커피 향기를 읽어드립니다.</h3>
-                      <p className="text-xs text-coffee-light/40 font-medium">바리스타가 직접 내려주는 오늘의 커피 타로</p>
+                      <h3 className="text-white font-black text-2xl tracking-tight leading-tight">
+                        당신의 운명의 향기를 읽어드립니다.
+                      </h3>
+                      <p className="text-sm text-coffee-light/60 font-bold">바리스타가 직접 내려주는 오늘의 신비로운 운명 타로</p>
                     </div>
                     <button 
                       onClick={shuffleAndDraw} 
@@ -349,11 +491,11 @@ function App() {
               )}
             </main>
           )}
+          
+          <footer className="mt-8 mb-4 text-[9px] text-coffee-light/20 font-medium uppercase tracking-[0.3em] inline-block text-center w-full">
+            © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
+          </footer>
         </div>
-
-        <footer className="mt-6 text-[10px] text-coffee-light/20 font-medium uppercase tracking-[0.2em] z-10">
-          © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
-        </footer>
       </div>
     </div>
   );
