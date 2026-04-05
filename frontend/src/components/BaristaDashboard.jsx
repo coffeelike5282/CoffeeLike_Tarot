@@ -287,18 +287,42 @@ const BaristaDashboard = ({ onLogout }) => {
                 </div>
               ) : (
                 history.map((order) => (
-                  <div key={order.req_id} className="flex flex-col p-6 bg-white/[0.02] border border-white/5 rounded-2xl gap-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${order.status === 1 ? 'bg-tech-purple/10 text-tech-purple' : 'bg-red-500/10 text-red-500'} border border-white/5`}>
-                          {order.status === 1 ? <Check size={20} /> : <X size={20} />}
+                  <div key={order.req_id} className="flex flex-col p-5 bg-white/[0.02] border border-white/5 rounded-2xl gap-4 hover:bg-white/[0.04] transition-all group">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                        {/* 🏁 상태 아이콘: 원형 글로우 디자인 */}
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border shadow-sm ${order.status === 1 ? 'bg-tech-blue/10 border-tech-blue/20 text-tech-blue' : 'bg-red-500/10 border-red-500/20 text-red-500'}`}>
+                          {order.status === 1 ? <Check size={18} /> : <X size={18} />}
                         </div>
-                        <div className="flex flex-col text-left">
-                          <span className="text-white font-black text-lg">{formatPhone(order.phone_number)}</span>
-                          <span className="text-tech-purple text-[10px] font-black uppercase italic tracking-tighter">{order.tarot_card_name} + {order.tarot_card2_name}</span>
+                        
+                        <div className="flex flex-col text-left min-w-0">
+                          <span className="text-white font-bold text-base leading-none tracking-tight">{formatPhone(order.phone_number)}</span>
+                          {/* 🃏 카드 조합: 계단식 레이아웃 */}
+                          <div className="flex flex-col gap-1 mt-1.5 flex-wrap">
+                            <div className="flex items-center gap-1.5">
+                              <div className={`w-1 h-1 rounded-full ${order.status === 1 ? 'bg-tech-blue' : 'bg-red-500/40'}`} />
+                              <span className="text-coffee-light/60 font-medium text-[10px] truncate">{order.tarot_card_name}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <div className={`w-1 h-1 rounded-full ${order.status === 1 ? 'bg-tech-purple' : 'bg-red-500/40'}`} />
+                              <span className="text-coffee-light/60 font-medium text-[10px] truncate">{order.tarot_card2_name}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <span className="text-[10px] text-white/20 font-mono italic">{order.req_id.slice(0, 8)}</span>
+
+                      {/* 🎫 리퀘스트 ID: 전체 노출 스타일 */}
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${order.status === 1 ? 'bg-tech-blue/20 text-tech-blue' : 'bg-red-500/20 text-red-500'}`}>
+                          {order.status === 1 ? 'COMPLETED' : 'REJECTED'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* ID 하단 배치로 가독성 확보 */}
+                    <div className="border-t border-white/[0.03] pt-3 flex justify-between items-center">
+                      <span className="text-[10px] text-white/40 font-mono tracking-tighter uppercase">ID: {order.req_id}</span>
+                      <span className="text-[10px] text-coffee-light/40 font-black italic">{new Date(order.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                   </div>
                 ))
