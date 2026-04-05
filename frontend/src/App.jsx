@@ -310,7 +310,7 @@ function App() {
                       </p>
                     </div>
                     <div className="w-full p-5 bg-black/30 rounded-2xl border border-white/5 text-[10px] text-coffee-light/40 flex justify-between items-center font-mono">
-                      <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-tech-blue animate-pulse" /> 실시간 동기화 중</span>
+                      <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-tech-blue animate-pulse" /> 동기화 중</span>
                       <span>ID: {requestId}</span>
                     </div>
                   </>
