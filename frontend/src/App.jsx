@@ -277,41 +277,49 @@ function App() {
             </main>
           ) : (requestStatus === 'pending' || isCasting2) ? (
             <main className="w-full flex-1 flex flex-col items-center justify-center gap-6 sm:gap-10 animate-in fade-in zoom-in duration-500 mx-auto">
-              <div className="w-full max-w-[440px] glass-panel p-6 sm:p-10 flex flex-col items-center gap-8 shadow-2xl">
-                {/* Internal content wrap to keep footer outside the main gap flow if needed */}
-              </div>
-              <footer className="mt-0 text-[8px] sm:text-[9px] text-coffee-light/20 font-medium uppercase tracking-[0.3em] text-center w-full">
-                © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
-              </footer>
-              {isCasting2 ? (
-                <div className="flex flex-col items-center gap-6 py-10">
-                  <div className="relative">
-                    <Loader2 className="animate-spin text-tech-purple w-16 h-16" />
-                    <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-tech-purple w-6 h-6 animate-pulse" />
+              <div className="w-full max-w-[440px] glass-panel p-6 sm:p-10 flex flex-col items-center gap-8 shadow-2xl relative overflow-hidden">
+                {/* Branding in Wait Screen */}
+                <div className="flex flex-col items-center gap-4 mb-2 w-full text-center">
+                  <div className="p-3 bg-coffee-dark/50 rounded-full border border-coffee-light/10 shadow-lg glow-coffee scale-90">
+                    <Coffee className="text-coffee-light w-8 h-8" />
                   </div>
-                  <h2 className="text-xl font-black text-tech-purple uppercase tracking-[0.2em] animate-pulse">운명의 향기를 조합 중...</h2>
+                  <h1 className="text-lg sm:text-xl font-black text-white tracking-widest uppercase italic bg-clip-text text-transparent bg-gradient-to-r from-coffee-light to-white w-full text-center">COFFEELIKE TAROT</h1>
                 </div>
-              ) : (
-                <>
-                  <div className="relative flex items-center justify-center">
-                    <div className="w-40 h-40 rounded-full border-[6px] border-tech-blue/10 border-t-tech-blue animate-spin" />
-                    <div className="absolute w-28 h-28 bg-coffee-dark border border-tech-blue/30 rounded-full flex flex-col items-center justify-center backdrop-blur-sm shadow-2xl">
-                      <span className="text-[10px] text-tech-blue font-black uppercase tracking-widest mb-1">YOUR NO.</span>
-                      <span className="text-4xl font-black text-tech-blue animate-pulse">{waitNumber}</span>
+
+                {isCasting2 ? (
+                  <div className="flex flex-col items-center gap-6 py-10">
+                    <div className="relative">
+                      <Loader2 className="animate-spin text-tech-purple w-16 h-16" />
+                      <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-tech-purple w-6 h-6 animate-pulse" />
                     </div>
+                    <h2 className="text-xl font-black text-tech-purple uppercase tracking-[0.2em] animate-pulse">운명의 향기를 조합 중...</h2>
                   </div>
-                  <div className="space-y-4">
-                    <h2 className="font-heading text-xl sm:text-3xl font-black text-white uppercase tracking-tighter italic">바리스타 승인 대기 중</h2>
-                    <p className="text-coffee-light/60 text-base leading-relaxed mx-auto font-bold">
-                      카운터 바리스타에게 <span className="text-tech-blue font-black underline underline-offset-4 decoration-2">"{waitNumber}번 대기 중"</span>이라고 말씀해주세요. 
-                    </p>
-                  </div>
-                  <div className="w-full p-5 bg-black/30 rounded-2xl border border-white/5 text-[10px] text-coffee-light/40 flex justify-between items-center font-mono">
-                    <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-tech-blue animate-pulse" /> 실시간 동기화 중</span>
-                    <span>ID: {requestId}</span>
-                  </div>
-                </>
-              )}
+                ) : (
+                  <>
+                    <div className="relative flex items-center justify-center">
+                      <div className="w-40 h-40 rounded-full border-[6px] border-tech-blue/10 border-t-tech-blue animate-spin" />
+                      <div className="absolute w-28 h-28 bg-coffee-dark border border-tech-blue/30 rounded-full flex flex-col items-center justify-center backdrop-blur-sm shadow-2xl">
+                        <span className="text-[10px] text-tech-blue font-black uppercase tracking-widest mb-1">YOUR NO.</span>
+                        <span className="text-4xl font-black text-tech-blue animate-pulse">{waitNumber}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-4 text-center">
+                      <h2 className="font-heading text-xl sm:text-2xl font-black text-white uppercase tracking-tighter italic">바리스타 승인 대기 중</h2>
+                      <p className="text-coffee-light/60 text-sm sm:text-base leading-relaxed mx-auto font-bold max-w-[280px]">
+                        카운터 바리스타에게 <span className="text-tech-blue font-black underline underline-offset-4 decoration-2">"{waitNumber}번 대기 중"</span>이라고 말씀해주세요. 
+                      </p>
+                    </div>
+                    <div className="w-full p-5 bg-black/30 rounded-2xl border border-white/5 text-[10px] text-coffee-light/40 flex justify-between items-center font-mono">
+                      <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-tech-blue animate-pulse" /> 실시간 동기화 중</span>
+                      <span>ID: {requestId}</span>
+                    </div>
+                  </>
+                )}
+                
+                <footer className="mt-4 text-[8px] sm:text-[9px] text-coffee-light/10 font-medium uppercase tracking-[0.3em] text-center w-full">
+                  © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
+                </footer>
+              </div>
             </main>
           ) : (requestStatus === 'approved' && deepResult) ? (
             <main className="w-full flex-1 flex flex-col items-center justify-center gap-4 sm:gap-6 animate-in slide-in-from-bottom duration-1000 pb-10 mx-auto">
