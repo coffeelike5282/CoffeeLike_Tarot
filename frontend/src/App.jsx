@@ -206,28 +206,30 @@ function App() {
         <div className="absolute -top-20 -left-20 w-64 h-64 bg-tech-blue/10 rounded-full blur-[80px] animate-pulse-subtle" />
         <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-tech-purple/10 rounded-full blur-[80px] animate-pulse-subtle" />
 
-        {/* Logo & Header */}
-        <header className="flex flex-col items-center gap-4 z-10 w-full">
-            <div className="w-20 h-20 bg-coffee-dark rounded-full flex items-center justify-center border border-coffee-light/20 shadow-xl neon-shadow">
-                <Coffee className="text-coffee-light w-10 h-10" />
-            </div>
-            <h1 className="font-heading text-2xl md:text-4xl font-bold tracking-tighter text-white/90 drop-shadow-lg">
-                COFFEELIKE <span className="text-tech-blue">TAROT</span>
-            </h1>
-        </header>
+        {/* Header - Only show when logged in to avoid duplication on login screen */}
+        {user && (
+          <header className="flex flex-col items-center gap-4 z-10 w-full mb-4">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-coffee-dark rounded-full flex items-center justify-center border border-coffee-light/20 shadow-xl neon-shadow">
+                  <Coffee className="text-coffee-light w-8 h-8 sm:w-10 sm:h-10" />
+              </div>
+              <h1 className="font-heading text-xl sm:text-2xl md:text-4xl font-bold tracking-tighter text-white/90 drop-shadow-lg">
+                  COFFEELIKE <span className="text-tech-blue">TAROT</span>
+              </h1>
+          </header>
+        )}
 
         <div className="w-full z-10 transition-all duration-700">
           {isAdmin ? (
             <BaristaDashboard onLogout={handleLogout} />
           ) : !user ? (
-            <main className="w-full flex flex-col items-center justify-center p-6 relative">
+            <main className="w-full flex items-center justify-center min-h-[70vh]">
               <div 
                 className="fixed inset-0 z-[-1] bg-cover bg-center transition-all duration-1000 scale-105"
                 style={{ backgroundImage: 'url("/assets/tarot_bg.png")' }}
               />
               <div className="fixed inset-0 z-[-1] bg-gradient-to-b from-coffee-dark/40 via-coffee-dark/80 to-coffee-dark backdrop-blur-[2px]" />
               
-              <div className="w-full max-w-[720px] glass-panel p-6 sm:p-10 space-y-8 animate-in fade-in zoom-in duration-700 shadow-2xl shadow-black/80 flex flex-col items-center">
+              <div className="w-full max-w-[440px] glass-panel p-6 sm:p-10 space-y-8 animate-in fade-in zoom-in duration-700 shadow-2xl shadow-black/80 flex flex-col items-center">
                 <div className="flex flex-col items-center gap-4 mb-4 w-full text-center">
                   <div className="p-4 bg-coffee-dark/50 rounded-full border border-coffee-light/10 shadow-lg glow-coffee">
                     <Coffee className="text-coffee-light w-10 h-10" />
@@ -271,7 +273,7 @@ function App() {
               </div>
             </main>
           ) : (requestStatus === 'pending' || isCasting2) ? (
-            <main className="w-full max-w-[720px] flex flex-col items-center gap-10 glass-panel p-6 sm:p-10 animate-in fade-in zoom-in duration-500 mx-auto">
+            <main className="w-full max-w-[440px] flex flex-col items-center gap-10 glass-panel p-6 sm:p-10 animate-in fade-in zoom-in duration-500 mx-auto">
               {isCasting2 ? (
                 <div className="flex flex-col items-center gap-6 py-10">
                   <div className="relative">
@@ -303,7 +305,7 @@ function App() {
               )}
             </main>
           ) : (requestStatus === 'approved' && deepResult) ? (
-            <main className="w-full max-w-[720px] flex flex-col items-center gap-4 sm:gap-6 animate-in slide-in-from-bottom duration-1000 pb-10 mx-auto">
+            <main className="w-full max-w-[500px] flex flex-col items-center gap-4 sm:gap-6 animate-in slide-in-from-bottom duration-1000 pb-10 mx-auto">
               <div className="flex gap-4 mb-4 scale-90 sm:scale-100">
                 <div className="flex flex-col items-center gap-3">
                   <span className="text-sm text-coffee-light/60 font-black uppercase tracking-[0.2em]">현재의 실타래</span>
@@ -318,7 +320,7 @@ function App() {
                 </div>
               </div>
 
-              <div className="glass-panel p-6 sm:p-10 w-full space-y-8 relative overflow-hidden text-center">
+              <div className="glass-panel p-6 sm:p-8 w-full space-y-8 relative overflow-hidden text-center">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                    <Zap size={80} className="text-tech-purple" />
                 </div>
@@ -389,7 +391,7 @@ function App() {
               </div>
             </main>
           ) : (
-            <main className="w-full max-w-[720px] flex flex-col items-center gap-8 min-h-[400px] mx-auto">
+            <main className="w-full max-w-[500px] flex flex-col items-center gap-8 min-h-[400px] mx-auto">
               {selectedCard ? (
                 <div className="flex flex-col items-center gap-10 w-full animate-in fade-in zoom-in duration-700">
                   <TarotCard 
@@ -399,7 +401,7 @@ function App() {
                     onFlip={() => setFirstCardFlipped(true)}
                   />
                   
-                  <div className="w-full glass-panel p-6 sm:p-10 space-y-6">
+                  <div className="w-full glass-panel p-6 sm:p-8 space-y-6">
                     <div className="space-y-4">
                       <div className="flex flex-col items-center gap-2 mb-2">
                         <span className="text-tech-blue font-black text-2xl tracking-[0.1em] uppercase">
@@ -443,7 +445,7 @@ function App() {
                   </button>
                 </div>
               ) : (
-                <div className="w-full max-w-[720px] flex flex-col items-center gap-12 glass-panel p-6 sm:p-10 mx-auto">
+                <div className="w-full max-w-[440px] flex flex-col items-center gap-12 glass-panel p-6 sm:p-10 mx-auto">
                   <div className="relative group cursor-pointer" onClick={!isCasting ? shuffleAndDraw : null}>
                     <div className={`w-52 h-80 bg-coffee-dark border border-coffee-light/10 rounded-[2rem] flex items-center justify-center transition-all duration-700 ${isCasting ? 'scale-95 blur-sm' : 'hover:scale-105 hover:border-tech-blue/40 shadow-2xl'}`}>
                       {isCasting ? (
