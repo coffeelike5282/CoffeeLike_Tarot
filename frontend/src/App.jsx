@@ -222,7 +222,7 @@ function App() {
           {isAdmin ? (
             <BaristaDashboard onLogout={handleLogout} />
           ) : !user ? (
-            <main className="w-full flex items-center justify-center min-h-[70vh]">
+            <main className="w-full flex flex-col items-center justify-center p-2 sm:p-6 relative">
               <div 
                 className="fixed inset-0 z-[-1] bg-cover bg-center transition-all duration-1000 scale-105"
                 style={{ backgroundImage: 'url("/assets/tarot_bg.png")' }}
@@ -270,10 +270,19 @@ function App() {
                     {loading ? <Loader2 className="animate-spin" /> : <>운명의 문 열기 <ChevronRight size={20} /></>}
                   </button>
                 </form>
+                <footer className="mt-6 text-[8px] sm:text-[9px] text-coffee-light/10 font-medium uppercase tracking-[0.3em] text-center w-full">
+                  © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
+                </footer>
               </div>
             </main>
           ) : (requestStatus === 'pending' || isCasting2) ? (
             <main className="w-full max-w-[440px] flex flex-col items-center gap-10 glass-panel p-6 sm:p-10 animate-in fade-in zoom-in duration-500 mx-auto">
+              <div className="w-full flex flex-col items-center">
+                {/* Internal content wrap to keep footer outside the main gap flow if needed */}
+              </div>
+              <footer className="mt-0 text-[8px] sm:text-[9px] text-coffee-light/20 font-medium uppercase tracking-[0.3em] text-center w-full">
+                © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
+              </footer>
               {isCasting2 ? (
                 <div className="flex flex-col items-center gap-6 py-10">
                   <div className="relative">
@@ -388,6 +397,9 @@ function App() {
                     상담 종료
                   </button>
                 </div>
+                <footer className="mt-6 text-[8px] sm:text-[9px] text-coffee-light/10 font-medium uppercase tracking-[0.3em] text-center w-full">
+                  © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
+                </footer>
               </div>
             </main>
           ) : (
@@ -438,6 +450,9 @@ function App() {
                         <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
                       </button>
                     </div>
+                    <footer className="mt-6 text-[8px] sm:text-[9px] text-coffee-light/10 font-medium uppercase tracking-[0.3em] text-center w-full">
+                      © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
+                    </footer>
                   </div>
 
                   <button onClick={() => { setSelectedCard(null); setFirstCardFlipped(false); }} className="text-[10px] text-coffee-light/30 font-bold uppercase tracking-widest hover:text-white transition-colors">
@@ -489,14 +504,14 @@ function App() {
                       {isDataLoading ? "데이터 로딩 중..." : "운명의 카드 뽑기"}
                     </button>
                   </div>
+                  <footer className="mt-6 text-[8px] sm:text-[9px] text-coffee-light/20 font-medium uppercase tracking-[0.3em] text-center w-full">
+                    © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
+                  </footer>
                 </div>
               )}
             </main>
           )}
           
-          <footer className="mt-8 mb-4 text-[9px] text-coffee-light/20 font-medium uppercase tracking-[0.3em] inline-block text-center w-full">
-            © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
-          </footer>
         </div>
       </div>
     </div>
