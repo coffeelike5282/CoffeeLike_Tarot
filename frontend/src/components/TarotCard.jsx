@@ -7,10 +7,21 @@ const TarotCard = ({ card, backImage, frontImage, onFlip, size = 'default', isFl
   useEffect(() => {
     if (isFlipped && !flipped) {
       setFlipped(true);
+      playFlipSound();
     } else if (!isFlipped && flipped) {
       setFlipped(false);
     }
   }, [isFlipped]);
+
+  const playFlipSound = () => {
+    try {
+      const audio = new Audio('/assets/sfx/card_flip.mp3');
+      audio.volume = 0.4; // 너무 크지 않게 40% 볼륨
+      audio.play().catch(e => console.warn('Audio play failed (waiting for user interaction):', e));
+    } catch (err) {
+      console.error('SFX playback error:', err);
+    }
+  };
   
   const sizeClasses = {
     small: 'w-32 sm:w-40',
@@ -21,6 +32,7 @@ const TarotCard = ({ card, backImage, frontImage, onFlip, size = 'default', isFl
   const handleFlip = () => {
     if (!flipped) {
       setFlipped(true);
+      playFlipSound();
       if (onFlip) onFlip();
     }
   };
