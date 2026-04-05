@@ -211,7 +211,7 @@ function App() {
             <div className="w-20 h-20 bg-coffee-dark rounded-full flex items-center justify-center border border-coffee-light/20 shadow-xl neon-shadow">
                 <Coffee className="text-coffee-light w-10 h-10" />
             </div>
-            <h1 className="font-heading text-4xl font-bold tracking-tighter text-white/90 drop-shadow-lg">
+            <h1 className="font-heading text-2xl md:text-4xl font-bold tracking-tighter text-white/90 drop-shadow-lg">
                 COFFEELIKE <span className="text-tech-blue">TAROT</span>
             </h1>
         </header>
@@ -227,21 +227,21 @@ function App() {
               />
               <div className="fixed inset-0 z-[-1] bg-gradient-to-b from-coffee-dark/40 via-coffee-dark/80 to-coffee-dark backdrop-blur-[2px]" />
               
-              <div className="w-full max-w-[720px] glass-panel p-10 space-y-8 animate-in fade-in zoom-in duration-700 shadow-2xl shadow-black/80 flex flex-col items-center">
+              <div className="w-full max-w-[720px] glass-panel p-6 sm:p-10 space-y-8 animate-in fade-in zoom-in duration-700 shadow-2xl shadow-black/80 flex flex-col items-center">
                 <div className="flex flex-col items-center gap-4 mb-4 w-full text-center">
                   <div className="p-4 bg-coffee-dark/50 rounded-full border border-coffee-light/10 shadow-lg glow-coffee">
                     <Coffee className="text-coffee-light w-10 h-10" />
                   </div>
-                  <h1 className="text-3xl font-black text-white tracking-widest uppercase italic bg-clip-text text-transparent bg-gradient-to-r from-coffee-light to-white w-full text-center">COFFEELIKE TAROT</h1>
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-widest uppercase italic bg-clip-text text-transparent bg-gradient-to-r from-coffee-light to-white w-full text-center">COFFEELIKE TAROT</h1>
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-8 w-full flex flex-col items-center">
                   <div className="space-y-2 text-center w-full">
-                    <h2 className="font-heading text-2xl font-bold text-white tracking-tight">시크릿 타로룸 접속</h2>
+                    <h2 className="font-heading text-xl sm:text-2xl font-bold text-white tracking-tight">시크릿 타로룸 접속</h2>
                     <p className="text-sm text-coffee-light/40 font-medium">휴대폰 번호를 입력하고 운명을 확인하세요.</p>
                   </div>
-                  <div className="flex items-center justify-center gap-3 w-full">
-                    <div className="bg-coffee-dark/50 border border-coffee-light/10 rounded-xl py-4 px-3 text-xl font-heading text-white/50 w-20 text-center">
+                  <div className="flex items-center justify-center gap-1 sm:gap-3 w-full">
+                    <div className="bg-coffee-dark/50 border border-coffee-light/10 rounded-xl py-3 px-2 sm:py-4 sm:px-3 text-lg sm:text-xl font-heading text-white/50 w-16 sm:w-20 text-center">
                       010
                     </div>
                     <span className="text-coffee-light/20">-</span>
@@ -253,7 +253,7 @@ function App() {
                         if (val.length === 4) document.getElementById('phone-part3')?.focus();
                       }}
                       placeholder="0000"
-                      className="w-24 bg-coffee-dark/50 border border-coffee-light/10 focus:border-tech-blue rounded-xl py-4 px-2 text-center text-xl font-heading outline-none transition-all duration-500 text-white"
+                      className="w-20 sm:w-24 bg-coffee-dark/50 border border-coffee-light/10 focus:border-tech-blue rounded-xl py-3 px-2 sm:py-4 text-center text-lg sm:text-xl font-heading outline-none transition-all duration-500 text-white"
                     />
                     <span className="text-coffee-light/20">-</span>
                     <input 
@@ -261,17 +261,17 @@ function App() {
                       type="text" maxLength={4} value={phonePart3}
                       onChange={(e) => setPhonePart3(e.target.value.replace(/[^0-9]/g, ''))}
                       placeholder="0000"
-                      className="w-24 bg-coffee-dark/50 border border-coffee-light/10 focus:border-tech-blue rounded-xl py-4 px-2 text-center text-xl font-heading outline-none transition-all duration-500 text-white"
+                      className="w-20 sm:w-24 bg-coffee-dark/50 border border-coffee-light/10 focus:border-tech-blue rounded-xl py-3 px-2 sm:py-4 text-center text-lg sm:text-xl font-heading outline-none transition-all duration-500 text-white"
                     />
                   </div>
-                  <button disabled={loading} className="w-full max-w-[400px] bg-coffee-light text-coffee-dark font-black text-lg py-5 rounded-2xl transition-all hover:bg-white active:scale-[0.98] shadow-lg shadow-black/20 flex items-center justify-center gap-3">
+                  <button disabled={loading} className="w-full max-w-[400px] bg-coffee-light text-coffee-dark font-black text-lg py-4 sm:py-5 rounded-2xl transition-all hover:bg-white active:scale-[0.98] shadow-lg shadow-black/20 flex items-center justify-center gap-3">
                     {loading ? <Loader2 className="animate-spin" /> : <>운명의 문 열기 <ChevronRight size={20} /></>}
                   </button>
                 </form>
               </div>
             </main>
           ) : (requestStatus === 'pending' || isCasting2) ? (
-            <main className="w-full max-w-[720px] flex flex-col items-center gap-10 glass-panel p-10 animate-in fade-in zoom-in duration-500 mx-auto">
+            <main className="w-full max-w-[720px] flex flex-col items-center gap-10 glass-panel p-6 sm:p-10 animate-in fade-in zoom-in duration-500 mx-auto">
               {isCasting2 ? (
                 <div className="flex flex-col items-center gap-6 py-10">
                   <div className="relative">
@@ -290,7 +290,7 @@ function App() {
                     </div>
                   </div>
                   <div className="space-y-4">
-                    <h2 className="font-heading text-3xl font-black text-white uppercase tracking-tighter italic">바리스타 승인 대기 중</h2>
+                    <h2 className="font-heading text-xl sm:text-3xl font-black text-white uppercase tracking-tighter italic">바리스타 승인 대기 중</h2>
                     <p className="text-coffee-light/60 text-base leading-relaxed mx-auto font-bold">
                       카운터 바리스타에게 <span className="text-tech-blue font-black underline underline-offset-4 decoration-2">"{waitNumber}번 대기 중"</span>이라고 말씀해주세요. 
                     </p>
@@ -303,7 +303,7 @@ function App() {
               )}
             </main>
           ) : (requestStatus === 'approved' && deepResult) ? (
-            <main className="w-full max-w-[720px] flex flex-col items-center gap-6 animate-in slide-in-from-bottom duration-1000 pb-10 mx-auto">
+            <main className="w-full max-w-[720px] flex flex-col items-center gap-4 sm:gap-6 animate-in slide-in-from-bottom duration-1000 pb-10 mx-auto">
               <div className="flex gap-4 mb-4 scale-90 sm:scale-100">
                 <div className="flex flex-col items-center gap-3">
                   <span className="text-sm text-coffee-light/60 font-black uppercase tracking-[0.2em]">현재의 실타래</span>
@@ -313,12 +313,12 @@ function App() {
                   <div className="w-12 h-px bg-tech-purple animate-pulse" />
                 </div>
                 <div className="flex flex-col items-center gap-3">
-                  <span className="text-sm text-tech-purple/80 font-black uppercase tracking-[0.2em]">미래의 향기</span>
+                  <span className="text-[10px] sm:text-sm text-tech-purple/80 font-black uppercase tracking-[0.2em]">미래의 향기</span>
                   <TarotCard card={selectedCard2} backImage={backImage} size="medium" isFlipped={isResultCard2Flipped} />
                 </div>
               </div>
 
-              <div className="glass-panel p-10 w-full space-y-8 relative overflow-hidden text-center">
+              <div className="glass-panel p-6 sm:p-10 w-full space-y-8 relative overflow-hidden text-center">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                    <Zap size={80} className="text-tech-purple" />
                 </div>
@@ -399,7 +399,7 @@ function App() {
                     onFlip={() => setFirstCardFlipped(true)}
                   />
                   
-                  <div className="w-full glass-panel p-10 space-y-6">
+                  <div className="w-full glass-panel p-6 sm:p-10 space-y-6">
                     <div className="space-y-4">
                       <div className="flex flex-col items-center gap-2 mb-2">
                         <span className="text-tech-blue font-black text-2xl tracking-[0.1em] uppercase">
@@ -443,7 +443,7 @@ function App() {
                   </button>
                 </div>
               ) : (
-                <div className="w-full max-w-[720px] flex flex-col items-center gap-12 glass-panel p-10 mx-auto">
+                <div className="w-full max-w-[720px] flex flex-col items-center gap-12 glass-panel p-6 sm:p-10 mx-auto">
                   <div className="relative group cursor-pointer" onClick={!isCasting ? shuffleAndDraw : null}>
                     <div className={`w-52 h-80 bg-coffee-dark border border-coffee-light/10 rounded-[2rem] flex items-center justify-center transition-all duration-700 ${isCasting ? 'scale-95 blur-sm' : 'hover:scale-105 hover:border-tech-blue/40 shadow-2xl'}`}>
                       {isCasting ? (
