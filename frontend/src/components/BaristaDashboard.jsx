@@ -130,8 +130,9 @@ const BaristaDashboard = ({ onLogout }) => {
     if (!dateString) return '-';
     try {
       return new Intl.DateTimeFormat('ko-KR', {
-        year: 'numeric', month: 'long', day: 'numeric',
-        hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false
       }).format(new Date(dateString));
     } catch (e) { return dateString; }
   };
@@ -144,7 +145,7 @@ const BaristaDashboard = ({ onLogout }) => {
   return (
     <div className="w-full max-w-[720px] mx-auto flex flex-col gap-6 animate-in fade-in duration-700">
       
-      {/* 🚀 AI ORACLE ENGINE STATUS BANNER (V3.2 PREM) */}
+      {/* 🚀 AI ORACLE ENGINE STATUS BANNER (V4.0 PREM) */}
       <div className="glass-panel p-5 border-tech-blue/30 bg-black/60 overflow-hidden relative group">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-5 relative z-10">
           <div className="flex items-center gap-4 w-full sm:w-auto">
@@ -160,7 +161,7 @@ const BaristaDashboard = ({ onLogout }) => {
                 <div className="w-1 h-1 rounded-full bg-tech-blue animate-ping" />
               </div>
               <h2 className="text-sm font-black text-white italic tracking-tight flex items-baseline gap-2">
-                AI ORACLE ENGINE <span className="text-tech-blue drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">V3.2</span>
+                AI ORACLE ENGINE <span className="text-tech-blue drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">V4.0</span>
                 <span className="text-[8px] bg-tech-blue/20 text-tech-blue px-1.5 py-0.5 rounded-full not-italic font-black border border-tech-blue/10">ACTIVE</span>
               </h2>
             </div>
@@ -178,7 +179,7 @@ const BaristaDashboard = ({ onLogout }) => {
             <div className="w-px h-3 bg-white/10" />
             
             <div className="flex items-center gap-2">
-              <span className="text-[9px] bg-amber-500/10 text-amber-500 px-2 py-1 rounded-lg font-black border border-amber-500/10 italic">V3.1.2_STABLE</span>
+              <span className="text-[9px] bg-amber-500/10 text-amber-500 px-2 py-1 rounded-lg font-black border border-amber-500/10 italic">V4.0.0_STABLE</span>
             </div>
           </div>
         </div>
@@ -261,7 +262,16 @@ const BaristaDashboard = ({ onLogout }) => {
 
                       {/* 📱 정보 영역: 모바일 가독성 중심 */}
                       <div className="flex flex-col gap-1.5 text-left flex-1 min-w-0">
-                        <span className="text-white font-bold text-lg leading-none tracking-tight">{formatPhone(order.phone_number)}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-white font-bold text-lg leading-none tracking-tight">{formatPhone(order.phone_number)}</span>
+                          {order.ip_address && (
+                            <span className="text-[10px] text-tech-blue/60 font-mono font-black italic">{order.ip_address}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mb-1">
+                           <Clock size={10} className="text-white/20" />
+                           <span className="text-[10px] text-white/40 font-mono tracking-tighter">{formatDate(order.created_at)}</span>
+                        </div>
                         <div className="flex flex-col gap-0.5">
                           <span className="text-coffee-light/40 font-black text-[9px] uppercase tracking-widest">심층 조합</span>
                           <div className="flex flex-col gap-1 mt-0.5">
@@ -341,9 +351,14 @@ const BaristaDashboard = ({ onLogout }) => {
                     </div>
                     
                     {/* ID 하단 배치로 가독성 확보 */}
-                    <div className="border-t border-white/[0.03] pt-3 flex justify-between items-center">
-                      <span className="text-[10px] text-white/40 font-mono tracking-tighter uppercase">ID: {order.req_id}</span>
-                      <span className="text-[10px] text-coffee-light/40 font-black italic">{new Date(order.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</span>
+                    <div className="border-t border-white/[0.03] pt-3 flex flex-wrap justify-between items-center gap-2">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] text-white/40 font-mono tracking-tighter uppercase">ID: {order.req_id}</span>
+                        {order.ip_address && (
+                          <span className="text-[9px] text-tech-purple/50 font-mono italic">IP: {order.ip_address}</span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-coffee-light/40 font-black italic">{formatDate(order.created_at)}</span>
                     </div>
                   </div>
                 ))

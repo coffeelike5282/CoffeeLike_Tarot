@@ -17,28 +17,33 @@ const OLLAMA_API_URL = 'http://localhost:11434/api/generate';
 const MODEL_NAME = 'qwen2.5-local:latest';
 
 async function generateBlockForCard(cardName, cardNameKr, keywords) {
-  const prompt = `당신은 최고급 프리미엄 타로 해설가입니다.
-제시된 타로 카드에 대해 다음 5가지 요소를 JSON 형식으로만 응답하세요. 다른 부가 설명은 절대 하지 마세요.
+  const prompt = `당신은 최고급 프리미엄 타로 해설가입니다. 모든 해설은 품격 있는 존댓말(하십시오체 또는 해요체)로 작성해야 합니다.
 
 카드 ID: ${cardName}
 카드 이름 (한국어): ${cardNameKr}
 주요 키워드: ${keywords}
 
-[요청 사항]
-1. short_modifier: 이 카드가 과거/원인으로 작동할 때 어울리는 10자 내외의 짧은 수식어. (예: "눈부신 성과가 빛납니다만,", "혼란의 늪에 빠졌으나,")
-2. short_advice: 이 카드가 현재/결과로 작동할 때 어울리는 15자 내외의 짧고 강렬한 조언. (예: "스스로를 믿고 직진하십시오.", "지금은 때를 기다려야 합니다.")
-3. essay_intro: 긴 에세이 형태의 해설에서 이 카드의 상징을 묘사하는 감성적인 도입부 (약 1~2문장).
-4. essay_meaning: 이 카드의 핵심 의미와 현재 상황에 대한 직관적인 해석 (약 2문장).
-5. essay_advice: 이 카드가 주는 구체적이고 현실적인 마지막 조언 (약 1~2문장).
+[요청 사항 - 절대 준수]
+1. 말투: 모든 문장은 반드시 '~습니다', '~합니다', '~하십시오', '~해요'와 같은 정중한 존댓말로 마쳐야 합니다. 
+   - 절대 금지: '~이다', '~하다', '~한다'와 같은 평어체/반말은 절대 금지합니다.
+2. 오타 방지: '지킵니다'를 '주킵니다'로 쓰는 등 초보적인 오타가 나지 않도록 단어 선택과 맞춤법에 각별히 유의하십시오. 특히 '지킵니다'는 정확히 기재하십시오.
+3. short_modifier: 이 카드가 과거/원인으로 작동할 때 어울리는 10자 내외의 짧은 수식어. (예: "눈부신 성과가 빛납니다만,", "혼란의 늪에 빠졌으나,")
+4. short_advice: 이 카드가 현재/결과로 작동할 때 어울리는 15자 내외의 짧고 강렬한 조언. (예: "스스로를 믿고 직진하십시오.", "지금은 때를 기다려야 합니다.")
+5. essay_intro: 긴 에세이 형태의 해설에서 이 카드의 상징을 묘사하는 감성적인 도입부 (약 1~2문장).
+6. essay_meaning: 이 카드의 핵심 의미와 현재 상황에 대한 직관적인 해석 (약 2문장).
+7. essay_advice: 이 카드가 주는 구체적이고 현실적인 마지막 조언 (약 1~2문장).
 
-응답 필수 형식 (JSON):
+응답 형식 (JSON):
 {
-  "short_modifier": "...",
-  "short_advice": "...",
-  "essay_intro": "...",
-  "essay_meaning": "...",
-  "essay_advice": "..."
-}`;
+  "short_modifier": "한 장의 수식어 문장(해요체)",
+  "short_advice": "한 장의 조언 문장(해요체)",
+  "essay_intro": "카드의 상징 묘사(해요체)",
+  "essay_meaning": "카드의 해석(해요체)",
+  "essay_advice": "마무리 조언(해요체)"
+}
+오타 금지: '지킵니다' (O), '주킵니다' (X)
+존댓말만 사용하십시오.
+`;
 
   try {
     const response = await fetch(OLLAMA_API_URL, {
@@ -54,7 +59,10 @@ async function generateBlockForCard(cardName, cardNameKr, keywords) {
     
     if (!response.ok) throw new Error(`Ollama 통신 실패: ${response.status}`);
     const data = await response.json();
-    return JSON.parse(data.response);
+    
+    // 🔥 JSON 포맷이므로 바로 파싱
+    const parsed = JSON.parse(data.response);
+    return parsed;
   } catch (error) {
     console.error(`❌ [${cardNameKr}] 생성 중 에러 발생:`, error);
     return null;
@@ -91,33 +99,34 @@ async function main() {
     return;
   }
 
-  // 3. 작업 대상 필터링 (아직 없거나, 기본 문구인 녀석들만 정밀 타격함다)
-  const cards = allCards.filter(c => !finishedNames.has(c.name));
+  // 3. 작업 대상 필터링 (V4.0 엔진 고도화를 위해 전체 재생성 강제)
+  const FORCE_ALL_REGENERATE = true; 
+  const cardsToProcess = (FORCE_ALL_REGENERATE ? allCards : allCards.filter(c => !finishedNames.has(c.name)));
   
-  if (cards.length === 0) {
+  if (cardsToProcess.length === 0) {
     console.log("✅ 이미 모든 카드가 고품질로 생성되었습니다. 작업할 내용이 없슴다!");
     return;
   }
 
-  console.log(`✅ 총 ${cards.length}장의 카드를 정밀 재작업합니다. (재작업 대상: ${redoNames.size}장)`);
+  // 🚀 [V4.0 프리미엄 엔진] 78장 전체 카드 데이터 적재 시작!
+  const targetCards = cardsToProcess;
+  console.log(`✅ 총 ${targetCards.length}장의 카드를 정밀 재작업합니다. (전체 적재 모드)`);
 
   const generatedBlocks = [];
 
   // 순차적으로 꼬봉이에게 요청
-  for (let i = 0; i < cards.length; i++) {
-    const card = cards[i];
+  for (let i = 0; i < targetCards.length; i++) {
+    const card = targetCards[i];
     // 키워드를 한글로 변환하기 위해 객체 value 추출
     let keywordStr = "";
     if (Array.isArray(card.keywords)) {
       keywordStr = card.keywords.join(", ");
-    } else {
-      keywordStr = JSON.stringify(card.keywords);
+    } else if (typeof card.keywords === 'object' && card.keywords !== null) {
+      keywordStr = Object.values(card.keywords).join(", ");
     }
-
-    // 카드명 추출 (더미는 한국어명 모를 경우 대비)
-    const cardNameKr = card.name; // 실제 테이블 구조에 따라 변경 필요 (현재는 ar00 등 임시)
     
-    console.log(`[${i+1}/${cards.length}] 🤖 꼬봉이가 [${card.name}] 블록을 깎는 중입니다...`);
+    const cardNameKr = card.name_kr || card.name;
+    console.log(`[${i+1}/${targetCards.length}] 🤖 꼬봉이가 [${cardNameKr}] 블록을 깎는 중입니다...`);
     const blockData = await generateBlockForCard(card.name, cardNameKr, keywordStr);
     
     if (blockData) {

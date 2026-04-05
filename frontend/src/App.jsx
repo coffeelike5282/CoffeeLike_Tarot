@@ -92,7 +92,7 @@ function App() {
   };
 
 
-  const performDeepTarotRequest = async (c1, c2) => {
+  const performDeepTarotRequest = async (c1, c2, ip = null) => {
     if (!user || !c1 || !c2) return;
     
     try {
@@ -100,7 +100,8 @@ function App() {
         .rpc('process_deep_tarot_request', {
           p_phone_number: user.phone_number,
           p_tarot_card1_name: c1.name,
-          p_tarot_card2_name: c2.name
+          p_tarot_card2_name: c2.name,
+          p_ip_address: ip
         });
 
       setIsCasting2(false);
@@ -132,8 +133,20 @@ function App() {
     }
   };
 
-  const startDeepProcess = () => {
+  const startDeepProcess = async () => {
     if (cards.length === 0 || !selectedCard) return;
+    
+    setIsCasting2(true);
+
+    // IP 주소 수집 시도 (실패해도 진행은 하되 null로 처리)
+    let clientIp = null;
+    try {
+      const response = await fetch('https://api.ipify.org?format=json');
+      const ipData = await response.json();
+      clientIp = ipData.ip;
+    } catch (ipErr) {
+      console.warn('IP collection failed:', ipErr);
+    }
     
     // 2번째 카드 자동 추첨
     let randomCard;
@@ -142,10 +155,9 @@ function App() {
     } while (randomCard.name === selectedCard.name);
     
     setSelectedCard2(randomCard);
-    setIsCasting2(true);
     
-    // 즉시 서버 요청 수행
-    performDeepTarotRequest(selectedCard, randomCard);
+    // 즉시 서버 요청 수행 (IP 포함)
+    performDeepTarotRequest(selectedCard, randomCard, clientIp);
   };
 
   // Poll for approval status
