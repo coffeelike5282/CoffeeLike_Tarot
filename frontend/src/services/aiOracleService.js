@@ -27,6 +27,7 @@ export const generateAIInterpretation = (card1, card2) => {
       // 4. 기타 유착어
       .replace(/이며,*/g, "")
       .replace(/\s*하지만\s*결국\s*잘\s*될\s*거예요\.*/g, "")
+      .replace(/\s*부분에\s*유의하여\s*향기로운\s*하루를\s*만드십쇼\.*/g, "")
       .replace(/\.$/, "")
       .trim();
   };
@@ -40,7 +41,7 @@ export const generateAIInterpretation = (card1, card2) => {
   return {
     mainFortune: `'${card1.name}'의 짙은 에스프레소 같은 오늘이 '${card2.name}'의 부드러운 스팀 밀크를 만나 새로운 운명의 라떼로 완성됐슴다. ${card1.keywords?.[0]}와(과) ${card2.keywords?.[0]}의 조화로운 향기를 느껴보십쇼.`,
     deepInsight: `'${card1.name}'이(가) 이끄는 ${insight1} 흐름을 바탕으로, '${card2.name}'의 ${insight2} 기운이 더해져 당신의 앞날에 풍부한 가능성의 향기가 퍼져나갈 것임다.`,
-    caution: `바리스타의 특별 조언임다. ${caution1} 태도로 운명의 균형을 잡으시고, 동시에 ${caution2} 부분에 유의하여 향기로운 하루를 만드십쇼.`,
+    caution: `바리스타의 특별 조언임다. ${caution1} 태도로 운명의 균형을 잡으시고, 동시에 ${caution2} 점에 유의하십쇼.`,
     coffeePairing: `부드러운 산미와 깊은 바디감이 조화로운 '오라클 블렌드'를 추천함다.`,
     generatedAt: new Date().toISOString(),
     engineVersion: "3.1-purified"

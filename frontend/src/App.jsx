@@ -200,7 +200,7 @@ function App() {
 
   return (
     <div className="min-h-screen w-full coffee-gradient-bg flex flex-col items-center justify-start sm:justify-center p-4 overflow-x-hidden overflow-y-auto">
-      <div className="max-w-[720px] w-full flex flex-col items-center justify-center gap-6 sm:gap-10 text-center relative mx-auto min-h-[calc(100vh-2rem)]">
+      <div className={`max-w-[720px] w-full flex flex-col items-center ${isAdmin ? 'justify-start pt-6' : 'justify-center'} gap-6 sm:gap-10 text-center relative mx-auto min-h-[calc(100vh-2rem)]`}>
         
         {/* Animated Background Decor */}
         <div className="absolute -top-20 -left-20 w-64 h-64 bg-tech-blue/10 rounded-full blur-[80px] animate-pulse-subtle" />
@@ -218,7 +218,7 @@ function App() {
           </header>
         )}
 
-        <div className="w-full z-10 transition-all duration-700 flex-1 flex flex-col items-center justify-center">
+        <div className={`w-full z-10 transition-all duration-700 flex-1 flex flex-col items-center ${isAdmin ? 'justify-start pt-4' : 'justify-center'}`}>
           {isAdmin ? (
             <BaristaDashboard onLogout={handleLogout} />
           ) : !user ? (
