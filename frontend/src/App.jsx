@@ -403,7 +403,7 @@ function App() {
               </div>
             </main>
           ) : (
-            <main className="w-full flex-1 flex flex-col items-center justify-center gap-8 mx-auto">
+            <main className="w-full flex-1 flex flex-col items-center justify-start pt-4 sm:pt-8 gap-8 mx-auto">
               {selectedCard ? (
                 <div className="flex flex-col items-center gap-10 w-full animate-in fade-in zoom-in duration-700">
                   <TarotCard 
