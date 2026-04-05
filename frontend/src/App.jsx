@@ -315,13 +315,13 @@ function App() {
             </main>
           ) : (requestStatus === 'approved' && deepResult) ? (
             <main className="w-full max-w-[500px] flex flex-col items-center gap-4 sm:gap-6 animate-in slide-in-from-bottom duration-1000 pb-10 mx-auto">
-              <div className="flex gap-4 mb-4 scale-90 sm:scale-100">
+              <div className="flex gap-2 sm:gap-4 mb-4 scale-75 sm:scale-100">
                 <div className="flex flex-col items-center gap-3">
-                  <span className="text-sm text-coffee-light/60 font-black uppercase tracking-[0.2em]">현재의 실타래</span>
+                  <span className="text-[10px] sm:text-sm text-coffee-light/60 font-black uppercase tracking-[0.2em]">현재의 실타래</span>
                   <TarotCard card={selectedCard} backImage={backImage} size="medium" isFlipped={isResultCard1Flipped} />
                 </div>
                 <div className="flex flex-col items-center justify-center pt-8">
-                  <div className="w-12 h-px bg-tech-purple animate-pulse" />
+                  <div className="w-8 h-px bg-tech-purple animate-pulse" />
                 </div>
                 <div className="flex flex-col items-center gap-3">
                   <span className="text-[10px] sm:text-sm text-tech-purple/80 font-black uppercase tracking-[0.2em]">미래의 향기</span>
@@ -370,14 +370,6 @@ function App() {
                       <Shield size={18} /> 주의사항 (Caution)
                     </h4>
                     <p className="text-base text-white/80 leading-relaxed font-bold">{deepResult.caution}</p>
-                  </section>
-
-                  {/* Coffee Pairing Section 추가 */}
-                  <section className="space-y-3 p-6 bg-tech-blue/10 rounded-3xl border border-tech-blue/20">
-                    <h4 className="text-lg font-black text-tech-blue uppercase flex items-center gap-2">
-                      <Coffee size={18} /> 추천 커피 페어링
-                    </h4>
-                    <p className="text-base text-white/90 leading-relaxed font-bold italic">"{deepResult.coffeePairing}"</p>
                   </section>
                 </div>
 
