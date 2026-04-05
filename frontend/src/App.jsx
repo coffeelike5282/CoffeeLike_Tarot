@@ -153,7 +153,7 @@ function App() {
     let interval;
     if (requestStatus === 'pending' && requestId) {
       interval = setInterval(async () => {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('tb_tarot_request')
           .select('status, ai_tarot_result')
           .eq('req_id', requestId)
@@ -199,8 +199,8 @@ function App() {
   }, [requestStatus]);
 
   return (
-    <div className="min-h-screen w-full coffee-gradient-bg flex flex-col items-center justify-center p-4 overflow-x-hidden">
-      <div className="max-w-[720px] w-full flex flex-col items-center gap-10 text-center relative mx-auto">
+    <div className="min-h-screen w-full coffee-gradient-bg flex flex-col items-center justify-start sm:justify-center p-4 overflow-x-hidden overflow-y-auto">
+      <div className="max-w-[720px] w-full flex flex-col items-center justify-center gap-6 sm:gap-10 text-center relative mx-auto min-h-[calc(100vh-2rem)]">
         
         {/* Animated Background Decor */}
         <div className="absolute -top-20 -left-20 w-64 h-64 bg-tech-blue/10 rounded-full blur-[80px] animate-pulse-subtle" />
@@ -218,11 +218,11 @@ function App() {
           </header>
         )}
 
-        <div className="w-full z-10 transition-all duration-700">
+        <div className="w-full z-10 transition-all duration-700 flex-1 flex flex-col items-center justify-center">
           {isAdmin ? (
             <BaristaDashboard onLogout={handleLogout} />
           ) : !user ? (
-            <main className="w-full flex flex-col items-center justify-center p-2 sm:p-6 relative">
+            <main className="w-full flex-1 flex flex-col items-center justify-center p-2 sm:p-6 relative">
               <div 
                 className="fixed inset-0 z-[-1] bg-cover bg-center transition-all duration-1000 scale-105"
                 style={{ backgroundImage: 'url("/assets/tarot_bg.png")' }}
@@ -276,8 +276,8 @@ function App() {
               </div>
             </main>
           ) : (requestStatus === 'pending' || isCasting2) ? (
-            <main className="w-full max-w-[440px] flex flex-col items-center gap-10 glass-panel p-6 sm:p-10 animate-in fade-in zoom-in duration-500 mx-auto">
-              <div className="w-full flex flex-col items-center">
+            <main className="w-full flex-1 flex flex-col items-center justify-center gap-6 sm:gap-10 animate-in fade-in zoom-in duration-500 mx-auto">
+              <div className="w-full max-w-[440px] glass-panel p-6 sm:p-10 flex flex-col items-center gap-8 shadow-2xl">
                 {/* Internal content wrap to keep footer outside the main gap flow if needed */}
               </div>
               <footer className="mt-0 text-[8px] sm:text-[9px] text-coffee-light/20 font-medium uppercase tracking-[0.3em] text-center w-full">
@@ -314,7 +314,7 @@ function App() {
               )}
             </main>
           ) : (requestStatus === 'approved' && deepResult) ? (
-            <main className="w-full max-w-[500px] flex flex-col items-center gap-4 sm:gap-6 animate-in slide-in-from-bottom duration-1000 pb-10 mx-auto">
+            <main className="w-full flex-1 flex flex-col items-center justify-center gap-4 sm:gap-6 animate-in slide-in-from-bottom duration-1000 pb-10 mx-auto">
               <div className="flex gap-2 sm:gap-4 mb-4 scale-75 sm:scale-100">
                 <div className="flex flex-col items-center gap-3">
                   <span className="text-[10px] sm:text-sm text-coffee-light/60 font-black uppercase tracking-[0.2em]">현재의 실타래</span>
@@ -395,7 +395,7 @@ function App() {
               </div>
             </main>
           ) : (
-            <main className="w-full max-w-[500px] flex flex-col items-center gap-8 min-h-[400px] mx-auto">
+            <main className="w-full flex-1 flex flex-col items-center justify-center gap-8 mx-auto">
               {selectedCard ? (
                 <div className="flex flex-col items-center gap-10 w-full animate-in fade-in zoom-in duration-700">
                   <TarotCard 
