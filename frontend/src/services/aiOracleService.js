@@ -5,7 +5,7 @@
  * 자연스러운 한국어로 매끄럽게 조립하는 방식(V4.0)으로 전면 교체했슴다!
  */
 
-import supabase from '../utils/supabaseClient';
+import { supabase } from '../lib/supabaseClient';
 import { generateCompositeInterpretation } from '../utils/tarotTemplateEngine';
 
 console.warn("☕ [신탁 엔진 V4.0] 다이내믹 템플릿 모드 장착 - 기계 냄새 제로!");
