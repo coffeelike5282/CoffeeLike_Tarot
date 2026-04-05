@@ -36,16 +36,40 @@ export const generateAIInterpretation = (card1, card2) => {
 
   const insight1 = sanitize(card1.deep_interpretation?.general || card1.fortune_telling?.[0] || "");
   const insight2 = sanitize(card2.deep_interpretation?.general || card2.fortune_telling?.[0] || "");
-  const caution1 = sanitize(card1.deep_interpretation?.caution || "지나친 조급함을 경계하십쇼");
-  const caution2 = sanitize(card2.deep_interpretation?.caution || "주변의 작은 변화를 놓치지 마십쇼");
+  
+  // 2. 다이내믹 주의사항 (Dynamic Caution V3.2)
+  // 고정된 문구 대신 카드의 키워드와 성격에 따라 다양한 조합을 생성함다.
+  const getDynamicCaution = (c1, c2) => {
+    const fallbacks = [
+      "지나친 조급함보다는 에스프레소처럼 진득하게 기다리십쇼",
+      "주변의 작은 변화를 놓치지 않는 세밀한 바리스타의 눈을 가지십쇼",
+      "한쪽으로 치우친 생각은 운명의 온도를 떨어뜨릴 수 있슴다",
+      "자신감을 갖되, 다른 이의 향기(의견)도 존중하는 여유를 갖으십쇼",
+      "지금의 안정이 자칫 정체로 이어지지 않게 긴장을 늦추지 마십쇼"
+    ];
 
-  // V3.1 신규 템플릿 - 기존의 "현재의 자리에.." 같은 문구 일절 미사용!
+    const ctx1 = c1.deep_interpretation?.caution || (c1.keywords?.[1] ? `'${c1.keywords[1]}'의 이면에 숨은 함정을 경계하십쇼` : fallbacks[0]);
+    const ctx2 = c2.deep_interpretation?.caution || (c2.keywords?.[0] ? `'${c2.keywords[0]}'의 과잉된 욕심만 버린다면 완벽함다` : fallbacks[1]);
+    
+    const templates = [
+      `바리스타의 특별 조언임다. '${ctx1}'은(는) 경계하시고, '${ctx2}'에 각별히 유의하여 운명의 균형을 잡으십쇼.`,
+      `오늘의 추출 포인트! '${ctx1}'에 유의하면서, '${ctx2}'의 흐름만 잘 타면 최상의 결과가 나올 것임다.`,
+      `운명의 배합이 미묘함다. '${ctx1}'에 대한 각별한 유의가 필요하며, 특히 '${ctx2}' 부분을 놓치지 마십쇼.`
+    ];
+
+    // 카드 이름 조합을 기반으로 한 유사 랜덤 선택
+    const seed = (c1.name?.length || 0) + (c2.name?.length || 0);
+    return templates[seed % templates.length];
+  };
+
+  const cautionText = getDynamicCaution(card1, card2);
+
   return {
     mainFortune: `'${card1.name}'의 짙은 에스프레소 같은 오늘이 '${card2.name}'의 부드러운 스팀 밀크를 만나 새로운 운명의 라떼로 완성됐슴다. ${card1.keywords?.[0]}와(과) ${card2.keywords?.[0]}의 조화로운 향기를 느껴보십쇼.`,
     deepInsight: `'${card1.name}'이(가) 이끄는 ${insight1} 흐름을 바탕으로, '${card2.name}'의 ${insight2} 기운이 더해져 당신의 앞날에 풍부한 가능성의 향기가 퍼져나갈 것임다.`,
-    caution: `바리스타의 특별 조언임다. '${caution1}'은(는) 경계하시고, '${caution2}'에 각별히 유의하여 운명의 균형을 잡으십쇼.`,
+    caution: cautionText,
     coffeePairing: `부드러운 산미와 깊은 바디감이 조화로운 '오라클 블렌드'를 추천함다.`,
     generatedAt: new Date().toISOString(),
-    engineVersion: "3.1-purified"
+    engineVersion: "3.2-dynamic-insight"
   };
 };
