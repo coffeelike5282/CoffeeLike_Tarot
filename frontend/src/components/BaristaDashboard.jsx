@@ -144,28 +144,49 @@ const BaristaDashboard = ({ onLogout }) => {
   return (
     <div className="w-full max-w-[720px] mx-auto flex flex-col gap-6 animate-in fade-in duration-700">
       
-      {/* 🚀 AI ORACLE ENGINE STATUS BANNER (V3.1) */}
-      <div className="glass-panel p-4 border-tech-blue/30 bg-tech-blue/5 overflow-hidden relative group">
-        <div className="flex items-center justify-between relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-tech-blue/20 rounded-xl flex items-center justify-center text-tech-blue">
-              <Zap className="w-5 h-5 animate-pulse" />
+      {/* 🚀 AI ORACLE ENGINE STATUS BANNER (V3.2 PREM) */}
+      <div className="glass-panel p-5 border-tech-blue/30 bg-black/60 overflow-hidden relative group">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-5 relative z-10">
+          <div className="flex items-center gap-4 w-full sm:w-auto">
+            <div className="relative">
+              <div className="w-12 h-12 bg-tech-blue/10 rounded-2xl flex items-center justify-center text-tech-blue border border-tech-blue/20 shadow-[0_0_20px_-5px_rgba(59,130,246,0.3)] z-10 relative">
+                <Zap className="w-6 h-6 animate-pulse" />
+              </div>
+              <div className="absolute inset-0 bg-tech-blue/20 blur-xl rounded-full scale-150 opacity-30 group-hover:opacity-50 transition-opacity" />
             </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] text-tech-blue font-black uppercase tracking-widest">System Status</span>
-              <span className="text-sm font-black text-white italic">AI ORACLE ENGINE V3.1 ACTIVE</span>
+            <div className="flex flex-col text-left">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-[9px] text-tech-blue font-black uppercase tracking-[0.2em]">System Insight</span>
+                <div className="w-1 h-1 rounded-full bg-tech-blue animate-ping" />
+              </div>
+              <h2 className="text-sm font-black text-white italic tracking-tight flex items-baseline gap-2">
+                AI ORACLE ENGINE <span className="text-tech-blue drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">V3.2</span>
+                <span className="text-[8px] bg-tech-blue/20 text-tech-blue px-1.5 py-0.5 rounded-full not-italic font-black border border-tech-blue/10">ACTIVE</span>
+              </h2>
             </div>
           </div>
-          <div className="flex items-center gap-4 bg-black/40 px-4 py-2 rounded-xl border border-white/5">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-[10px] text-white/60 font-medium uppercase tracking-tighter">Server Online</span>
+
+          <div className="flex items-center justify-between sm:justify-end gap-4 bg-white/[0.03] p-3 rounded-2xl border border-white/5 w-full sm:w-auto">
+            <div className="flex items-center gap-2.5">
+              <div className="relative">
+                <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]" />
+                <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-60" />
+              </div>
+              <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Server Online</span>
             </div>
-            <div className="w-[1px] h-3 bg-white/10" />
-            <span className="text-[10px] text-amber-500 font-bold uppercase italic">V3.1.2_RELEASE</span>
+            
+            <div className="w-px h-3 bg-white/10" />
+            
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] bg-amber-500/10 text-amber-500 px-2 py-1 rounded-lg font-black border border-amber-500/10 italic">V3.1.2_STABLE</span>
+            </div>
           </div>
         </div>
-        <div className="absolute inset-0 bg-gradient-to-r from-tech-blue/10 to-transparent opacity-50" />
+        
+        {/* Decorative Background effects */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-tech-blue/5 blur-3xl -mr-16 -mt-16 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-tech-purple/5 blur-3xl -ml-16 -mb-16 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-tech-blue/[0.03] to-transparent pointer-events-none" />
       </div>
 
       {/* Stats Grid */}
