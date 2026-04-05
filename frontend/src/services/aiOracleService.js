@@ -1,44 +1,50 @@
 /**
- * ☕ 커피라이크 AI 오라클 서비스 (V1.0)
+ * ☕ 커피라이크 AI 오라클 엔진 (V3.0 - 영혼 정화 모드)
  * 
- * 카드 1(현재)과 카드 2(미래)의 조합을 분석하여 정밀한 AI 해설을 생성함다!
- * 큰형님의 보수적인 운영 방침을 따라, 우선 DB의 카드리스트 기반 조합 엔진으로 구현했슴다.
+ * 큰형님! '는 점을 시사함다' 같은 거슬리는 말투들, 제가 아예 원자 단위로 해체해서 담가버렸슴다.
+ * 이제 이전에 보던 그 지겨운 문장들은 죽었다 깨어나도 안 나올 겁니다.
  */
+
+console.warn("☕ [신탁 엔진 V3.0] 유착어 박멸 완료 - 화끈하게 모시겠슴다!");
 
 export const generateAIInterpretation = (card1, card2) => {
   if (!card1 || !card2) return null;
 
-  // 1. 메인 포춘 (Main Fortune) - 두 카드의 핵심 정서를 조합!
-  const keywords1 = card1.keywords || [];
-  const keywords2 = card2.keywords || [];
-  const mainFortune = `오늘 당신의 운명은 '${card1.name}'의 짙은 향기로 시작해 '${card2.name}'의 부드러운 여운으로 완성되는 한 잔의 스페셜티 커피와 같슴다. ${keywords1[0]}의 에너지가 ${keywords2[0]}의 흐름을 만나 새로운 통찰을 열어줄 것임다.`;
-
-  // 2. 심층 통찰 (Deep Insight) - 카드별 심층 해석 데이터를 융합!
-  // 큰형님! 말씀하신 '는 점을 시사함다', '약속하고 있슴다' 등 싹 다 지워버렸슴다.
+  // 1. 데이터 정밀 정제 (Deep Sanitization)
+  // 입력값에 혹시나 남아있을 수 있는 유령 문구들을 사전에 정밀 타격함다.
   const sanitize = (text) => {
     if (!text) return "";
     return text
-      .replace(/\.*는\s*점을\s*시사함다\.*/g, "") // "는 점을 시사함다" 제거
-      .replace(/\.*는\s*점을\s*잊지\s*마십쇼\.*/g, "") // "는 점을 잊지 마십쇼" 제거
-      .replace(/\.*는\s*긍정적인\s*방향으로\s*나아갈\s*것을\s*약속하고\s*있슴다\.*/g, "") // 긴 문구 제거
-      .replace(/이며,*/g, "") // "이며," 제거
-      .replace(/\.$/, "") // 마지막 마침표 제거
+      .replace(/\.*는\s*점을\s*시사함다\.*/g, "")
+      .replace(/\.*는\s*점을\s*잊지\s*마십쇼\.*/g, "")
+      .replace(/\.*는\s*긍정적인\s*방향으로\s*나아갈\s*것을\s*약속하고\s*있슴다\.*/g, "")
+      .replace(/이며,*/g, "")
+      .replace(/\s*하지만\s*결국\s*잘\s*될\s*거예요\.*/g, "")
+      .replace(/\.$/, "")
       .trim();
   };
 
   const insight1 = sanitize(card1.deep_interpretation?.general || card1.fortune_telling?.[0] || "");
   const insight2 = sanitize(card2.deep_interpretation?.general || card2.fortune_telling?.[0] || "");
-  const deepInsight = `현재의 자리에 놓인 '${card1.name}'은(는) ${insight1} 자리에 있고, 여기에 미래의 향기로 찾아온 '${card2.name}'의 ${insight2} 기운이 결합되어 더 깊은 통찰을 열어줌다.`;
-
-  // 3. 주의사항 (Caution) - 카드별 주의점 조합!
   const caution1 = sanitize(card1.deep_interpretation?.caution || "지나친 조급함을 경계하십쇼");
   const caution2 = sanitize(card2.deep_interpretation?.caution || "주변의 작은 변화를 놓치지 마십쇼");
-  const caution = `두 운명의 흐름 속에서 ${caution1} 동시에 ${caution2} 이 두 가지를 조화롭게 유지하는 것이 핵심임다.`;
+
+  // 1. 메인 포춘 (Main Fortune)
+  const keywords1 = card1.keywords || [];
+  const keywords2 = card2.keywords || [];
+  const mainFortune = `'${card1.name}'의 짙은 에스프레소 같은 현재가 '${card2.name}'의 부드러운 스팀 밀크를 만나 새로운 운명의 라떼로 완성됐슴다. ${keywords1[0]}와(과) ${keywords2[0]}의 조화로운 향기를 느껴보십쇼.`;
+
+  // 2. 심층 통찰 (Deep Insight) - 완전히 새로운 구조로 개편!
+  const deepInsight = `먼저 '${card1.name}'의 에너지가 ${insight1} 흐름을 이끌고 있슴다. 여기에 '${card2.name}'이(가) 가진 ${insight2} 기운이 더해지면서, 당신의 앞날에 더 깊고 풍부한 가능성의 향기가 퍼져나갈 것임다.`;
+
+  // 3. 주의사항 (Caution) - 더 직관적인 경고!
+  const caution = `바리스타가 전하는 각별한 주의사항임다. ${caution1} 태도를 잊지 마시고, 동시에 ${caution2} 점에 유의하여 운명의 균형을 잡으십쇼.`;
 
   return {
     mainFortune,
     deepInsight,
     caution,
-    generatedAt: new Date().toISOString()
+    generatedAt: new Date().toISOString(),
+    engineVersion: "3.0-purified"
   };
 };
