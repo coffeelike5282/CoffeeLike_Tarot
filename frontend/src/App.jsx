@@ -460,9 +460,9 @@ function App() {
                   </button>
                 </div>
               ) : (
-                <div className="w-full max-w-[440px] flex flex-col items-center gap-12 glass-panel p-6 sm:p-10 mx-auto">
+                <div className="w-full max-w-[440px] flex flex-col items-center gap-6 sm:gap-12 glass-panel p-6 sm:p-10 mx-auto">
                   <div className="relative group cursor-pointer" onClick={!isCasting ? shuffleAndDraw : null}>
-                    <div className={`w-52 h-80 bg-coffee-dark border border-coffee-light/10 rounded-[2rem] flex items-center justify-center transition-all duration-700 ${isCasting ? 'scale-95 blur-sm' : 'hover:scale-105 hover:border-tech-blue/40 shadow-2xl'}`}>
+                    <div className={`w-44 h-64 sm:w-52 sm:h-80 bg-coffee-dark border border-coffee-light/10 rounded-[2rem] flex items-center justify-center transition-all duration-700 ${isCasting ? 'scale-95 blur-sm' : 'hover:scale-105 hover:border-tech-blue/40 shadow-2xl'}`}>
                       {isCasting ? (
                         <div className="flex flex-col items-center gap-4">
                           <div className="relative">
@@ -484,12 +484,12 @@ function App() {
                     {!isCasting && <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-6 py-2 bg-tech-blue text-white text-xs font-black rounded-full shadow-lg animate-bounce uppercase tracking-tighter z-20 whitespace-nowrap">터치하여 카드 뽑기</div>}
                   </div>
                   
-                  <div className="space-y-6 w-full">
+                  <div className="space-y-4 sm:space-y-6 w-full">
                     <div className="space-y-2">
-                      <h3 className="text-white font-black text-2xl tracking-tight leading-tight">
+                      <h3 className="text-white font-black text-xl sm:text-2xl tracking-tight leading-tight">
                         당신의 운명의 향기를 읽어드립니다.
                       </h3>
-                      <p className="text-sm text-coffee-light/60 font-bold">바리스타가 직접 내려주는 오늘의 신비로운 운명 타로</p>
+                      <p className="text-[10px] sm:text-sm text-coffee-light/60 font-bold">바리스타가 직접 내려주는 오늘의 신비로운 운명 타로</p>
                     </div>
                     <button 
                       onClick={shuffleAndDraw} 
@@ -504,7 +504,7 @@ function App() {
                       {isDataLoading ? "데이터 로딩 중..." : "운명의 카드 뽑기"}
                     </button>
                   </div>
-                  <footer className="mt-6 text-[8px] sm:text-[9px] text-coffee-light/20 font-medium uppercase tracking-[0.3em] text-center w-full">
+                  <footer className="mt-4 sm:mt-6 text-[8px] sm:text-[9px] text-coffee-light/20 font-medium uppercase tracking-[0.3em] text-center w-full">
                     © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
                   </footer>
                 </div>
