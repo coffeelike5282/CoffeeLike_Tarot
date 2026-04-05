@@ -243,11 +243,16 @@ const BaristaDashboard = ({ onLogout }) => {
                         <span className="text-white font-bold text-lg leading-none tracking-tight">{formatPhone(order.phone_number)}</span>
                         <div className="flex flex-col gap-0.5">
                           <span className="text-coffee-light/40 font-black text-[9px] uppercase tracking-widest">심층 조합</span>
-                          <p className="text-coffee-light font-bold text-[11px] leading-tight break-keep overflow-hidden whitespace-nowrap overflow-ellipsis">
-                            <span className="text-tech-blue">{order.tarot_card_name}</span>
-                            <span className="mx-1 text-white/20">+</span>
-                            <span className="text-tech-purple">{order.tarot_card2_name}</span>
-                          </p>
+                          <div className="flex flex-col gap-1 mt-0.5">
+                            <div className="flex items-center gap-2">
+                              <div className="w-1 h-1 bg-tech-blue rounded-full shadow-[0_0_5px_rgba(59,130,246,0.5)]" />
+                              <span className="text-tech-blue font-bold text-[11px] leading-none">{order.tarot_card_name}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-1 h-1 bg-tech-purple rounded-full shadow-[0_0_5px_rgba(168,85,247,0.5)]" />
+                              <span className="text-tech-purple font-bold text-[11px] leading-none">{order.tarot_card2_name}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
