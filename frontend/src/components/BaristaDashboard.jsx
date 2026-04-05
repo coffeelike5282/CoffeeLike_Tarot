@@ -221,25 +221,54 @@ const BaristaDashboard = ({ onLogout }) => {
                   <p className="font-heading text-sm font-bold italic uppercase tracking-widest text-center">현재 대기 중인 주문이 없습니다</p>
                 </div>
               ) : (
-                requests.map((order, index) => (
-                  <motion.div key={order.req_id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className="flex flex-col md:flex-row items-center justify-between p-6 bg-white/5 border border-white/5 rounded-2xl gap-6">
-                    <div className="flex items-center gap-6 flex-1">
-                      <div className="w-14 h-14 bg-coffee-dark border border-tech-blue/20 rounded-2xl flex items-center justify-center shadow-2xl relative overflow-hidden">
-                        <span className="text-xl font-black text-tech-blue z-10">{order.wait_number}</span>
-                        <div className="absolute inset-0 bg-tech-blue/5 animate-pulse" />
+                requests.map((order) => (
+                  <motion.div 
+                    key={order.req_id} 
+                    initial={{ opacity: 0, y: 10 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    exit={{ opacity: 0, scale: 0.95 }} 
+                    className="flex flex-col md:flex-row items-center justify-between p-5 md:p-6 bg-white/[0.03] border border-white/5 rounded-2xl gap-5 md:gap-6 hover:bg-white/[0.05] transition-all group"
+                  >
+                    <div className="flex items-center gap-5 md:gap-6 flex-1 w-full">
+                      {/* 🔢 대기 번호: 원형 글로우 디자인 */}
+                      <div className="relative flex-shrink-0">
+                        <div className="w-14 h-14 bg-coffee-dark/80 border-2 border-tech-blue/30 rounded-full flex items-center justify-center shadow-[0_0_15px_-5px_rgba(59,130,246,0.5)] z-10 relative overflow-hidden">
+                          <span className="text-xl font-black text-tech-blue drop-shadow-[0_0_5px_rgba(59,130,246,0.5)]">{order.wait_number}</span>
+                        </div>
+                        <div className="absolute inset-0 bg-tech-blue/10 rounded-full blur-md animate-pulse" />
                       </div>
-                      <div className="flex flex-col gap-1 text-left">
-                        <span className="text-white font-bold text-lg">{formatPhone(order.phone_number)}</span>
-                        <span className="text-coffee-light font-black text-[10px] uppercase italic tracking-tighter">
-                          심층 조합: <span className="text-tech-blue">{order.tarot_card_name}</span> + <span className="text-tech-purple">{order.tarot_card2_name}</span>
-                        </span>
+
+                      {/* 📱 정보 영역: 모바일 가독성 중심 */}
+                      <div className="flex flex-col gap-1.5 text-left flex-1 min-w-0">
+                        <span className="text-white font-bold text-lg leading-none tracking-tight">{formatPhone(order.phone_number)}</span>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-coffee-light/40 font-black text-[9px] uppercase tracking-widest">심층 조합</span>
+                          <p className="text-coffee-light font-bold text-[11px] leading-tight break-keep overflow-hidden whitespace-nowrap overflow-ellipsis">
+                            <span className="text-tech-blue">{order.tarot_card_name}</span>
+                            <span className="mx-1 text-white/20">+</span>
+                            <span className="text-tech-purple">{order.tarot_card2_name}</span>
+                          </p>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <button onClick={() => handleAction(order.req_id, 2)} className="p-3 bg-white/5 hover:bg-red-500/20 text-coffee-light/40 hover:text-red-500 rounded-xl border border-white/5 transition-all"><X size={20} /></button>
-                      <button onClick={() => handleAction(order.req_id, 1, order)} disabled={isGenerating[order.req_id]} className="flex items-center gap-2 px-6 py-3 bg-tech-blue hover:bg-white text-white hover:text-tech-blue font-black rounded-xl transition-all shadow-lg disabled:opacity-50">
-                        {isGenerating[order.req_id] ? <RefreshCcw size={18} className="animate-spin" /> : <Check size={18} />}
-                        <span className="text-xs uppercase italic tracking-tighter">{isGenerating[order.req_id] ? 'AI 생성 중' : '승인'}</span>
+
+                    {/* 🎮 액션 버튼: 콤팩트 레이아웃 */}
+                    <div className="flex items-center gap-2.5 w-full md:w-auto justify-end md:justify-start border-t md:border-t-0 border-white/5 pt-4 md:pt-0">
+                      <button 
+                        onClick={() => handleAction(order.req_id, 2)} 
+                        className="p-3 bg-white/5 hover:bg-red-500/20 text-coffee-light/40 hover:text-red-500 rounded-xl border border-white/5 transition-all flex-1 md:flex-none flex justify-center"
+                      >
+                        <X size={18} />
+                      </button>
+                      <button 
+                        onClick={() => handleAction(order.req_id, 1, order)} 
+                        disabled={isGenerating[order.req_id]} 
+                        className="flex items-center justify-center gap-2 px-6 py-3 bg-tech-blue hover:bg-white text-white hover:text-tech-blue font-black rounded-xl transition-all shadow-lg disabled:opacity-30 flex-[2] md:flex-none whitespace-nowrap"
+                      >
+                        {isGenerating[order.req_id] ? <RefreshCcw size={16} className="animate-spin" /> : <Check size={16} />}
+                        <span className="text-[10px] uppercase italic tracking-tighter">
+                          {isGenerating[order.req_id] ? 'AI 생성 중' : '승인'}
+                        </span>
                       </button>
                     </div>
                   </motion.div>
