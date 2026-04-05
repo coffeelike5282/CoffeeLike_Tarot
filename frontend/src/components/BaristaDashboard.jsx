@@ -201,13 +201,13 @@ const BaristaDashboard = ({ onLogout }) => {
           <div className="flex items-center gap-4">
             <div className={`w-2 h-8 ${activeTab === 'queue' ? 'bg-tech-blue' : 'bg-tech-purple'} rounded-full transition-all`} />
             <h2 className="text-2xl font-black text-white tracking-tight italic uppercase">
-              {activeTab === 'queue' ? '바리스타 오라클 대기열' : '상담 이력 관리'}
+              {activeTab === 'queue' ? '오라클 대기열' : '상담 이력 관리'}
             </h2>
           </div>
 
           <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl">
-            <button onClick={() => setActiveTab('queue')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'queue' ? 'bg-tech-blue text-white shadow-lg' : 'text-coffee-light/40 hover:text-white'}`}>대기열 ({requests.length})</button>
-            <button onClick={() => setActiveTab('history')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-tech-purple text-white shadow-lg' : 'text-coffee-light/40 hover:text-white'}`}>히스토리</button>
+            <button onClick={() => setActiveTab('queue')} className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'queue' ? 'bg-tech-blue text-white shadow-lg' : 'text-coffee-light/40 hover:text-white'}`}>대기열 ({requests.length})</button>
+            <button onClick={() => setActiveTab('history')} className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'history' ? 'bg-tech-purple text-white shadow-lg' : 'text-coffee-light/40 hover:text-white'}`}>히스토리</button>
             <button onClick={fetchRequests} className="p-2 hover:bg-white/5 rounded-lg transition-all text-coffee-light/40 hover:text-white"><RefreshCcw size={16} className={loading ? "animate-spin" : ""} /></button>
           </div>
         </div>
@@ -218,7 +218,7 @@ const BaristaDashboard = ({ onLogout }) => {
               requests.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-coffee-light/20 gap-4">
                   <Users size={48} strokeWidth={1} />
-                  <p className="font-heading text-sm font-bold italic uppercase tracking-widest">현재 대기 중인 주문이 없습니다</p>
+                  <p className="font-heading text-sm font-bold italic uppercase tracking-widest text-center">현재 대기 중인 주문이 없습니다</p>
                 </div>
               ) : (
                 requests.map((order, index) => (
