@@ -1,75 +1,71 @@
 /**
- * ☕ 커피라이크 AI 오라클 엔진 (V3.1 - 영혼 정화 모드)
+ * ☕ 커피라이크 AI 오라클 엔진 (V4.0 - 하이브리드 템플릿 모드)
  * 
- * 큰형님! '는 점을 시사함다' 같은 거슬리는 말투들, 제가 아예 원자 단위로 해체해서 담가버렸슴다.
- * 이제 이전에 보던 그 지겨운 문장들은 죽었다 깨어나도 안 나올 겁니다.
+ * 큰형님! 꼬봉이가 만들어둔 '프리미엄 레고 블록'을 Supabase에서 불러와
+ * 자연스러운 한국어로 매끄럽게 조립하는 방식(V4.0)으로 전면 교체했슴다!
  */
 
-console.warn("☕ [신탁 엔진 V3.1] 유착어 박멸 완료 - 화끈하게 모시겠슴다!");
+import supabase from '../utils/supabaseClient';
+import { generateCompositeInterpretation } from '../utils/tarotTemplateEngine';
 
-export const generateAIInterpretation = (card1, card2) => {
+console.warn("☕ [신탁 엔진 V4.0] 다이내믹 템플릿 모드 장착 - 기계 냄새 제로!");
+
+// 임시 모의 블록 (DB에 아직 꼬봉이가 생성한 블록이 없을 때를 대비한 안전망)
+const createMockBlock = (card) => ({
+  card_name: card.name,
+  card_name_kr: card.name, // 일단 영어명으로 대체 (실제 DB에는 한글명 존재)
+  short_modifier: "잠시 길을 잃은 듯 하나,",
+  short_advice: "스스로를 믿고 나아가십시오.",
+  essay_intro: `당신이 뽑은 카드는 '${card.name}' 기운을 담고 있습니다. 무언가 새롭게 변하고자 하는 열망이 내면에 가득합니다.`,
+  essay_meaning: `이 카드가 시사하는 바는 바로 '현재의 한계를 넘어서는 힘'입니다. ${card.keywords?.[0] || '불확실성'} 속에서도 분명한 해답이 존재함을 뜻합니다.`,
+  essay_advice: "당장의 성과가 보이지 않더라도 흔들리지 마십시오. 결국 원하던 방향으로 궤도에 오를 것입니다."
+});
+
+export const generateAIInterpretation = async (card1, card2) => {
   if (!card1 || !card2) return null;
 
-  // 1. 데이터 정밀 정제 (Deep Sanitization V3.1)
-  // 입력값에 혹시나 남아있을 수 있는 유령 문구들을 사전에 정밀 타격함다.
-  const sanitize = (text) => {
-    if (!text) return "";
-    return text
-      // 1. "는 점을 시사함다" 계열 (변칙 띄어쓰기 포함)
-      .replace(/는\s*점을\s*시사함다\.*/g, "")
-      .replace(/는\s*점을\s*나타냅니다\.*/g, "")
-      // 2. "는 긍정적인 방향으로 나아갈 것을 약속하고 있슴다" 계열
-      .replace(/는\s*긍정적인\s*방향으로\s*나아갈\s*것을\s*약속하고\s*있슴다\.*/g, "")
-      .replace(/는\s*긍정적인\s*미래를\s*약속합니\.*/g, "")
-      // 3. "는 점을 잊지 마십쇼" 계열
-      .replace(/는\s*점을\s*잊지\s*마십쇼\.*/g, "")
-      .replace(/라는\s*사실을\s*기억하십쇼\.*/g, "")
-      // 4. 기타 유착어
-      .replace(/이며,*/g, "")
-      .replace(/\s*하지만\s*결국\s*잘\s*될\s*거예요\.*/g, "")
-      .replace(/\s*부분에\s*유의하여\s*향기로운\s*하루를\s*만드십쇼\.*/g, "")
-      .replace(/\s*점에*\s*유의하십쇼\.*/g, "")
-      .replace(/\s*점의*\s*유의하십시오\.*/g, "")
-      .replace(/\.$/, "")
-      .trim();
-  };
+  try {
+    // 1. Supabase에서 두 카드의 블록을 가져옴다!
+    const { data: blocks, error } = await supabase
+      .from('tb_tarot_blocks')
+      .select('*')
+      .in('card_name', [card1.name, card2.name]);
 
-  const insight1 = sanitize(card1.deep_interpretation?.general || card1.fortune_telling?.[0] || "");
-  const insight2 = sanitize(card2.deep_interpretation?.general || card2.fortune_telling?.[0] || "");
-  
-  // 2. 다이내믹 주의사항 (Dynamic Caution V3.2)
-  // 고정된 문구 대신 카드의 키워드와 성격에 따라 다양한 조합을 생성함다.
-  const getDynamicCaution = (c1, c2) => {
-    const fallbacks = [
-      "지나친 조급함보다는 에스프레소처럼 진득하게 기다리십쇼",
-      "주변의 작은 변화를 놓치지 않는 세밀한 바리스타의 눈을 가지십쇼",
-      "한쪽으로 치우친 생각은 운명의 온도를 떨어뜨릴 수 있슴다",
-      "자신감을 갖되, 다른 이의 향기(의견)도 존중하는 여유를 갖으십쇼",
-      "지금의 안정이 자칫 정체로 이어지지 않게 긴장을 늦추지 마십쇼"
-    ];
+    if (error) {
+      console.error("❌ 블록 데이터를 가져오지 못했슴다:", error);
+    }
 
-    const ctx1 = c1.deep_interpretation?.caution || (c1.keywords?.[1] ? `'${c1.keywords[1]}'의 이면에 숨은 함정을 경계하십쇼` : fallbacks[0]);
-    const ctx2 = c2.deep_interpretation?.caution || (c2.keywords?.[0] ? `'${c2.keywords[0]}'의 과잉된 욕심만 버린다면 완벽함다` : fallbacks[1]);
-    
-    const templates = [
-      `바리스타의 특별 조언임다. '${ctx1}'은(는) 경계하시고, '${ctx2}'에 각별히 유의하여 운명의 균형을 잡으십쇼.`,
-      `오늘의 추출 포인트! '${ctx1}'에 유의하면서, '${ctx2}'의 흐름만 잘 타면 최상의 결과가 나올 것임다.`,
-      `운명의 배합이 미묘함다. '${ctx1}'에 대한 각별한 유의가 필요하며, 특히 '${ctx2}' 부분을 놓치지 마십쇼.`
-    ];
+    // 2. 블록 매칭 및 fallback 처리
+    let card1Block = blocks?.find(b => b.card_name === card1.name);
+    let card2Block = blocks?.find(b => b.card_name === card2.name);
 
-    // 카드 이름 조합을 기반으로 한 유사 랜덤 선택
-    const seed = (c1.name?.length || 0) + (c2.name?.length || 0);
-    return templates[seed % templates.length];
-  };
+    if (!card1Block) {
+      console.warn(`⚠️ [${card1.name}] DB 블록이 부족하여 예비 부품을 씁니다!`);
+      card1Block = createMockBlock(card1);
+    }
+    if (!card2Block) {
+      console.warn(`⚠️ [${card2.name}] DB 블록이 부족하여 예비 부품을 씁니다!`);
+      card2Block = createMockBlock(card2);
+    }
 
-  const cautionText = getDynamicCaution(card1, card2);
+    // 3. 엔진 가동! 레고 블록 조립 및 은/는/이/가 맞춤
+    const { shortInterpretation, essayInterpretation } = generateCompositeInterpretation(card1Block, card2Block);
 
-  return {
-    mainFortune: `'${card1.name}'의 짙은 에스프레소 같은 오늘이 '${card2.name}'의 부드러운 스팀 밀크를 만나 새로운 운명의 라떼로 완성됐슴다. ${card1.keywords?.[0]}와(과) ${card2.keywords?.[0]}의 조화로운 향기를 느껴보십쇼.`,
-    deepInsight: `'${card1.name}'이(가) 이끄는 ${insight1} 흐름을 바탕으로, '${card2.name}'의 ${insight2} 기운이 더해져 당신의 앞날에 풍부한 가능성의 향기가 퍼져나갈 것임다.`,
-    caution: cautionText,
-    coffeePairing: `부드러운 산미와 깊은 바디감이 조화로운 '오라클 블렌드'를 추천함다.`,
-    generatedAt: new Date().toISOString(),
-    engineVersion: "3.2-dynamic-insight"
-  };
+    // 4. 예전부터 큰형님이 좋아하시던 다이내믹 주의사항 (임시 유지)
+    const cautionText = `바리스타 특별 조언임다! '${card1.keywords?.[1] || card1.name}'의 이면을 경계하시고 상황의 흐름만 탄다면 최상의 결과가 나올 것임다.`;
+
+    return {
+      mainFortune: shortInterpretation,
+      deepInsight: essayInterpretation,
+      caution: cautionText,
+      coffeePairing: `부드러운 산미와 깊은 바디감이 조화로운 '오라클 블렌드'를 추천함다.`,
+      generatedAt: new Date().toISOString(),
+      engineVersion: "4.0-template-hybrid"
+    };
+
+  } catch (err) {
+    console.error('Template Engine Error:', err);
+    return null;
+  }
 };
+

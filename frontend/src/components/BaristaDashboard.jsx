@@ -83,10 +83,10 @@ const BaristaDashboard = ({ onLogout }) => {
         const card2 = cards.find(c => c.name === requestData.tarot_card2_name);
 
         console.log("☕ AI 신탁 생성을 시작함다... (요청 ID:", id, ")");
-        const aiResult = generateAIInterpretation(card1, card2);
+        const aiResult = await generateAIInterpretation(card1, card2);
         
         if (!aiResult) throw new Error('AI 신탁 생성 실패!');
-        console.log("✅ AI 신탁 V3.1 생성 완료:", aiResult.engineVersion);
+        console.log("✅ AI 신탁 V4.0 생성 완료:", aiResult.engineVersion);
 
         const { error: updateError } = await supabase
           .from('tb_tarot_request')
