@@ -336,15 +336,15 @@ function App() {
           ) : (requestStatus === 'approved' && deepResult) ? (
             <main className="w-full flex-1 flex flex-col items-center justify-center gap-4 sm:gap-6 animate-in slide-in-from-bottom duration-1000 pb-10 mx-auto">
               <div className="flex gap-2 sm:gap-4 mb-4 scale-75 sm:scale-100">
-                <div className="flex flex-col items-center gap-3">
-                  <span className="text-[10px] sm:text-sm text-coffee-light/60 font-black uppercase tracking-[0.2em]">현재의 실타래</span>
+                <div className="flex flex-col items-center gap-4">
+                  <span className="text-xl sm:text-2xl text-white font-black uppercase tracking-[0.1em] mb-1">현재 실타래</span>
                   <TarotCard card={selectedCard} backImage={backImage} size="medium" isFlipped={isResultCard1Flipped} />
                 </div>
                 <div className="flex flex-col items-center justify-center pt-8">
                   <div className="w-8 h-px bg-tech-purple animate-pulse" />
                 </div>
-                <div className="flex flex-col items-center gap-3">
-                  <span className="text-[10px] sm:text-sm text-tech-purple/80 font-black uppercase tracking-[0.2em]">미래의 향기</span>
+                <div className="flex flex-col items-center gap-4">
+                  <span className="text-xl sm:text-2xl text-tech-purple font-black uppercase tracking-[0.1em] mb-1">미래 향기</span>
                   <TarotCard card={selectedCard2} backImage={backImage} size="medium" isFlipped={isResultCard2Flipped} />
                 </div>
               </div>
