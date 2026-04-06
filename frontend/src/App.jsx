@@ -4,6 +4,7 @@ import { useAuth } from './hooks/useAuth';
 import TarotCard from './components/TarotCard';
 import BaristaDashboard from './components/BaristaDashboard';
 import { supabase } from './lib/supabaseClient';
+import AdminPinModal from './components/AdminPinModal';
 
 import backImage from './assets/card_back.jpg';
 
@@ -21,6 +22,7 @@ function App() {
   const [cards, setCards] = useState([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminPinModalOpen, setIsAdminPinModalOpen] = useState(false);
   const [firstCardFlipped, setFirstCardFlipped] = useState(false);
   const [isResultCard1Flipped, setIsResultCard1Flipped] = useState(false);
   const [isResultCard2Flipped, setIsResultCard2Flipped] = useState(false);
@@ -52,7 +54,7 @@ function App() {
     
     // 관리자 전용 번호 (01000009999 대응)
     if (fullPhone === '01000009999') {
-      setIsAdmin(true);
+      setIsAdminPinModalOpen(true);
       return;
     }
     
@@ -529,6 +531,14 @@ function App() {
           
         </div>
       </div>
+
+      {/* 바리스타 이중 보안 PIN 모달 */}
+      <AdminPinModal 
+        isOpen={isAdminPinModalOpen}
+        onClose={() => setIsAdminPinModalOpen(false)}
+        onSuccess={() => setIsAdmin(true)}
+        adminPhone="01000009999"
+      />
     </div>
   );
 }
