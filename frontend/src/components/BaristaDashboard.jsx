@@ -146,7 +146,7 @@ const BaristaDashboard = ({ onLogout }) => {
     <div className="w-full max-w-[720px] mx-auto flex flex-col gap-6 animate-in fade-in duration-700">
       
       {/* 🚀 AI ORACLE ENGINE STATUS BANNER (V4.0 PREM) */}
-      <div className="glass-panel p-5 border-tech-blue/30 bg-black/60 overflow-hidden relative group">
+      <div className="glass-panel px-4 py-5 border-tech-blue/30 bg-black/60 overflow-hidden relative group">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-5 relative z-10">
           <div className="flex items-center gap-4 w-full sm:w-auto">
             <div className="relative">
@@ -167,7 +167,7 @@ const BaristaDashboard = ({ onLogout }) => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between sm:justify-end gap-4 bg-white/[0.03] p-3 rounded-2xl border border-white/5 w-full sm:w-auto">
+          <div className="flex items-center justify-between sm:justify-end gap-4 bg-white/[0.03] px-4 py-3 rounded-2xl border border-white/5 w-full sm:w-auto">
             <div className="flex items-center gap-2.5">
               <div className="relative">
                 <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]" />
@@ -192,24 +192,24 @@ const BaristaDashboard = ({ onLogout }) => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="glass-panel p-4 border-tech-blue/20 flex flex-col items-center gap-1">
+        <div className="glass-panel px-3 py-4 border-tech-blue/20 flex flex-col items-center gap-1">
           <Clock className="text-tech-blue w-5 h-5" />
           <span className="text-[9px] text-coffee-light/40 font-black uppercase tracking-widest">대기</span>
           <span className="text-2xl font-black text-white">{stats.pending}</span>
         </div>
-        <div className="glass-panel p-4 border-tech-purple/20 flex flex-col items-center gap-1">
+        <div className="glass-panel px-3 py-4 border-tech-purple/20 flex flex-col items-center gap-1">
           <Check className="text-tech-purple w-5 h-5" />
           <span className="text-[9px] text-coffee-light/40 font-black uppercase tracking-widest">완료</span>
           <span className="text-2xl font-black text-white">{stats.completed}</span>
         </div>
-        <div className="glass-panel p-4 border-red-500/20 flex flex-col items-center gap-1">
+        <div className="glass-panel px-3 py-4 border-red-500/20 flex flex-col items-center gap-1">
           <X className="text-red-500 w-5 h-5" />
           <span className="text-[9px] text-coffee-light/40 font-black uppercase tracking-widest">반려</span>
           <span className="text-2xl font-black text-white">{stats.rejected}</span>
         </div>
         <button 
           onClick={onLogout}
-          className="glass-panel p-4 border-amber-500/20 hover:bg-amber-500/10 transition-all flex flex-col items-center gap-1 group"
+          className="glass-panel px-3 py-4 border-amber-500/20 hover:bg-amber-500/10 transition-all flex flex-col items-center gap-1 group"
         >
           <LogOut className="text-amber-500 w-5 h-5 group-hover:scale-110 transition-transform" />
           <span className="text-[9px] text-amber-500/60 font-black uppercase tracking-widest">종료</span>
@@ -218,7 +218,7 @@ const BaristaDashboard = ({ onLogout }) => {
       </div>
 
       {/* Tabs & Content */}
-      <div className="glass-panel p-8 min-h-[500px] flex flex-col gap-6 bg-black/40 backdrop-blur-xl border-white/5">
+      <div className="glass-panel px-4 py-8 sm:px-8 min-h-[500px] flex flex-col gap-6 bg-black/40 backdrop-blur-xl border-white/5">
         <div className="flex flex-col md:flex-row justify-between items-center border-b border-white/5 pb-6 gap-6">
           <div className="flex items-center gap-4">
             <div className={`w-2 h-8 ${activeTab === 'queue' ? 'bg-tech-blue' : 'bg-tech-purple'} rounded-full transition-all`} />
@@ -249,7 +249,7 @@ const BaristaDashboard = ({ onLogout }) => {
                     initial={{ opacity: 0, y: 10 }} 
                     animate={{ opacity: 1, y: 0 }} 
                     exit={{ opacity: 0, scale: 0.95 }} 
-                    className="flex flex-col md:flex-row items-center justify-between p-5 md:p-6 bg-white/[0.03] border border-white/5 rounded-2xl gap-5 md:gap-6 hover:bg-white/[0.05] transition-all group"
+                    className="flex flex-col md:flex-row items-center justify-between px-4 py-5 md:px-6 md:py-6 bg-white/[0.03] border border-white/5 rounded-2xl gap-5 md:gap-6 hover:bg-white/[0.05] transition-all group"
                   >
                     <div className="flex items-center gap-5 md:gap-6 flex-1 w-full">
                       {/* 🔢 대기 번호: 원형 글로우 디자인 */}
@@ -318,7 +318,7 @@ const BaristaDashboard = ({ onLogout }) => {
                 </div>
               ) : (
                 history.map((order) => (
-                  <div key={order.req_id} className="flex flex-col p-5 bg-white/[0.02] border border-white/5 rounded-2xl gap-4 hover:bg-white/[0.04] transition-all group">
+                  <div key={order.req_id} className="flex flex-col px-4 py-5 bg-white/[0.02] border border-white/5 rounded-2xl gap-4 hover:bg-white/[0.04] transition-all group">
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center gap-4 flex-1 min-w-0">
                         {/* 🏁 상태 아이콘: 원형 글로우 디자인 */}

@@ -241,7 +241,7 @@ function App() {
               />
               <div className="fixed inset-0 z-[-1] bg-gradient-to-b from-coffee-dark/40 via-coffee-dark/80 to-coffee-dark backdrop-blur-[2px]" />
               
-              <div className="w-full max-w-[440px] glass-panel p-6 sm:p-10 space-y-8 animate-in fade-in zoom-in duration-700 shadow-2xl shadow-black/80 flex flex-col items-center">
+              <div className="w-full max-w-[440px] glass-panel px-4 py-6 sm:px-6 sm:py-10 space-y-8 animate-in fade-in zoom-in duration-700 shadow-2xl shadow-black/80 flex flex-col items-center">
                 <div className="flex flex-col items-center gap-4 mb-4 w-full text-center">
                   <div className="p-4 bg-coffee-dark/50 rounded-full border border-coffee-light/10 shadow-lg glow-coffee">
                     <Coffee className="text-coffee-light w-10 h-10" />
@@ -289,7 +289,7 @@ function App() {
             </main>
           ) : (requestStatus === 'pending' || isCasting2) ? (
             <main className="w-full flex-1 flex flex-col items-center justify-center gap-6 sm:gap-10 animate-in fade-in zoom-in duration-500 mx-auto">
-              <div className="w-full max-w-[440px] glass-panel p-6 sm:p-10 flex flex-col items-center gap-8 shadow-2xl relative overflow-hidden">
+              <div className="glass-panel px-4 py-6 sm:px-6 sm:py-10 flex flex-col items-center justify-center gap-10 shadow-2xl relative overflow-hidden">
                 {/* Branding in Wait Screen */}
                 <div className="flex flex-col items-center gap-4 mb-2 w-full text-center">
                   <div className="p-3 bg-coffee-dark/50 rounded-full border border-coffee-light/10 shadow-lg glow-coffee scale-90">
@@ -349,7 +349,7 @@ function App() {
                 </div>
               </div>
 
-              <div className="glass-panel p-6 sm:p-8 w-full space-y-8 relative overflow-hidden text-center">
+              <div className="glass-panel px-4 py-6 sm:px-6 sm:py-10 flex flex-col gap-8 shadow-2xl relative overflow-hidden text-center">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                    <Zap size={80} className="text-tech-purple" />
                 </div>
@@ -378,19 +378,19 @@ function App() {
                     </p>
                   </section>
 
-                  <section className="space-y-3 p-6 bg-white/5 rounded-3xl border border-white/10 shadow-inner">
+                  <section className="space-y-3 px-4 py-6 bg-white/5 rounded-3xl border border-white/10 shadow-inner">
                     <h3 className="text-lg font-black text-tech-purple uppercase tracking-widest flex items-center gap-2">
                       <Moon size={18} /> 영적 통찰 (Insight)
                     </h3>
                     <p className="text-lg text-coffee-light/90 leading-relaxed font-medium">{deepResult.deepInsight}</p>
                   </section>
 
-                  <section className="space-y-3 p-6 bg-amber-500/10 rounded-3xl border border-amber-500/20">
+                  <div className="px-4 py-6 bg-amber-500/[0.03] border border-amber-500/10 rounded-2xl group transition-all hover:bg-amber-500/[0.05]">
                     <h4 className="text-lg font-black text-amber-500 uppercase flex items-center gap-2">
                       <Shield size={18} /> 주의사항 (Caution)
                     </h4>
                     <p className="text-base text-white/80 leading-relaxed font-bold">{deepResult.caution}</p>
-                  </section>
+                  </div>
                 </div>
 
                 <div className="pt-6">
@@ -425,7 +425,7 @@ function App() {
                     onFlip={() => setFirstCardFlipped(true)}
                   />
                   
-                  <div className="w-full glass-panel p-6 sm:p-8 space-y-6">
+                  <div className="w-full glass-panel px-4 py-6 sm:px-6 sm:py-8 space-y-6">
                     <div className="space-y-4">
                       <div className="flex flex-col items-center gap-2 mb-2">
                         <span className="text-tech-blue font-black text-2xl tracking-[0.1em] uppercase">
@@ -443,7 +443,7 @@ function App() {
                       </p>
                     </div>
 
-                    <div className="pt-4 border-t border-white/5 space-y-4 text-center">
+                    <div className="px-4 py-6 bg-white/[0.03] border border-white/5 rounded-2xl group transition-all hover:bg-white/[0.05]">
                         <p className="text-lg text-tech-purple font-bold leading-relaxed">
                           더 깊은 운명의 향기를 알고 싶으시면<br/>
                           신청 버튼을 누르고 바리스타에게 말씀해 보세요.
@@ -475,7 +475,7 @@ function App() {
                   </button>
                 </div>
               ) : (
-                <div className="w-full max-w-[440px] flex flex-col items-center gap-6 sm:gap-12 glass-panel p-6 sm:p-10 mx-auto">
+                <div className="w-full max-w-[440px] flex flex-col items-center gap-6 sm:gap-12 glass-panel px-4 py-6 sm:px-6 sm:py-10 mx-auto">
                   <div className="relative group cursor-pointer" onClick={!isCasting ? shuffleAndDraw : null}>
                     <div className={`w-44 h-64 sm:w-52 sm:h-80 bg-coffee-dark border border-coffee-light/10 rounded-[2rem] flex items-center justify-center transition-all duration-700 ${isCasting ? 'scale-95 blur-sm' : 'hover:scale-105 hover:border-tech-blue/40 shadow-2xl'}`}>
                       {isCasting ? (
