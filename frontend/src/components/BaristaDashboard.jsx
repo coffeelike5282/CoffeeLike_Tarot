@@ -11,6 +11,9 @@ const BaristaDashboard = ({ onLogout }) => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ pending: 0, completed: 0, rejected: 0 });
   const [isGenerating, setIsGenerating] = useState({}); // 각 요청별 AI 생성 로딩 상태
+  const [isSoundEnabled, setIsSoundEnabled] = useState(false);
+  const [lastNotifiedReqId, setLastNotifiedReqId] = useState(null);
+  const [showNewOrderToast, setShowNewOrderToast] = useState(false);
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -38,6 +41,17 @@ const BaristaDashboard = ({ onLogout }) => {
       .eq('status', 2);
 
     if (!pendingError && !historyError) {
+      // 새로운 주문이 있는지 확인 (알림용)
+      if (pendingData && pendingData.length > 0) {
+        const latestReq = pendingData[0];
+        if (latestReq.req_id !== lastNotifiedReqId && isSoundEnabled) {
+          playNotification();
+          setLastNotifiedReqId(latestReq.req_id);
+          setShowNewOrderToast(true);
+          setTimeout(() => setShowNewOrderToast(false), 5000);
+        }
+      }
+
       setRequests(pendingData || []);
       setHistory(historyData || []);
       setStats({ 
@@ -49,21 +63,41 @@ const BaristaDashboard = ({ onLogout }) => {
     setLoading(false);
   };
 
+  const playNotification = () => {
+    if (!isSoundEnabled) return;
+    const audio = new Audio('/assets/sfx/notification.mp3');
+    audio.play().catch(err => console.log('Audio play failed (need interaction):', err));
+  };
+
   useEffect(() => {
     fetchRequests();
 
+    // 🚀 10초 주기 폴링 (백업용)
+    const pollInterval = setInterval(() => {
+      console.log('🔄 10초 주기 폴링 중...');
+      fetchRequests();
+    }, 10000);
+
+    // ⚡ 수파베이스 리얼타임 구독
     const subscription = supabase
       .channel('tarot_orders')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tb_tarot_request' }, (payload) => {
         console.log('Realtime update:', payload);
+        
+        // 새로운 주문(INSERT) 발생 시 즉시 소리 알림
+        if (payload.eventType === 'INSERT') {
+          playNotification();
+        }
+        
         fetchRequests();
       })
       .subscribe();
 
     return () => {
+      clearInterval(pollInterval);
       supabase.removeChannel(subscription);
     };
-  }, []);
+  }, [isSoundEnabled, lastNotifiedReqId]);
 
   const handleAction = async (id, newStatus, requestData = null) => {
     if (newStatus === 1 && requestData) {
@@ -181,6 +215,21 @@ const BaristaDashboard = ({ onLogout }) => {
             <div className="flex items-center gap-2">
               <span className="text-[9px] bg-amber-500/10 text-amber-500 px-2 py-1 rounded-lg font-black border border-amber-500/10 italic">V4.0.0_STABLE</span>
             </div>
+
+            <div className="w-px h-3 bg-white/10" />
+
+            <button 
+              onClick={() => setIsSoundEnabled(!isSoundEnabled)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${isSoundEnabled ? 'bg-tech-blue/20 border-tech-blue/40 text-tech-blue' : 'bg-white/5 border-white/10 text-white/40'}`}
+            >
+              <div className="relative">
+                <Zap size={10} className={isSoundEnabled ? "animate-pulse" : ""} />
+                {isSoundEnabled && <div className="absolute inset-0 bg-tech-blue rounded-full animate-ping opacity-40" />}
+              </div>
+              <span className="text-[9px] font-black uppercase tracking-tighter">
+                {isSoundEnabled ? 'Sound ON' : 'Sound OFF'}
+              </span>
+            </button>
           </div>
         </div>
         
@@ -367,6 +416,27 @@ const BaristaDashboard = ({ onLogout }) => {
           </AnimatePresence>
         </div>
       </div>
+      {/* 🔔 New Order Toast Notification */}
+      <AnimatePresence>
+        {showNewOrderToast && (
+          <motion.div 
+            initial={{ opacity: 0, y: -100, x: '-50%' }}
+            animate={{ opacity: 1, y: 20, x: '-50%' }}
+            exit={{ opacity: 0, y: -100, x: '-50%' }}
+            className="fixed top-0 left-1/2 z-[100] w-[90%] max-w-[400px]"
+          >
+            <div className="bg-tech-blue border border-white/20 rounded-2xl p-4 shadow-[0_20px_50px_-10px_rgba(59,130,246,0.5)] flex items-center gap-4">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center animate-bounce">
+                <Zap className="text-white w-6 h-6" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-black text-white/70 uppercase tracking-widest">New Oracle Request</span>
+                <span className="text-sm font-bold text-white">새로운 타로 신탁 요청이 들어왔슴다!</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
