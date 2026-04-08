@@ -351,8 +351,19 @@ function App() {
             </main>
           ) : requestStatus === 'processing' ? (
             <main className="w-full flex-1 flex flex-col items-center justify-center p-2 sm:p-6 relative">
+              {/* Inline Style for Flash Animation */}
+              <style>{`
+                @keyframes customFlash {
+                  0% { opacity: 1; }
+                  100% { opacity: 0; visibility: hidden; }
+                }
+              `}</style>
+              
               {/* Flash effect on entry */}
-              <div className="fixed inset-0 z-[100] bg-white animate-out fade-out duration-1000 pointer-events-none" />
+              <div 
+                className="fixed inset-0 z-[100] bg-white pointer-events-none" 
+                style={{ animation: 'customFlash 1s ease-out forwards' }}
+              />
               
               <div 
                 className="fixed inset-0 z-[-1] bg-cover bg-center transition-all duration-1000 scale-105"
@@ -360,27 +371,37 @@ function App() {
               />
               <div className="fixed inset-0 z-[-1] bg-gradient-to-b from-coffee-dark/40 via-coffee-dark/80 to-coffee-dark backdrop-blur-[2px]" />
               
-              <div className="w-full max-w-[440px] glass-panel px-4 py-10 sm:px-10 sm:py-16 space-y-10 animate-in zoom-in duration-700 shadow-2xl shadow-tech-purple/20 flex flex-col items-center border-tech-purple/30">
-                <div className="relative">
-                  <div className="w-32 h-32 rounded-full border-4 border-tech-purple/20 border-t-tech-purple animate-spin" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Sparkles className="text-tech-purple w-12 h-12 animate-pulse" />
+              <div className="w-full max-w-[440px] glass-panel px-4 py-8 sm:px-8 sm:py-12 space-y-8 animate-in zoom-in duration-700 shadow-2xl shadow-tech-purple/20 flex flex-col items-center border-tech-purple/30">
+                {/* Show Selected Cards (Blurred/Glow Effect) */}
+                <div className="flex gap-4 mb-4 scale-75">
+                  <div className="relative group">
+                    <TarotCard card={selectedCard} backImage={backImage} size="small" isFlipped={true} />
+                    <div className="absolute inset-0 bg-tech-blue/20 blur-xl rounded-xl -z-10 group-hover:bg-tech-blue/40 transition-all" />
                   </div>
-                  {/* Floating particles */}
-                  <div className="absolute -top-4 -right-4 w-6 h-6 bg-tech-blue rounded-full blur-xl animate-bounce" />
-                  <div className="absolute -bottom-4 -left-4 w-8 h-8 bg-tech-purple rounded-full blur-xl animate-pulse" />
+                  <div className="relative group">
+                    <TarotCard card={selectedCard2} backImage={backImage} size="small" isFlipped={true} />
+                    <div className="absolute inset-0 bg-tech-purple/20 blur-xl rounded-xl -z-10 group-hover:bg-tech-purple/40 transition-all" />
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-full border-4 border-tech-purple/20 border-t-tech-purple animate-spin" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Sparkles className="text-tech-purple w-8 h-8 animate-pulse" />
+                  </div>
                 </div>
 
                 <div className="space-y-4 text-center">
                   <div className="inline-flex items-center gap-2 px-4 py-1 bg-tech-purple/20 rounded-full border border-tech-purple/30 text-[10px] font-black text-tech-purple tracking-widest uppercase animate-pulse">
                     <CheckCircle2 size={12} /> 승인 완료
                   </div>
-                  <h2 className="font-heading text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter italic">AI 마스터 해석 중</h2>
-                  <p className="text-coffee-light/80 text-sm sm:text-lg leading-relaxed font-bold max-w-[320px]">
-                    안본 본부장의 AI 마스터가 <br/>
-                    <span className="text-tech-purple underline underline-offset-4 decoration-2">당신의 카드를 분석하고 있슴다!</span> 
+                  <h2 className="font-heading text-xl sm:text-2xl font-black text-white uppercase tracking-tighter italic">AI 마스터 해석 중</h2>
+                  <p className="text-coffee-light/80 text-sm sm:text-base leading-relaxed font-bold max-w-[320px]">
+                    마스터가 당신의 <br/>
+                    <span className="text-tech-purple decoration-2">{selectedCard.name} & {selectedCard2.name}</span> <br/>
+                    운명을 볶고 있슴다!
                   </p>
-                  <p className="text-coffee-light/40 text-[11px] animate-pulse">잠시만 기다려 주십쇼. 깊은 성찰을 준비 중임다...</p>
+                  <p className="text-coffee-light/40 text-[10px] animate-pulse">잠시만 기다려 주십쇼. 깊은 성찰을 준비 중임다...</p>
                 </div>
 
                 <footer className="mt-4 text-[8px] sm:text-[9px] text-coffee-light/10 font-medium uppercase tracking-[0.3em] text-center w-full">
