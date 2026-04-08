@@ -190,7 +190,7 @@ const BaristaDashboard = ({ onLogout }) => {
   return (
     <div className="w-full max-w-[720px] mx-auto flex flex-col gap-6 animate-in fade-in duration-700">
       
-      {/* 🚀 AI ORACLE ENGINE STATUS BANNER (V4.0 PREM) */}
+      {/* 🚀 AI ORACLE ENGINE STATUS BANNER (V5.0 PREM) */}
       <div className="glass-panel px-4 py-5 border-tech-blue/30 bg-black/60 overflow-hidden relative group">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-5 relative z-10">
           <div className="flex items-center gap-4 w-full sm:w-auto">
@@ -206,7 +206,7 @@ const BaristaDashboard = ({ onLogout }) => {
                 <div className="w-1 h-1 rounded-full bg-tech-blue animate-ping" />
               </div>
               <h2 className="text-sm font-black text-white italic tracking-tight flex items-baseline gap-2">
-                AI ORACLE ENGINE <span className="text-tech-blue drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">V4.0</span>
+                AI ORACLE ENGINE <span className="text-tech-blue drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">V5.0</span>
                 <span className="text-[8px] bg-tech-blue/20 text-tech-blue px-1.5 py-0.5 rounded-full not-italic font-black border border-tech-blue/10">ACTIVE</span>
               </h2>
             </div>
@@ -224,7 +224,7 @@ const BaristaDashboard = ({ onLogout }) => {
             <div className="w-px h-3 bg-white/10" />
             
             <div className="flex items-center gap-2">
-              <span className="text-[9px] bg-amber-500/10 text-amber-500 px-2 py-1 rounded-lg font-black border border-amber-500/10 italic">V4.0.0_STABLE</span>
+              <span className="text-[9px] bg-amber-500/10 text-amber-500 px-2 py-1 rounded-lg font-black border border-amber-500/10 italic">V5.0.0_STABLE</span>
             </div>
 
             <div className="w-px h-3 bg-white/10" />

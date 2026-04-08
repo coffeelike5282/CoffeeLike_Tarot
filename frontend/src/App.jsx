@@ -460,13 +460,6 @@ function App() {
                     </h3>
                     <p className="text-lg text-coffee-light/90 leading-relaxed font-medium whitespace-pre-wrap">{deepResult.deepInsight}</p>
                   </section>
-
-                  <div className="px-4 py-6 bg-amber-500/[0.03] border border-amber-500/10 rounded-2xl group transition-all hover:bg-amber-500/[0.05]">
-                    <h4 className="text-lg font-black text-amber-500 uppercase flex items-center gap-2">
-                      <Shield size={18} /> 주의사항 (Caution)
-                    </h4>
-                    <p className="text-base text-white/80 leading-relaxed font-bold">{deepResult.caution}</p>
-                  </div>
                 </div>
 
                 <div className="pt-6">

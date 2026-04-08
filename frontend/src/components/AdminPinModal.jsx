@@ -6,6 +6,15 @@ const AdminPinModal = ({ isOpen, onClose, onSuccess, adminPhone }) => {
   const [error, setError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
 
+  // 모달이 열릴 때 첫 번째 입력창에 자동 포커스
+  React.useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => {
+        document.getElementById('pin-0')?.focus();
+      }, 100);
+    }
+  }, [isOpen]);
+
   const handleChange = (index, value) => {
     if (!/^\d*$/.test(value)) return;
     const newPin = [...pin];
