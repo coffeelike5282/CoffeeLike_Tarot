@@ -116,22 +116,33 @@ const BaristaDashboard = ({ onLogout }) => {
         const card1 = cards.find(c => c.name === requestData.tarot_card_name);
         const card2 = cards.find(c => c.name === requestData.tarot_card2_name);
 
+        // 1. 상태를 즉시 status=1(승인됨/처리 중)로 업데이트하여 손님 화면 전환 유도
+        const { error: startError } = await supabase
+          .from('tb_tarot_request')
+          .update({ 
+            status: 1,
+            approved_at: new Date().toISOString()
+          })
+          .eq('req_id', id);
+
+        if (startError) throw startError;
+
+        // 2. AI 해석 생성 시작 (약 20초 소요)
         console.log("☕ AI 신탁 생성을 시작함다... (요청 ID:", id, ")");
         const aiResult = await generateAIInterpretation(requestData.question, card1, card2);
         
         if (!aiResult) throw new Error('AI 신탁 생성 실패!');
-        console.log("✅ AI 신탁 V4.0 생성 완료:", aiResult.engineVersion);
+        console.log("✅ AI 신탁 V5.0 생성 완료:", aiResult.engineVersion);
 
-        const { error: updateError } = await supabase
+        // 3. AI 결과를 최종 저장
+        const { error: finalError } = await supabase
           .from('tb_tarot_request')
           .update({ 
-            status: 1,
-            approved_at: new Date().toISOString(),
             ai_tarot_result: JSON.stringify(aiResult)
           })
           .eq('req_id', id);
 
-        if (updateError) throw updateError;
+        if (finalError) throw finalError;
         
         setRequests(prev => prev.filter(r => r.req_id !== id));
         setStats(prev => ({ ...prev, completed: prev.completed + 1 }));
