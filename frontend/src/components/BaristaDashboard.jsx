@@ -117,7 +117,7 @@ const BaristaDashboard = ({ onLogout }) => {
         const card2 = cards.find(c => c.name === requestData.tarot_card2_name);
 
         console.log("☕ AI 신탁 생성을 시작함다... (요청 ID:", id, ")");
-        const aiResult = await generateAIInterpretation(card1, card2);
+        const aiResult = await generateAIInterpretation(requestData.question, card1, card2);
         
         if (!aiResult) throw new Error('AI 신탁 생성 실패!');
         console.log("✅ AI 신탁 V4.0 생성 완료:", aiResult.engineVersion);
@@ -352,7 +352,7 @@ const BaristaDashboard = ({ onLogout }) => {
                       >
                         {isGenerating[order.req_id] ? <RefreshCcw size={16} className="animate-spin" /> : <Check size={16} />}
                         <span className="text-[10px] uppercase italic tracking-tighter">
-                          {isGenerating[order.req_id] ? 'AI 생성 중' : '승인'}
+                          {isGenerating[order.req_id] ? '마스터가 카드를 해석 중입니다...' : '승인'}
                         </span>
                       </button>
                     </div>

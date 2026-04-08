@@ -1,71 +1,56 @@
 /**
- * ☕ 커피라이크 AI 오라클 엔진 (V4.0 - 하이브리드 템플릿 모드)
+ * ☕ 커피라이크 AI 오라클 엔진 (V5.0 - 외부 마스터 에이전트 연동)
  * 
- * 큰형님! 꼬봉이가 만들어둔 '프리미엄 레고 블록'을 Supabase에서 불러와
- * 자연스러운 한국어로 매끄럽게 조립하는 방식(V4.0)으로 전면 교체했슴다!
+ * 큰형님! 20년 경력 타로 마스터 에이전트를 외부 API로 전격 연동했슴다!
+ * 이제 진짜 마스터의 깊이 있는 해석을 실시간으로 가져옵니다.
  */
 
-import { supabase } from '../lib/supabaseClient';
-import { generateCompositeInterpretation } from '../utils/tarotTemplateEngine';
-
-console.warn("☕ [신탁 엔진 V4.0] 다이내믹 템플릿 모드 장착 - 기계 냄새 제로!");
-
-// 임시 모의 블록 (DB에 아직 꼬봉이가 생성한 블록이 없을 때를 대비한 안전망)
-const createMockBlock = (card) => ({
-  card_name: card.name,
-  card_name_kr: card.name, // 일단 영어명으로 대체 (실제 DB에는 한글명 존재)
-  short_modifier: "잠시 길을 잃은 듯 하나,",
-  short_advice: "스스로를 믿고 나아가십시오.",
-  essay_intro: `당신이 뽑은 카드는 '${card.name}' 기운을 담고 있습니다. 무언가 새롭게 변하고자 하는 열망이 내면에 가득합니다.`,
-  essay_meaning: `이 카드가 시사하는 바는 바로 '현재의 한계를 넘어서는 힘'입니다. ${card.keywords?.[0] || '불확실성'} 속에서도 분명한 해답이 존재함을 뜻합니다.`,
-  essay_advice: "당장의 성과가 보이지 않더라도 흔들리지 마십시오. 결국 원하던 방향으로 궤도에 오를 것입니다."
-});
-
-export const generateAIInterpretation = async (card1, card2) => {
+export const generateAIInterpretation = async (question, card1, card2) => {
   if (!card1 || !card2) return null;
 
   try {
-    // 1. Supabase에서 두 카드의 블록을 가져옴다!
-    const { data: blocks, error } = await supabase
-      .from('tb_tarot_blocks')
-      .select('*')
-      .in('card_name', [card1.name, card2.name]);
+    console.log("🔮 [마스터 에이전트 호출] 질문:", question);
+    
+    // 큰형님 명령대로 카드는 배열 형태로 화끈하게 보냅니다!
+    const requestBody = {
+      question: question || "오늘의 전반적인 운세가 궁금합니다.",
+      cards: [card1.name, card2.name]
+    };
 
-    if (error) {
-      console.error("❌ 블록 데이터를 가져오지 못했슴다:", error);
+    const response = await fetch('https://tarot-master-worker.hatnim72.workers.dev/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      throw new Error('마스터와의 통신에 실패했슴다!');
     }
 
-    // 2. 블록 매칭 및 fallback 처리
-    let card1Block = blocks?.find(b => b.card_name === card1.name);
-    let card2Block = blocks?.find(b => b.card_name === card2.name);
-
-    if (!card1Block) {
-      console.warn(`⚠️ [${card1.name}] DB 블록이 부족하여 예비 부품을 씁니다!`);
-      card1Block = createMockBlock(card1);
-    }
-    if (!card2Block) {
-      console.warn(`⚠️ [${card2.name}] DB 블록이 부족하여 예비 부품을 씁니다!`);
-      card2Block = createMockBlock(card2);
+    const data = await response.json();
+    
+    // 데이터는 data.response 안에 들어있슴다! 다른 데서 찾지 않슴다.
+    if (!data || !data.response) {
+      throw new Error('마스터의 응답에 문제가 있슴다!');
     }
 
-    // 3. 엔진 가동! 레고 블록 조립 및 은/는/이/가 맞춤
-    const { shortInterpretation, essayInterpretation } = generateCompositeInterpretation(card1Block, card2Block);
-
-    // 4. 예전부터 큰형님이 좋아하시던 다이내믹 주의사항 (임시 유지)
-    const cautionText = `바리스타 특별 조언임다! '${card1.keywords?.[1] || card1.name}'의 이면을 경계하시고 상황의 흐름만 탄다면 최상의 결과가 나올 것임다.`;
+    console.log("✅ 마스터 해석 수신 완료");
 
     return {
-      mainFortune: shortInterpretation,
-      deepInsight: essayInterpretation,
-      caution: cautionText,
-      coffeePairing: `부드러운 산미와 깊은 바디감이 조화로운 '오라클 블렌드'를 추천함다.`,
+      mainFortune: "마스터의 깊은 신탁",
+      deepInsight: data.response, // 전체 응답을 통찰 영역에 담습니다.
+      caution: "마스터의 조언을 가슴 깊이 새기십시오.",
+      coffeePairing: `마스터의 기운과 어울리는 '오라클 블렌드'를 추천함다.`,
       generatedAt: new Date().toISOString(),
-      engineVersion: "4.0-template-hybrid"
+      engineVersion: "5.0-master-agent"
     };
 
   } catch (err) {
-    console.error('Template Engine Error:', err);
-    return null;
+    console.error('Master Agent API Error:', err);
+    // 큰형님이 지시하신 정중한 에러 메시지
+    throw new Error('사장님, 통신 중에 문제가 생겼습니다. 잠시 후 다시 시도해 주세요!');
   }
 };
 

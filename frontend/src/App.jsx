@@ -26,6 +26,7 @@ function App() {
   const [firstCardFlipped, setFirstCardFlipped] = useState(false);
   const [isResultCard1Flipped, setIsResultCard1Flipped] = useState(false);
   const [isResultCard2Flipped, setIsResultCard2Flipped] = useState(false);
+  const [question, setQuestion] = useState('');
   const { login, user, loading, logout: authLogout } = useAuth();
 
   // 타로 카드 데이터를 DB에서 가져옵니다.
@@ -103,7 +104,8 @@ function App() {
           p_phone_number: user.phone_number,
           p_tarot_card1_name: c1.name,
           p_tarot_card2_name: c2.name,
-          p_ip_address: ip
+          p_ip_address: ip,
+          p_question: question // 질문 파라미터 추가
         });
 
       setIsCasting2(false);
@@ -384,7 +386,7 @@ function App() {
                     <h3 className="text-lg font-black text-tech-purple uppercase tracking-widest flex items-center gap-2">
                       <Moon size={18} /> 영적 통찰 (Insight)
                     </h3>
-                    <p className="text-lg text-coffee-light/90 leading-relaxed font-medium">{deepResult.deepInsight}</p>
+                    <p className="text-lg text-coffee-light/90 leading-relaxed font-medium whitespace-pre-wrap">{deepResult.deepInsight}</p>
                   </section>
 
                   <div className="px-4 py-6 bg-amber-500/[0.03] border border-amber-500/10 rounded-2xl group transition-all hover:bg-amber-500/[0.05]">
@@ -446,10 +448,21 @@ function App() {
                     </div>
 
                     <div className="px-4 py-6 bg-white/[0.03] border border-white/5 rounded-2xl group transition-all hover:bg-white/[0.05]">
-                        <p className="text-lg text-tech-purple font-bold leading-relaxed">
+                        <p className="text-lg text-tech-purple font-bold leading-relaxed mb-4">
                           더 깊은 운명의 향기를 알고 싶으시면<br/>
-                          신청 버튼을 누르고 바리스타에게 말씀해 보세요.
+                          질문을 입력하고 바리스타에게 말씀해 보세요.
                         </p>
+                        
+                        <div className="mb-6 space-y-2">
+                          <label className="text-[10px] text-tech-purple font-black uppercase tracking-widest block text-left pl-1">상담 질문 입력</label>
+                          <textarea 
+                            value={question}
+                            onChange={(e) => setQuestion(e.target.value)}
+                            placeholder="예: 올해 연애운이 궁금합니다. / 이직을 고민 중인데 어떨까요?"
+                            className="w-full bg-black/40 border border-tech-purple/30 rounded-xl p-4 text-white text-sm outline-none focus:border-tech-purple transition-all min-h-[100px] resize-none"
+                          />
+                        </div>
+
                         <div className="flex items-center justify-center gap-3 py-2 animate-in slide-in-from-bottom-2 duration-700">
                           <span className="px-3 py-1 bg-tech-purple/5 border border-tech-purple/20 rounded-full text-[10px] font-black text-tech-purple/70 uppercase tracking-widest">
                             1,000P 차감
