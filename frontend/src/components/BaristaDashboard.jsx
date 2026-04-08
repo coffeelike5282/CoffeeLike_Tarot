@@ -14,6 +14,7 @@ const BaristaDashboard = ({ onLogout }) => {
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
   const [lastNotifiedReqId, setLastNotifiedReqId] = useState(null);
   const [showNewOrderToast, setShowNewOrderToast] = useState(false);
+  const [aiEngine, setAiEngine] = useState('llama'); // 'llama' or 'gemini'
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -63,6 +64,32 @@ const BaristaDashboard = ({ onLogout }) => {
     setLoading(false);
   };
 
+  const fetchSettings = async () => {
+    const { data, error } = await supabase
+      .from('tb_admin_config')
+      .select('ai_engine')
+      .single();
+    
+    if (!error && data) {
+      setAiEngine(data.ai_engine || 'llama');
+    }
+  };
+
+  const toggleAiEngine = async () => {
+    const newEngine = aiEngine === 'llama' ? 'gemini' : 'llama';
+    setAiEngine(newEngine);
+    
+    const { error } = await supabase
+      .from('tb_admin_config')
+      .update({ ai_engine: newEngine })
+      .eq('id', 1); // 어차피 어드민 설정은 1번 고정임다!
+    
+    if (error) {
+      alert('AI 엔진 설정 업데이트 실패했슴다!');
+      setAiEngine(aiEngine); // 롤백
+    }
+  };
+
   const playNotification = () => {
     if (!isSoundEnabled) return;
     const audio = new Audio('/assets/sfx/notification.mp3');
@@ -71,6 +98,7 @@ const BaristaDashboard = ({ onLogout }) => {
 
   useEffect(() => {
     fetchRequests();
+    fetchSettings();
 
     // 🚀 10초 주기 폴링 (백업용)
     const pollInterval = setInterval(() => {
@@ -128,8 +156,8 @@ const BaristaDashboard = ({ onLogout }) => {
         if (startError) throw startError;
 
         // 2. AI 해석 생성 시작 (약 20초 소요)
-        console.log("☕ AI 신탁 생성을 시작함다... (요청 ID:", id, ")");
-        const aiResult = await generateAIInterpretation(requestData.question, card1, card2);
+        console.log(`☕ AI ${aiEngine === 'gemini' ? '제미나이' : '라마'} 신탁 생성을 시작함다... (요청 ID: ${id})`);
+        const aiResult = await generateAIInterpretation(requestData.question, card1, card2, aiEngine);
         
         if (!aiResult) throw new Error('AI 신탁 생성 실패!');
         console.log("✅ AI 신탁 V5.0 생성 완료:", aiResult.engineVersion);
@@ -226,6 +254,20 @@ const BaristaDashboard = ({ onLogout }) => {
             <div className="flex items-center gap-2">
               <span className="text-[9px] bg-amber-500/10 text-amber-500 px-2 py-1 rounded-lg font-black border border-amber-500/10 italic">V5.0.0_STABLE</span>
             </div>
+
+            <div className="w-px h-3 bg-white/10" />
+
+            <button 
+              onClick={toggleAiEngine}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-full border transition-all ${aiEngine === 'gemini' ? 'bg-tech-purple/20 border-tech-purple/40 text-tech-purple' : 'bg-tech-blue/20 border-tech-blue/40 text-tech-blue'}`}
+            >
+              <div className="relative">
+                <RefreshCcw size={10} className={aiEngine === 'gemini' ? "text-tech-purple" : "text-tech-blue"} />
+              </div>
+              <span className="text-[9px] font-black uppercase tracking-tighter">
+                {aiEngine === 'gemini' ? 'Gemini 1.5' : 'Llama 3'}
+              </span>
+            </button>
 
             <div className="w-px h-3 bg-white/10" />
 
