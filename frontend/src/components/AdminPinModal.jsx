@@ -91,6 +91,7 @@ const AdminPinModal = ({ isOpen, onClose, onSuccess, adminPhone }) => {
                   id={`pin-${idx}`}
                   type="password"
                   inputMode="numeric"
+                  pattern="\d*"
                   value={digit}
                   onChange={(e) => handleChange(idx, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(idx, e)}

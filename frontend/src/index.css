@@ -117,3 +117,8 @@ body {
    -ms-overflow-style: none; /* IE and Edge */
    scrollbar-width: none; /* Firefox */
  }
+ 
+ .break-keep {
+   word-break: keep-all;
+   overflow-wrap: break-word;
+ }

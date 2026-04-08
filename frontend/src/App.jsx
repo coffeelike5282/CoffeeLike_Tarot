@@ -277,6 +277,7 @@ function App() {
                     <span className="text-coffee-light/20">-</span>
                     <input 
                       type="text" maxLength={4} value={phonePart2}
+                      inputMode="numeric"
                       onChange={(e) => {
                         const val = e.target.value.replace(/[^0-9]/g, '');
                         setPhonePart2(val);
@@ -289,6 +290,7 @@ function App() {
                     <input 
                       id="phone-part3"
                       type="text" maxLength={4} value={phonePart3}
+                      inputMode="numeric"
                       onChange={(e) => setPhonePart3(e.target.value.replace(/[^0-9]/g, ''))}
                       placeholder="0000"
                       className="w-20 sm:w-24 bg-coffee-dark/50 border border-coffee-light/10 focus:border-tech-blue rounded-xl py-3 px-2 sm:py-4 text-center text-lg sm:text-xl font-heading outline-none transition-all duration-500 text-white"
@@ -507,9 +509,9 @@ function App() {
                         )}
                         <h3 className="text-xl font-black text-white/40 tracking-[0.4em] uppercase italic mt-4 border-t border-white/5 pt-4 w-full">오늘의 신탁</h3>
                       </div>
-                      <div className="text-xl font-bold text-white tracking-tight leading-relaxed">
+                      <div className="text-xl font-bold text-white tracking-tight leading-relaxed break-keep">
                         <p>{selectedCard.fortune_telling?.join(' ') || '카드의 의미를 읽는 중입니다...'}</p>
-                        <p className="mt-4 text-sm text-tech-blue/60 font-bold italic animate-pulse">
+                        <p className="mt-4 text-sm text-tech-blue/60 font-bold italic animate-pulse break-keep">
                           이 카드가 속삭이는 더 깊은 진실이 궁금하지 않으신가요?<br/>
                           운명의 바리스타에게 직접 물어보십쇼.
                         </p>
@@ -517,7 +519,7 @@ function App() {
                     </div>
 
                     <div className="px-4 py-6 bg-white/[0.03] border border-white/5 rounded-2xl group transition-all hover:bg-white/[0.05]">
-                        <p className="text-lg text-tech-purple font-bold leading-relaxed mb-4">
+                        <p className="text-lg text-tech-purple font-bold leading-relaxed mb-4 break-keep">
                           더 깊은 운명의 향기를 알고 싶으시면<br/>
                           질문을 입력하고 바리스타에게 말씀해 보세요.
                         </p>
