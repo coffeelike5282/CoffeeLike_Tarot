@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Coffee, Sparkles, Loader2, RefreshCcw, ChevronRight, Zap, Shield, Moon } from 'lucide-react';
+import { Coffee, Sparkles, Loader2, RefreshCcw, ChevronRight, Zap, Shield, Moon, CheckCircle2 } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import TarotCard from './components/TarotCard';
 import BaristaDashboard from './components/BaristaDashboard';
@@ -167,7 +167,7 @@ function App() {
   // Poll for approval status
   useEffect(() => {
     let interval;
-    if (requestStatus === 'pending' && requestId) {
+    if ((requestStatus === 'pending' || requestStatus === 'processing') && requestId) {
       interval = setInterval(async () => {
         const { data } = await supabase
           .from('tb_tarot_request')
@@ -175,17 +175,29 @@ function App() {
           .eq('req_id', requestId)
           .single();
 
-        if (data && data.status === 1 && data.ai_tarot_result) { // Approved & AI Result Ready
-          try {
-            const parsedResult = typeof data.ai_tarot_result === 'string' 
-              ? JSON.parse(data.ai_tarot_result) 
-              : data.ai_tarot_result;
-            
-            setDeepResult(parsedResult);
-            setRequestStatus('approved');
-            clearInterval(interval);
-          } catch (e) {
-            console.error('JSON Parsing Error for AI result:', e);
+        if (data && data.status === 1) {
+          // 승인됨 (Barista Approved)
+          if (!data.ai_tarot_result) {
+            if (requestStatus !== 'processing') {
+              setRequestStatus('processing');
+              // 진동 알림 (지원되는 기기에서만)
+              if ("vibrate" in navigator) {
+                navigator.vibrate([200, 100, 200]);
+              }
+            }
+          } else {
+            // AI 결과까지 도착함 (Interpretation Done)
+            try {
+              const parsedResult = typeof data.ai_tarot_result === 'string' 
+                ? JSON.parse(data.ai_tarot_result) 
+                : data.ai_tarot_result;
+              
+              setDeepResult(parsedResult);
+              setRequestStatus('approved');
+              clearInterval(interval);
+            } catch (e) {
+              console.error('JSON Parsing Error for AI result:', e);
+            }
           }
         }
       }, 3000);
@@ -332,6 +344,45 @@ function App() {
                   </>
                 )}
                 
+                <footer className="mt-4 text-[8px] sm:text-[9px] text-coffee-light/10 font-medium uppercase tracking-[0.3em] text-center w-full">
+                  © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
+                </footer>
+              </div>
+            </main>
+          ) : requestStatus === 'processing' ? (
+            <main className="w-full flex-1 flex flex-col items-center justify-center p-2 sm:p-6 relative">
+              {/* Flash effect on entry */}
+              <div className="fixed inset-0 z-[100] bg-white animate-out fade-out duration-1000 pointer-events-none" />
+              
+              <div 
+                className="fixed inset-0 z-[-1] bg-cover bg-center transition-all duration-1000 scale-105"
+                style={{ backgroundImage: 'url("/assets/tarot_bg.png")' }}
+              />
+              <div className="fixed inset-0 z-[-1] bg-gradient-to-b from-coffee-dark/40 via-coffee-dark/80 to-coffee-dark backdrop-blur-[2px]" />
+              
+              <div className="w-full max-w-[440px] glass-panel px-4 py-10 sm:px-10 sm:py-16 space-y-10 animate-in zoom-in duration-700 shadow-2xl shadow-tech-purple/20 flex flex-col items-center border-tech-purple/30">
+                <div className="relative">
+                  <div className="w-32 h-32 rounded-full border-4 border-tech-purple/20 border-t-tech-purple animate-spin" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Sparkles className="text-tech-purple w-12 h-12 animate-pulse" />
+                  </div>
+                  {/* Floating particles */}
+                  <div className="absolute -top-4 -right-4 w-6 h-6 bg-tech-blue rounded-full blur-xl animate-bounce" />
+                  <div className="absolute -bottom-4 -left-4 w-8 h-8 bg-tech-purple rounded-full blur-xl animate-pulse" />
+                </div>
+
+                <div className="space-y-4 text-center">
+                  <div className="inline-flex items-center gap-2 px-4 py-1 bg-tech-purple/20 rounded-full border border-tech-purple/30 text-[10px] font-black text-tech-purple tracking-widest uppercase animate-pulse">
+                    <CheckCircle2 size={12} /> 승인 완료
+                  </div>
+                  <h2 className="font-heading text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter italic">AI 마스터 해석 중</h2>
+                  <p className="text-coffee-light/80 text-sm sm:text-lg leading-relaxed font-bold max-w-[320px]">
+                    안본 본부장의 AI 마스터가 <br/>
+                    <span className="text-tech-purple underline underline-offset-4 decoration-2">당신의 카드를 분석하고 있슴다!</span> 
+                  </p>
+                  <p className="text-coffee-light/40 text-[11px] animate-pulse">잠시만 기다려 주십쇼. 깊은 성찰을 준비 중임다...</p>
+                </div>
+
                 <footer className="mt-4 text-[8px] sm:text-[9px] text-coffee-light/10 font-medium uppercase tracking-[0.3em] text-center w-full">
                   © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
                 </footer>
