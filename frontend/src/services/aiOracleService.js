@@ -5,8 +5,7 @@
  * 이제 관리자 화면에서 자유롭게 스위칭하며 최고의 해석을 뽑아낼 수 있슴다.
  */
 
-// 제미나이 API 키는 환경 변수에서 가져옵니다.
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+import { supabase } from '../lib/supabaseClient';
 
 /**
  * Cloudflare Workers 기반 Llama 3 엔진 호출
@@ -23,52 +22,40 @@ const callLlamaEngine = async (question, card1, card2) => {
     body: JSON.stringify(requestBody)
   });
 
-  if (!response.ok) throw new Error('라마 마스터와의 통신에 실패했슴다!');
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "알 수 없는 오류");
+    console.error('❌ 라마 응답 오류 상세:', errorText);
+    throw new Error(`라마 마스터와의 통신에 실패했슴다! (상태: ${response.status})`);
+  }
   
   const data = await response.json();
-  if (!data || !data.response) throw new Error('라마 마스터의 응답에 문제가 있슴다!');
+  if (!data || !data.response) throw new Error('라마 마스터의 응답에 문제가 있슴다! 응답 본문을 확인해 보십쇼.');
   
   return data.response;
 };
 
 /**
- * Google AI Studio 기반 Gemini 1.5 Flash 엔진 호출
+ * Google AI Studio 기반 Gemini 1.5 Flash 엔진 호출 (Supabase Edge Function 우회)
  */
 const callGeminiEngine = async (question, card1, card2) => {
-  if (!GEMINI_API_KEY) throw new Error('제미나이 API 키가 설정되지 않았슴다, 큰형님!');
-
-  const prompt = `
-    당신은 20년 경력의 베테랑 타로 마스터 '커피라이크 AI 오라클'입니다.
-    사용자의 질문과 뽑은 2장의 카드를 바탕으로 깊이 있고 통찰력 있는 해석을 제공하세요.
-    
-    질문: ${question || "오늘의 운세"}
-    카드 1: ${card1.name} (${card1.rank} - ${card1.suit})
-    카드 2: ${card2.name} (${card2.rank} - ${card2.suit})
-    
-    [응답 규칙]
-    1. 답변은 반드시 한국어로 작성하세요.
-    2. 전문적인 타로 지식을 기반으로 하되, 따뜻하고 희망적인 어조를 유지하세요.
-    3. 각 카드의 상징성과 두 카드의 조합(조화/상충)을 상세히 설명하세요.
-    4. 마지막에 구체적인 조언이나 행동 지침을 제공하세요.
-    5. '큰형님' 스타일의 조폭 말투가 아닌, 정중하고 신비로운 타로 마스터의 말투를 사용하세요.
-  `;
-
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }]
-    })
+  // supabaseClient는 외부에서 주입받거나 전역 설정을 이용한다고 가정함다.
+  // 여기서는 supabaseClient가 이미 프로젝트 어딘가에 설정되어 있다고 보고 호출함다.
+  // (실제 프로젝트 구조에 따라 supabaseClient 임포트가 필요할 수 있슴다)
+  
+  const { data, error } = await supabase.functions.invoke('gemini-oracle', {
+    body: { question, card1, card2 }
   });
 
-  if (!response.ok) throw new Error('제미나이 마스터와의 통신에 실패했슴다!');
+  if (error) {
+    console.error('❌ Supabase 함수 호출 오류:', error);
+    throw new Error(`제미나이 마스터와의 통신에 실패했슴다! (상태: ${error.message})`);
+  }
   
-  const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!data || !data.interpretation) {
+    throw new Error('제미나이 마스터가 신탁을 내리지 않았슴다! 응답 형식을 확인해 보십쇼.');
+  }
   
-  if (!text) throw new Error('제미나이 마스터가 신탁을 내리지 않았슴다!');
-  
-  return text;
+  return data.interpretation;
 };
 
 export const generateAIInterpretation = async (question, card1, card2, engine = 'llama') => {
@@ -87,12 +74,12 @@ export const generateAIInterpretation = async (question, card1, card2, engine = 
     console.log(`✅ ${engine === 'gemini' ? '제미나이' : '라마'} 해석 수신 완료`);
 
     return {
-      mainFortune: engine === 'gemini' ? "제미나이 1.5의 정교한 통찰" : "마스터의 깊은 신탁",
+      mainFortune: engine === 'gemini' ? "제미나이 1.5의 서버 사이드 신탁" : "마스터의 깊은 신탁",
       deepInsight: responseText,
       caution: "신탁의 조언을 가슴 깊이 새기십시오.",
       coffeePairing: `마스터의 기운과 어울리는 '오라클 블렌드'를 추천함다.`,
       generatedAt: new Date().toISOString(),
-      engineVersion: engine === 'gemini' ? "Gemini-1.5-Flash" : "Llama-3-Master"
+      engineVersion: engine === 'gemini' ? "Gemini-1.5-Flash (Server)" : "Llama-3-Master"
     };
 
   } catch (err) {
