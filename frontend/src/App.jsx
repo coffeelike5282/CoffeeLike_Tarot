@@ -507,9 +507,13 @@ function App() {
                         )}
                         <h3 className="text-xl font-black text-white/40 tracking-[0.4em] uppercase italic mt-4 border-t border-white/5 pt-4 w-full">오늘의 신탁</h3>
                       </div>
-                      <p className="text-xl font-bold text-white tracking-tight leading-tight">
-                        {selectedCard.fortune_telling?.[0] || '카드의 의미를 읽는 중입니다...'}
-                      </p>
+                      <div className="text-xl font-bold text-white tracking-tight leading-relaxed">
+                        <p>{selectedCard.fortune_telling?.join(' ') || '카드의 의미를 읽는 중입니다...'}</p>
+                        <p className="mt-4 text-sm text-tech-blue/60 font-bold italic animate-pulse">
+                          이 카드가 속삭이는 더 깊은 진실이 궁금하지 않으신가요?<br/>
+                          운명의 바리스타에게 직접 물어보십쇼.
+                        </p>
+                      </div>
                     </div>
 
                     <div className="px-4 py-6 bg-white/[0.03] border border-white/5 rounded-2xl group transition-all hover:bg-white/[0.05]">
@@ -518,13 +522,15 @@ function App() {
                           질문을 입력하고 바리스타에게 말씀해 보세요.
                         </p>
                         
-                        <div className="mb-6 space-y-2">
-                          <label className="text-[10px] text-tech-purple font-black uppercase tracking-widest block text-left pl-1">상담 질문 입력</label>
+                        <div className="mb-6 space-y-3">
+                          <label className="text-lg text-tech-purple font-black uppercase tracking-tight block text-left pl-1">
+                            상담 질문 입력
+                          </label>
                           <textarea 
                             value={question}
                             onChange={(e) => setQuestion(e.target.value)}
-                            placeholder="예: 올해 연애운이 궁금합니다. / 이직을 고민 중인데 어떨까요?"
-                            className="w-full bg-black/40 border border-tech-purple/30 rounded-xl p-4 text-white text-sm outline-none focus:border-tech-purple transition-all min-h-[100px] resize-none"
+                            placeholder={"예: 올해 연애운이 궁금합니다. / 이직을 고민 중인데 어떨까요?\n\n질문을 입력하지 않으면 오늘의 운세가 자동으로 적용됩니다."}
+                            className="w-full bg-black/40 border border-tech-purple/30 rounded-xl p-4 text-white text-sm outline-none focus:border-tech-purple transition-all min-h-[120px] resize-none placeholder:text-white/20"
                           />
                         </div>
 
