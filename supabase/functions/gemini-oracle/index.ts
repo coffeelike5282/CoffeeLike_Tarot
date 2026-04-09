@@ -74,12 +74,15 @@ Deno.serve(async (req) => {
       - 언어: 반드시 한국어로 작성하십시오.
     `;
 
-    // 2026년형 주력 모델 풀 (실제 API 응답 기준 업데이트)
+    // 2026년형 최신 엔진 풀 (April 2026 기준 모델 ID)
     const modelPool = [
-      "gemini-2.5-flash", 
-      "gemini-1.5-flash",
-      "gemini-1.5-pro",
-      "gemini-1.5-flash-8b"
+      "gemini-3.1-flash-latest", 
+      "gemini-3.1-pro-latest",
+      "gemini-2.5-flash-latest",
+      "gemini-2.5-pro-latest",
+      "gemini-1.5-flash-latest",
+      "gemini-1.5-pro-latest",
+      "gemini-3.1-flash-lite-latest"
     ];
 
     // 무작위 셔플로 부하 분산 (Load Balancing)
@@ -95,7 +98,9 @@ Deno.serve(async (req) => {
       // 모델당 최대 2회 내부 재시도 (백오프 포함)
       for (let retryStep = 0; retryStep < 2; retryStep++) {
         try {
-          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${GEMINI_API_KEY}`, {
+          // 버전 호환성을 위해 v1과 v1beta를 유연하게 선택 (latest 별칭은 v1beta가 더 안정적일 수 있음)
+          const apiVersion = modelId.includes('3.1') ? 'v1beta' : 'v1beta'; 
+          const response = await fetch(`https://generativelanguage.googleapis.com/${apiVersion}/models/${modelId}:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

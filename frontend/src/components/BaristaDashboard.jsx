@@ -182,7 +182,11 @@ const BaristaDashboard = ({ onLogout }) => {
         await supabase
           .from('tb_tarot_request')
           .update({ 
-            ai_tarot_result: JSON.stringify({ isError: true, message: err.message })
+            ai_tarot_result: JSON.stringify({ 
+              isError: true, 
+              interpretation: "죄송함다, 큰형님! 지금 영적 주파수가 일시적으로 불안정해서 신탁을 불러오는 데 실패했슴다. 1분만 숨 고르고 다시 시도해 주시면 화끈하게 모시겠슴다!",
+              message: err.message 
+            })
           })
           .eq('req_id', id);
 
