@@ -625,6 +625,40 @@ function App() {
                   <div className="flex flex-col items-center gap-2">
                     <div className="px-6 py-2 bg-tech-purple/20 border border-tech-purple/40 rounded-full text-lg text-tech-purple font-black tracking-[0.2em] uppercase">심층 조합 결과</div>
                     
+                    {/* [v2.8] PDF용 카드 이미지 요약 섹션 (명함 사이즈) */}
+                    {(selectedCard || selectedCard2) && (
+                      <div className="flex justify-center gap-4 mt-6 mb-4 sm:gap-8 sm:mt-10 sm:mb-6 animate-in fade-in zoom-in duration-1000">
+                        {selectedCard && (
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="w-24 sm:w-32 aspect-[9/16] rounded-xl overflow-hidden border-2 border-tech-purple/30 shadow-2xl relative group">
+                              <img 
+                                src={selectedCard.image_url} 
+                                alt={selectedCard.name}
+                                className="w-full h-full object-cover grayscale-[0.2] hover:grayscale-0 transition-all duration-500"
+                                crossOrigin="anonymous"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+                            </div>
+                            <span className="text-[10px] sm:text-xs text-white/40 font-black uppercase tracking-[0.3em] leading-none">Present</span>
+                          </div>
+                        )}
+                        {selectedCard2 && (
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="w-24 sm:w-32 aspect-[9/16] rounded-xl overflow-hidden border-2 border-tech-purple/30 shadow-2xl relative group">
+                              <img 
+                                src={selectedCard2.image_url} 
+                                alt={selectedCard2.name}
+                                className="w-full h-full object-cover grayscale-[0.2] hover:grayscale-0 transition-all duration-500"
+                                crossOrigin="anonymous"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+                            </div>
+                            <span className="text-[10px] sm:text-xs text-tech-purple/50 font-black uppercase tracking-[0.3em] leading-none">Future</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {/* [v2.7.1] 소실된 카드명 정보 복원 - 심층 조합 결과와 제목 사이 */}
                     {(selectedCard || selectedCard2) && (
                       <div className="flex items-center gap-3 text-white/60 font-black tracking-tight mt-2 animate-in fade-in slide-in-from-top-4 duration-1500 fill-mode-both">
