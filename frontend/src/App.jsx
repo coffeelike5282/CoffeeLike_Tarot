@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Coffee, Sparkles, Loader2, RefreshCcw, ChevronRight, Zap, Shield, Moon, CheckCircle2 } from 'lucide-react';
+import { Coffee, Sparkles, Loader2, RefreshCcw, ChevronRight, Zap, Shield, Moon, CheckCircle2, Download } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { useAuth } from './hooks/useAuth';
 import TarotCard from './components/TarotCard';
 import BaristaDashboard from './components/BaristaDashboard';
@@ -130,6 +132,47 @@ function App() {
       console.error('Network/Internal Error:', err);
       setIsCasting2(false);
       setRequestStatus('error');
+    }
+  };
+
+  const [isSavingPDF, setIsSavingPDF] = useState(false);
+
+  // 📄 [v2.5] 신탁 결과 PDF 저장 기능
+  const handleSavePDF = async () => {
+    const element = document.getElementById('tarot-result-sheet');
+    if (!element) return;
+
+    try {
+      setIsSavingPDF(true);
+      
+      // 캡처 품질 향상을 위한 옵션 설정
+      const canvas = await html2canvas(element, {
+        scale: 2, // 해상도 2배
+        useCORS: true,
+        backgroundColor: '#0a0a0a', // 배경색 지정
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`CoffeeLike_Tarot_Oracle_${new Date().getTime()}.pdf`);
+      
+      console.log('✅ 신탁 PDF 저장 완료!');
+    } catch (error) {
+      console.error('❌ PDF 저장 실패:', error);
+      alert('신령님의 말씀을 기록하는 데 실패했슴다! 다시 시도해보십쇼.');
+    } finally {
+      setIsSavingPDF(false);
     }
   };
 
@@ -513,41 +556,38 @@ function App() {
                 </div>
               </div>
 
-              <div className="glass-panel px-4 py-6 sm:px-6 sm:py-10 flex flex-col gap-8 shadow-2xl relative overflow-hidden text-center">
-                <div className="absolute top-0 right-0 p-4 opacity-10">
-                   <Zap size={80} className="text-tech-purple" />
-                </div>
-                
-                <div className="flex flex-col items-center gap-2">
-                   <div className="px-6 py-2 bg-tech-purple/20 border border-tech-purple/40 rounded-full text-lg text-tech-purple font-black tracking-[0.2em] uppercase">심층 조합 결과 오픈</div>
-                </div>
+                <div id="tarot-result-sheet" className="flex flex-col gap-6 sm:gap-10 pb-6">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="px-6 py-2 bg-tech-purple/20 border border-tech-purple/40 rounded-full text-lg text-tech-purple font-black tracking-[0.2em] uppercase">심층 조합 결과</div>
+                    <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter mt-2 group-hover:text-tech-purple transition-colors italic">운명의 신탁</h2>
+                    <div className="w-12 h-1 bg-tech-purple/40 rounded-full mt-2" />
+                  </div>
 
-                <div className="space-y-6 text-left">
-                  <section className="space-y-4">
-                    <div className="space-y-2">
-                      <div className="text-2xl font-black text-tech-blue uppercase tracking-tighter flex flex-col gap-1 mb-4">
-                        <div className="flex items-center gap-2">
-                           <div className="w-8 h-px bg-tech-blue/50" /> {selectedCard.name}
-                        </div>
-                        <div className="flex items-center gap-2">
-                           <div className="w-8 h-px bg-tech-blue/50" /> {selectedCard2.name}
-                        </div>
-                      </div>
-                      <h3 className="text-lg sm:text-xl font-black text-white tracking-widest flex items-start gap-2 break-keep">
-                        <Zap size={20} className="text-tech-blue shadow-glow flex-shrink-0 mt-1" /> {deepResult.mainFortune}
-                      </h3>
+                  <div className="text-left space-y-6 sm:space-y-8">
+                    <div className="prose prose-invert max-w-none">
+                      {deepResult.split('\n\n').map((paragraph, idx) => (
+                        <p key={idx} className="text-lg sm:text-xl text-white/90 font-bold leading-relaxed break-keep tracking-tight bg-white/[0.02] p-4 rounded-2xl border border-white/5 hover:border-tech-purple/20 transition-all">
+                          {paragraph.trim()}
+                        </p>
+                      ))}
                     </div>
-                  </section>
-
-                  <section className="space-y-3 px-4 py-6 bg-white/5 rounded-3xl border border-white/10 shadow-inner">
-                    <h3 className="text-lg font-black text-tech-purple uppercase tracking-widest flex items-center gap-2">
-                      <Moon size={18} /> 영적 통찰 (Insight)
-                    </h3>
-                    <p className="text-lg text-coffee-light/90 leading-relaxed font-medium whitespace-pre-wrap">{deepResult.deepInsight}</p>
-                  </section>
+                  </div>
                 </div>
 
-                <div className="pt-6">
+                <div className="pt-6 flex flex-col gap-4">
+                  <button 
+                    onClick={saveAsPDF}
+                    disabled={isSavingPDF}
+                    className="w-full bg-tech-purple text-white font-black py-4 rounded-2xl text-lg uppercase tracking-[0.2em] hover:bg-tech-purple/80 transition-all shadow-2xl active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-50"
+                  >
+                    {isSavingPDF ? (
+                      <Loader2 className="animate-spin" />
+                    ) : (
+                      <Download size={20} />
+                    )}
+                    {isSavingPDF ? 'PDF 저장 중...' : '결과 PDF 저장'}
+                  </button>
+
                   <button 
                     onClick={() => { 
                       setRequestStatus(null); 
@@ -558,9 +598,9 @@ function App() {
                       setIsResultCard1Flipped(false);
                       setIsResultCard2Flipped(false);
                     }} 
-                    className="w-full bg-white text-black font-black py-4 rounded-2xl text-lg uppercase tracking-[0.2em] hover:bg-tech-blue hover:text-white transition-all shadow-2xl active:scale-[0.98]"
+                    className="w-full bg-white/10 text-white font-black py-4 rounded-2xl text-lg uppercase tracking-[0.2em] hover:bg-white/20 transition-all shadow-2xl active:scale-[0.98]"
                   >
-                    상담 종료
+                    새로운 상담 시작
                   </button>
                 </div>
                 <footer className="mt-6 text-[8px] sm:text-[9px] text-coffee-light/10 font-medium uppercase tracking-[0.3em] text-center w-full">
