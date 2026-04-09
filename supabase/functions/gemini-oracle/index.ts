@@ -70,39 +70,70 @@ Deno.serve(async (req) => {
 "      3. **언어**: 반드시 한국어로 작성하십시오.\n" +
 "    ";
 
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=" + GEMINI_API_KEY, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          response_mime_type: "application/json"
-        }
-      })
-    });
+    const models = [
+      "gemini-3-flash-preview", 
+      "gemini-1.5-flash-latest"
+    ];
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error("❌ Google Gemini API 호출 실패:", errorData);
-      const msg = errorData.error?.message || JSON.stringify(errorData);
-      throw new Error("구글 신령님이 응답하지 않슴다: " + msg);
+    let lastError = "";
+    let rawText = "";
+
+    // 모델별 순차 시도 및 재시도 로직
+    for (const modelId of models) {
+      console.log("🔮 시도 중인 모델: " + modelId);
+      
+      for (let retryStep = 0; retryStep < 3; retryStep++) {
+        try {
+          const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + modelId + ":generateContent?key=" + GEMINI_API_KEY, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { response_mime_type: "application/json" }
+            })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            if (rawText) break; // 성공 시 루프 탈출
+          } else {
+            const errorData = await response.json().catch(() => ({}));
+            const msg = errorData.error?.message || JSON.stringify(errorData);
+            lastError = msg;
+            
+            // 과부하 에러(429, 503, 400 High Demand) 시 대기 후 재시도
+            if (response.status === 429 || response.status === 503 || (response.status === 400 && msg.includes("high demand"))) {
+              console.warn("⚠️ [" + modelId + "] 과부하 감지 (시도 " + (retryStep + 1) + "/3), 잠시 후 다시 시도함다...");
+              await new Promise(r => setTimeout(r, 1000 * (retryStep + 1))); 
+              continue;
+            }
+            // 그 외 에러는 다음 모델로 즉시 점프
+            break;
+          }
+        } catch (e) {
+          lastError = e.message;
+          console.error("❌ [" + modelId + "] 통신 에러: ", e);
+        }
+      }
+      
+      if (rawText) break; // 성공 시 전체 모델 시도 중단
     }
 
-    const data = await response.json();
-    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    
+    if (!rawText) {
+      throw new Error("구글 신령님이 모든 채널에서 응답하지 않슴다: " + lastError);
+    }
+
     let summary = "운명의 요약문";
     let interpretation = rawText;
 
     try {
-      // JSON 파싱 시도
       const cleanJson = rawText.replace(/```json|```/g, "").trim();
       const parsed = JSON.parse(cleanJson);
       summary = parsed.summary || summary;
       interpretation = parsed.interpretation || interpretation;
     } catch (e) {
-      console.warn("⚠️ AI 응답 JSON 파싱 실패, 본문 전체를 사용함다:", e);
-      // 파싱 실패 시 본문의 첫 문장을 요약으로 쓰는 등 최소한의 조치
+      console.warn("⚠️ AI 응답 JSON 파싱 실패, 본문 전체를 사용함다.");
       if (rawText.includes(".")) {
         summary = rawText.split(".")[0].substring(0, 50);
       }

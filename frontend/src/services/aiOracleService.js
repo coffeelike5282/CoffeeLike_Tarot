@@ -116,9 +116,14 @@ export const generateAIInterpretation = async (question, card1, card2, engine = 
 
   } catch (err) {
     console.error('AI Oracle Service Error:', err);
-    // 에러 메시지가 구체적이면(우리가 던진 Error 객체라면) 그 메시지를 쓰고, 아니면 기본 메시지를 씀다.
-    const userMsg = err.message || 'AI 통신 중에 사고가 났습니다. 잠시 후 다시 시도해 주세요!';
-    throw new Error(`사장님, ${userMsg}`);
+    let userMsg = err.message || 'AI 통신 중에 사고가 났습니다. 잠시 후 다시 시도해 주세요!';
+    
+    // 과부하 에러 시 사용자 친화적인 안내 추가
+    if (userMsg.includes('high demand') || userMsg.includes('과부하')) {
+      userMsg = "구글 서버가 지금 너무 바쁩니다! 30초 정도만 숨 고르고 다시 시도해 주십쇼, 사장님!";
+    }
+
+    throw new Error("사장님, " + userMsg);
   }
 };
 
