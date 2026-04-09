@@ -199,7 +199,15 @@ function App() {
         backgroundColor: '#161311',
         logging: false,
         onclone: (clonedDoc) => {
-          // [v2.8.9] TOTAL CSS STERILIZATION: 외부 링크 차단 및 텍스트 소량 소탕
+          // [v2.9.6] NUCLEAR STYLE RESET: 전역 박스 모델 및 레이아웃 강제 집행
+          const style = clonedDoc.createElement('style');
+          style.innerHTML = `
+            * { box-sizing: border-box !important; }
+            img { max-width: 100%; height: auto; display: block; }
+          `;
+          clonedDoc.head.appendChild(style);
+
+          // 스타일 세척 (oklch 제거)
           const links = clonedDoc.querySelectorAll('link[rel="stylesheet"]');
           links.forEach(link => link.remove()); 
 
@@ -208,101 +216,106 @@ function App() {
             try {
               styleTags[i].innerHTML = styleTags[i].innerHTML.replace(/okl(ch|ab)\([^)]+\)/g, '#161311');
             } catch (e) {
-              console.warn('⚠️ 스타일 태그 세척 중 오류 발생(무시):', e);
+              console.warn('⚠️ 스타일 세척 무시:', e);
             }
           }
 
           const clonedElement = clonedDoc.getElementById('tarot-result-sheet');
           if (clonedElement) {
-            // [v2.9.0] A4 최적화 레이아웃 강제 주입
-            clonedElement.style.padding = '40px';
-            clonedElement.style.width = '794px'; // A4 width at 96dpi
-            clonedElement.style.minHeight = '1123px'; // A4 height at 96dpi
+            // [v2.9.7] A4 용지 규격 (794px) 강제 박제 및 중앙 정렬
+            clonedElement.style.padding = '60px';
+            clonedElement.style.width = '794px'; 
+            clonedElement.style.minHeight = '1123px'; 
             clonedElement.style.margin = '0 auto';
             clonedElement.style.background = '#161311';
             clonedElement.style.color = '#eae1dd';
             clonedElement.style.display = 'flex';
             clonedElement.style.flexDirection = 'column';
+            clonedElement.style.alignItems = 'center';
             
-            // [v2.9.1] 카드 이미지 콤팩트화 (명함 사이즈)
-            const cardContainer = clonedElement.querySelector('.flex.justify-center.gap-4');
+            // 카드 컨테이너 정밀 타격 (명함 스타일 배치)
+            const cardContainer = clonedElement.querySelector('.flex.justify-center.gap-4') || 
+                                  clonedElement.querySelector('.animate-in.fade-in.zoom-in');
+            
             if (cardContainer) {
               cardContainer.style.display = 'flex';
+              cardContainer.style.flexDirection = 'row';
               cardContainer.style.justifyContent = 'center';
-              cardContainer.style.gap = '30px';
-              cardContainer.style.marginTop = '20px';
-              cardContainer.style.marginBottom = '20px';
+              cardContainer.style.alignItems = 'flex-start';
+              cardContainer.style.gap = '50px'; // 넉넉한 간격
+              cardContainer.style.width = '100%';
+              cardContainer.style.marginTop = '40px';
+              cardContainer.style.marginBottom = '40px';
+              
+              // [v2.9.8] 이미지 래퍼 크기 강제 고정 (140px x 248px)
+              const imageWrappers = cardContainer.querySelectorAll('div.relative');
+              imageWrappers.forEach(w => {
+                if (w.classList.contains('aspect-[9/16]') || w.querySelector('img')) {
+                  w.style.width = '140px'; 
+                  w.style.height = '248px';
+                  w.style.minWidth = '140px';
+                  w.style.minHeight = '248px';
+                  w.style.flexShrink = '0';
+                  w.style.borderRadius = '16px';
+                  w.style.overflow = 'hidden';
+                  w.style.border = '3px solid rgba(139, 92, 246, 0.6)';
+                  w.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
+                  
+                  const img = w.querySelector('img');
+                  if (img) {
+                    img.style.width = '140px';
+                    img.style.height = '248px';
+                    img.style.objectFit = 'cover';
+                  }
+                }
+              });
             }
 
-            const imageWrappers = clonedElement.querySelectorAll('.w-24.sm\\:w-32');
-            imageWrappers.forEach(w => {
-              w.style.width = '120px'; // 콤팩트 크기로 고정
-              w.style.height = 'auto';
-              w.style.aspectRatio = '9/16';
-              w.style.border = '2px solid rgba(139, 92, 246, 0.4)';
-            });
-
-            // [v2.9.2] 텍스트 가독성 최적화
-            const mainTitle = clonedElement.querySelector('h2.text-3xl');
-            if (mainTitle) {
-              mainTitle.style.fontSize = '28px';
-              mainTitle.style.marginTop = '10px';
+            // 제목 및 텍스트 폰트 박제
+            const title = clonedElement.querySelector('.px-6.py-2');
+            if (title) {
+              title.style.fontSize = '24px';
+              title.style.padding = '10px 30px';
+              title.style.marginBottom = '20px';
             }
+
+            const mainMsg = clonedElement.querySelector('h2.text-3xl');
+            if (mainMsg) mainMsg.style.fontSize = '30px';
 
             const summaryBox = clonedElement.querySelector('.p-5.bg-tech-purple\\/10');
             if (summaryBox) {
-              summaryBox.style.padding = '20px';
-              summaryBox.style.marginTop = '20px';
-              const summaryText = summaryBox.querySelector('p.text-xl');
-              if (summaryText) summaryText.style.fontSize = '18px';
+              summaryBox.style.width = '100%';
+              summaryBox.style.padding = '40px';
+              summaryBox.style.marginTop = '40px';
+              summaryBox.style.borderRadius = '30px';
+              summaryBox.style.background = 'rgba(139, 92, 246, 0.05)';
+              const p = summaryBox.querySelector('p');
+              if (p) {
+                p.style.fontSize = '22px';
+                p.style.lineHeight = '1.8';
+              }
             }
 
-            // [v2.8.3] 클론된 문서의 이미지들을 준비된 Base64로 강제 교체
+            // 이미지 소스 최종 주입
             const summaryImages = clonedElement.querySelectorAll('img');
             if (summaryImages.length >= 1 && img1Data) summaryImages[0].src = img1Data;
             if (summaryImages.length >= 2 && img2Data) summaryImages[1].src = img2Data;
           }
 
+          // [v2.9.9] 잔여 위험 요소 소탕
           const allElements = clonedDoc.querySelectorAll('*');
           allElements.forEach(el => {
-            const style = window.getComputedStyle(el);
-            
-            const solidColorProps = [
-              'backgroundColor', 'color', 'borderColor', 'borderTopColor', 
-              'borderRightColor', 'borderBottomColor', 'borderLeftColor', 
-              'outlineColor', 'fill', 'stroke'
-            ];
-            solidColorProps.forEach(prop => {
-              const val = style[prop];
-              if (val && (val.includes('okl') || val.includes('var'))) {
-                el.style[prop] = val; 
-              }
-            });
-
-            ['boxShadow', 'textShadow'].forEach(prop => {
-              const val = style[prop];
-              if (val && val.includes('okl')) {
-                el.style[prop] = val.replace(/okl(ch|ab)\([^)]+\)/g, 'rgba(0,0,0,0.3)');
-              }
-            });
-
-            const bgImg = style.backgroundImage;
-            if (bgImg && bgImg.includes('okl')) {
-              el.style.backgroundImage = bgImg.replace(/okl(ch|ab)\([^)]+\)/g, 'rgba(30, 25, 23, 0.8)');
-            }
-
             if (el.classList.contains('animate-in')) {
               el.style.opacity = '1';
               el.style.transform = 'none';
               el.style.visibility = 'visible';
             }
-            if (style.filter && style.filter !== 'none') el.style.filter = 'none';
+            if (el.style.filter && el.style.filter !== 'none') el.style.filter = 'none';
           });
         }
       });
 
       const pdfImgData = canvas.toDataURL('image/png', 1.0);
-      // [v2.9.5] A4 표준 규격 PDF 생성 진화
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -312,21 +325,17 @@ function App() {
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      // 캔버스를 A4 너비에 맞게 비율 조정
       const imgWidth = pdfWidth;
       const imgHeight = (canvas.height * pdfWidth) / canvas.width;
       
-      pdf.addImage(pdfImgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.addImage(pdfImgData, 'PNG', 0, 0, imgWidth, Math.min(imgHeight, pdfHeight));
       
       const now = new Date();
-      const dateStr = now.getFullYear() + 
-                      String(now.getMonth() + 1).padStart(2, '0') + 
-                      String(now.getDate()).padStart(2, '0');
+      const dateStr = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
       const serial = String(now.getTime()).slice(-7);
-      
       pdf.save(`COFFEELIKE_TAROT_ORACLE_${dateStr}_${serial}.pdf`);
       
-      console.log('✅ 신탁 PDF 저장 완료! (v2.8.5)');
+      console.log('✅ 신탁 PDF 저장 완료! (v2.9.9)');
     } catch (error) {
       console.error('❌ PDF 저장 실패:', error);
       alert('기록 실패! 사유: ' + (error.message || '알 수 없는 영적 저체'));
