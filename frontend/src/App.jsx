@@ -201,8 +201,9 @@ function App() {
         width: 794,
         windowWidth: 794,
         onclone: (clonedDoc) => {
-          // [v2.9.11] 794px 레이아웃 강제 동기화 (왜곡 방지)
+          // [v2.9.15] 슬림 기둥(Slim Pillar) 레이아웃 집행
           clonedDoc.body.style.width = '794px';
+          clonedDoc.body.style.background = '#161311';
           clonedDoc.body.style.margin = '0';
           clonedDoc.body.style.padding = '0';
           clonedDoc.body.style.overflow = 'hidden';
@@ -211,11 +212,16 @@ function App() {
           style.innerHTML = `
             * { box-sizing: border-box !important; }
             img { display: block; }
-            #tarot-result-sheet { width: 794px !important; margin: 0 auto !important; }
+            /* 컨텐츠 너비를 580px로 제한하여 슬림한 비율 구현 */
+            #tarot-result-sheet { 
+              width: 580px !important; 
+              margin: 0 auto !important; 
+              background: transparent !important;
+            }
           `;
           clonedDoc.head.appendChild(style);
 
-          // 스타일 세척
+          // 스타일 세척 (oklab 오류 방지)
           const links = clonedDoc.querySelectorAll('link[rel="stylesheet"]');
           links.forEach(link => link.remove()); 
 
@@ -230,12 +236,11 @@ function App() {
 
           const clonedElement = clonedDoc.getElementById('tarot-result-sheet');
           if (clonedElement) {
-            clonedElement.style.padding = '60px';
-            clonedElement.style.width = '794px'; 
+            clonedElement.style.padding = '60px 40px';
+            clonedElement.style.width = '580px'; 
             clonedElement.style.minHeight = '1123px'; 
-            clonedElement.style.background = '#161311';
             clonedElement.style.color = '#eae1dd';
-            clonedElement.style.display = 'block'; // 전체는 블록으로
+            clonedElement.style.display = 'block'; 
             
             // [v2.9.12] 상단 섹션: 중앙 정렬 수호
             const topHeader = clonedElement.querySelector('.flex.flex-col.items-center.gap-2') || 
@@ -254,14 +259,13 @@ function App() {
               cardContainer.style.display = 'flex';
               cardContainer.style.flexDirection = 'row';
               cardContainer.style.justifyContent = 'center';
-              cardContainer.style.gap = '40px'; 
+              cardContainer.style.gap = '25px'; 
               cardContainer.style.width = '100%';
               cardContainer.style.marginTop = '40px';
               cardContainer.style.marginBottom = '20px';
               
               const imageWrappers = cardContainer.querySelectorAll('div.relative');
               imageWrappers.forEach(w => {
-                 // 160x272 (1:1.7) 표준 비율 고정
                  w.style.width = '160px'; 
                  w.style.height = '272px';
                  w.style.minWidth = '160px';
@@ -280,30 +284,29 @@ function App() {
               });
             }
 
-            // 상단 텍스트 중앙화
             const oracleTitle = clonedElement.querySelector('h2.text-3xl');
             if (oracleTitle) {
               oracleTitle.style.textAlign = 'center';
               oracleTitle.style.width = '100%';
-              oracleTitle.style.fontSize = '32px';
+              oracleTitle.style.fontSize = '30px';
             }
 
-            // [v2.9.13] 하단 섹션: 좌측 정렬 원상 복구
+            // [v2.9.13] 하단 섹션: 가독성 중심 좌측 정렬 복원
             const summaryBox = clonedElement.querySelector('.p-5.bg-tech-purple\\/10');
             if (summaryBox) {
               summaryBox.style.width = '100%';
-              summaryBox.style.padding = '35px';
-              summaryBox.style.marginTop = '40px';
-              summaryBox.style.borderRadius = '25px';
+              summaryBox.style.padding = '30px';
+              summaryBox.style.marginTop = '35px';
+              summaryBox.style.borderRadius = '20px';
               summaryBox.style.textAlign = 'left';
               summaryBox.style.background = 'rgba(139, 92, 246, 0.08)';
               const summaryLabels = summaryBox.querySelectorAll('h3, span, div');
               summaryLabels.forEach(l => l.style.textAlign = 'left');
               const p = summaryBox.querySelector('p');
               if (p) {
-                p.style.fontSize = '21px';
+                p.style.fontSize = '19px';
                 p.style.textAlign = 'left';
-                p.style.lineHeight = '1.7';
+                p.style.lineHeight = '1.6';
               }
             }
 
@@ -315,8 +318,9 @@ function App() {
               const paras = mainTextContainer.querySelectorAll('p');
               paras.forEach(p => {
                 p.style.textAlign = 'left';
-                p.style.fontSize = '17px';
-                p.style.lineHeight = '1.8';
+                p.style.fontSize = '16px';
+                p.style.lineHeight = '1.7';
+                p.style.marginBottom = '15px';
               });
             }
 
@@ -356,7 +360,7 @@ function App() {
       const serial = String(now.getTime()).slice(-7);
       pdf.save(`COFFEELIKE_TAROT_ORACLE_${dateStr}_${serial}.pdf`);
       
-      console.log('✅ 신틱 PDF 저장 완료! (v2.9.14)');
+      console.log('✅ 신틱 PDF 저장 완료! (v2.9.15)');
     } catch (error) {
       console.error('❌ PDF 저장 실패:', error);
       alert('기록 실패! 사유: ' + (error.message || '알 수 없는 영적 저체'));
