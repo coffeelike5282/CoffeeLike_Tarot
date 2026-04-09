@@ -168,11 +168,12 @@ function App() {
     performDeepTarotRequest(selectedCard, selectedCard2, null);
   };
 
-  // 🕰️ [v2.2.1] 카운트다운 전용 로직
+  // 🕰️ [v2.4] 카운트다운 전용 로직 (바리스타 승인 후 시작)
   useEffect(() => {
     let countdownInterval;
     
-    if ((requestStatus === 'pending' || requestStatus === 'processing') && requestId) {
+    // 바리스타가 승인하여 'processing' 상태가 될 때부터 시계가 돌아감다!
+    if (requestStatus === 'processing' && requestId) {
       setCountdown(60); 
       setIsExtended(false);
       
@@ -180,12 +181,13 @@ function App() {
         setCountdown(prev => {
           if (prev <= 1) {
             if (!isExtended) {
+              // 60초 만료 시 1회 자동 연장 (60초로 대폭 확대!)
               setIsExtended(true);
-              console.log('🔮 영적 주파수 미약... 30초 자동 연장함다!');
-              return 30;
+              console.log('🔮 영적 주파수 미약... 60초 자동 연장함다!');
+              return 60;
             } else {
-              // 연장도 끝났으면 종료 및 에러 처리
-              console.warn('AI Oracle Timeout: Final time elapsed.');
+              // 연장(60초)까지 다 썼으면 종료 및 에러 처리
+              console.warn('AI Oracle Timeout: Final time elapsed (120s).');
               setRequestStatus('error');
               clearInterval(countdownInterval);
               return 0;
@@ -194,10 +196,14 @@ function App() {
           return prev - 1;
         });
       }, 1000);
+    } else if (requestStatus === 'pending') {
+      // 대기 중일 때는 카운트다운을 표시하지 않거나 초기화 상태 유지
+      setCountdown(60);
+      setIsExtended(false);
     }
 
     return () => clearInterval(countdownInterval);
-  }, [requestStatus === 'pending' || requestStatus === 'processing', requestId]); // 시작 시점에만 초기화
+  }, [requestStatus, requestId]); // requestStatus 변화에 민감하게 반응함다!
 
   // 📡 [v2.2.1] DB 폴링 전용 로직
   useEffect(() => {

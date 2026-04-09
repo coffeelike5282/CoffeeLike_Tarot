@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
       // 모델당 1회 시도 (여러 모델이 있으므로 빠른 페일오버 중점)
       for (let retryStep = 0; retryStep < 1; retryStep++) {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 20000); // 20초 타임아웃
+        const timeoutId = setTimeout(() => controller.abort(), 45000); // 45초 타임아웃
 
         try {
           const apiVersion = 'v1beta'; 
@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
         } catch (e) {
           clearTimeout(timeoutId);
           if (e.name === 'AbortError') {
-            lastError = `${modelId} (Timeout): 20초 응답 지연 발생`;
+            lastError = `${modelId} (Timeout): 45초 응답 지연 발생`;
             console.warn(`⏳ [${modelId}] 타임아웃 발생. 다음 엔진으로 전환함다!`);
           } else {
             lastError = `${modelId} (Exception): ${e.message}`;
