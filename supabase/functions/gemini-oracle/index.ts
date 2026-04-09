@@ -151,7 +151,7 @@ Deno.serve(async (req) => {
     }
 
     if (!rawText) {
-      throw new Error(`모든 신령님이 부재중임다: ${lastError}`);
+      throw new Error(`모든 마스터가 부재중임다: ${lastError}`);
     }
 
     // [요약] 및 [해설] 태그 추출 로직
