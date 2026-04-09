@@ -215,20 +215,39 @@ function App() {
 
           const allElements = clonedDoc.querySelectorAll('*');
           allElements.forEach(el => {
-            // [v2.8.6] oklab/oklch 멱살 잡기: html2canvas 파서 오류 원천 차단
+            // [v2.8.7] 핵폭탄급 스타일 세척 서비스: oklab/oklch 흔적 지우기
             const style = window.getComputedStyle(el);
-            const colorProps = ['backgroundColor', 'color', 'borderColor', 'outlineColor'];
             
-            colorProps.forEach(prop => {
-              // 브라우저의 getComputedStyle은 내부적으로 oklch를 이미 rgb/rgba로 해석해놓은 상태임다.
-              // 이를 클론된 요소의 인라인 스타일로 직접 박아버리면 html2canvas가 파싱할 필요 없이 패스함다.
+            // 1. 단색 속성 강제 고정 (브라우저가 계산한 RGB 주입)
+            const solidColorProps = [
+              'backgroundColor', 'color', 'borderColor', 'borderTopColor', 
+              'borderRightColor', 'borderBottomColor', 'borderLeftColor', 
+              'outlineColor', 'fill', 'stroke'
+            ];
+            solidColorProps.forEach(prop => {
               const val = style[prop];
-              if (val && (val.includes('okl') || val.includes('var') || val.includes('canvas'))) {
-                el.style[prop] = val;
+              if (val && (val.includes('okl') || val.includes('var'))) {
+                el.style[prop] = val; 
               }
             });
 
-            // 애니메이션 초기화 (안 하면 투명하게 나옴다)
+            // 2. 그림자 (html2canvas 발작 버튼 1위) - oklch 그림자를 만나면 파서가 터집니다.
+            ['boxShadow', 'textShadow'].forEach(prop => {
+              const val = style[prop];
+              if (val && val.includes('okl')) {
+                // oklch(...) 부분을 아주 평범한 투명 검정으로 치환하거나 스타일 제거
+                el.style[prop] = val.replace(/okl(ch|ab)\([^)]+\)/g, 'rgba(0,0,0,0.3)');
+              }
+            });
+
+            // 3. 그라데이션 (발작 버튼 2위)
+            const bgImg = style.backgroundImage;
+            if (bgImg && bgImg.includes('okl')) {
+              // 그라데이션 내의 oklch를 단순 컬러로 밀어버리거나 치환
+              el.style.backgroundImage = bgImg.replace(/okl(ch|ab)\([^)]+\)/g, 'rgba(30, 25, 23, 0.8)');
+            }
+
+            // [v2.8.6] 애니메이션 및 필터 정리
             if (el.classList.contains('animate-in')) {
               el.style.opacity = '1';
               el.style.transform = 'none';
