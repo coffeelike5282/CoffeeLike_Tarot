@@ -47,19 +47,28 @@ const callGeminiEngine = async (question, card1, card2) => {
   });
 
   if (error) {
-    console.error('❌ Supabase 함수 호출 오류:', error)
+    console.error('❌ Supabase 함수 호출 오류 상세:', error)
     
-    // 상세 에러 메시지 추출 시도
-    let detailMsg = error.message
-    if (error.context) {
+    // 상세 에러 메시지 추출 시도 (더 꼼꼼하게!)
+    let detailMsg = error.message;
+    const errorSource = error.context || error.response; // SDK 버전에 따라 다를 수 있슴다
+
+    if (errorSource && typeof errorSource.json === 'function') {
       try {
-        const errorBody = await error.context.json()
-        detailMsg = errorBody.error || errorBody.message || JSON.stringify(errorBody)
+        const errorBody = await errorSource.json();
+        detailMsg = errorBody.error || errorBody.message || JSON.stringify(errorBody);
       } catch (e) {
-        console.warn('에러 본문 파싱 실패:', e)
+        console.warn('에러 본문 JSON 파싱 실패, 텍스트로 시도함다:', e);
+        try {
+          detailMsg = await errorSource.text();
+        } catch (e2) {
+          console.error('텍스트 파싱도 실패했슴다:', e2);
+        }
       }
     }
-    throw new Error(`제미나이 마스터와의 통신에 실패했슴다! (상태: ${detailMsg})`)
+    
+    console.error(`🔍 최종 추출된 에러 사유: ${detailMsg}`);
+    throw new Error(`제미나이 마스터와의 통신에 실패했슴다! (사유: ${detailMsg})`);
   }
   
   if (!data || !data.interpretation) {
