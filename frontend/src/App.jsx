@@ -230,8 +230,8 @@ function App() {
               return 60;
             } else {
               // 연장(60초)까지 다 썼으면 종료 및 에러 처리
-              console.warn('AI Oracle Timeout: Final time elapsed (120s).');
-              setRequestStatus('error');
+              // [v2.6] 레이스 컨디션 방지: 이미 성공했으면 에러로 덮어쓰지 않음
+              setRequestStatus(current => (current === 'approved' ? current : 'error'));
               clearInterval(countdownInterval);
               return 0;
             }
@@ -565,11 +565,21 @@ function App() {
 
                   <div className="text-left space-y-6 sm:space-y-8">
                     <div className="prose prose-invert max-w-none">
-                      {deepResult.split('\n\n').map((paragraph, idx) => (
-                        <p key={idx} className="text-lg sm:text-xl text-white/90 font-bold leading-relaxed break-keep tracking-tight bg-white/[0.02] p-4 rounded-2xl border border-white/5 hover:border-tech-purple/20 transition-all">
-                          {paragraph.trim()}
-                        </p>
-                      ))}
+                      {(() => {
+                        // [v2.6] deepResult가 객체일 수도, 문자열일 수도 있는 상황 완벽 대응!
+                        let content = "";
+                        if (typeof deepResult === 'string') {
+                          content = deepResult;
+                        } else if (deepResult && typeof deepResult === 'object') {
+                          content = deepResult.deepInsight || deepResult.interpretation || JSON.stringify(deepResult);
+                        }
+                        
+                        return content.split('\n\n').filter(p => p.trim()).map((paragraph, idx) => (
+                          <p key={idx} className="text-lg sm:text-xl text-white/90 font-bold leading-relaxed break-keep tracking-tight bg-white/[0.02] p-4 rounded-2xl border border-white/5 hover:border-tech-purple/20 transition-all">
+                            {paragraph.trim()}
+                          </p>
+                        ));
+                      })()}
                     </div>
                   </div>
                 </div>
