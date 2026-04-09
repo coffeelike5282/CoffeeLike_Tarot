@@ -624,7 +624,17 @@ function App() {
                 <div id="tarot-result-sheet" className="flex flex-col gap-6 sm:gap-10 pb-6">
                   <div className="flex flex-col items-center gap-2">
                     <div className="px-6 py-2 bg-tech-purple/20 border border-tech-purple/40 rounded-full text-lg text-tech-purple font-black tracking-[0.2em] uppercase">심층 조합 결과</div>
-                    <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter mt-2 group-hover:text-tech-purple transition-colors italic">운명의 신탁</h2>
+                    
+                    {/* [v2.7.1] 소실된 카드명 정보 복원 - 심층 조합 결과와 제목 사이 */}
+                    {(selectedCard || selectedCard2) && (
+                      <div className="flex items-center gap-3 text-white/60 font-black tracking-tight mt-2 animate-in fade-in slide-in-from-top-4 duration-1500 fill-mode-both">
+                        {selectedCard && <span>{selectedCard.name.split('(')[0].trim()}</span>}
+                        {selectedCard && selectedCard2 && <span className="text-tech-purple/60">&</span>}
+                        {selectedCard2 && <span>{selectedCard2.name.split('(')[0].trim()}</span>}
+                      </div>
+                    )}
+
+                    <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter mt-1 group-hover:text-tech-purple transition-colors italic">운명의 신탁</h2>
                     <div className="w-12 h-1 bg-tech-purple/40 rounded-full mt-2" />
                   </div>
 

@@ -39,11 +39,11 @@ const TarotCard = ({ card, backImage, frontImage, onFlip, size = 'default', isFl
 
   return (
     <div 
-      className={`perspective-1000 ${sizeClasses[size]} aspect-[9/16] cursor-pointer group`}
+      className={`relative ${sizeClasses[size]} perspective-1000 group cursor-pointer flex flex-col items-center`}
       onClick={handleFlip}
     >
       <motion.div
-        className="relative w-full h-full transition-all duration-700 preserve-3d"
+        className="relative w-full aspect-[9/16] transition-all duration-700 preserve-3d"
         animate={{ rotateY: flipped ? 180 : 0 }}
       >
         {/* Front of the Card (Hidden initially) */}
