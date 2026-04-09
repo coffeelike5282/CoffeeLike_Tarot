@@ -80,16 +80,21 @@ const TarotCard = ({ card, backImage, frontImage, onFlip, size = 'default', isFl
         </div>
       </motion.div>
 
-        {/* [v2.6.13] 카드 상단 플로팅 이름 띠 - 카드가 뒤집혔을 때만 서서히 나타남 */}
-        <div 
-          className={`absolute top-4 left-0 right-0 z-20 transition-all duration-700 pointer-events-none flex flex-col items-center ${flipped ? 'opacity-100' : 'opacity-0'}`}
-        >
-          <div className="bg-black/60 backdrop-blur-sm px-4 py-1.5 rounded-full border border-white/10 shadow-lg">
-            <span className="text-sm sm:text-base font-black text-tech-blue tracking-tighter whitespace-nowrap">
-              {card.name.includes('(') ? card.name.split('(')[0].trim() : card.name}
+      {/* [v2.7] 카드 하단 이름 표시 - 큰형님 엄명대로 영역 밖 하단에 한글/영문 병기 */}
+      <div 
+        className={`mt-4 transition-all duration-700 flex flex-col items-center ${flipped ? 'opacity-100' : 'opacity-0'}`}
+      >
+        <div className="flex flex-col items-center gap-0.5 sm:gap-1">
+          <span className="text-base sm:text-xl font-black text-tech-blue tracking-tighter whitespace-nowrap uppercase leading-none">
+            {card.name.includes('(') ? card.name.split('(')[0].trim() : card.name}
+          </span>
+          {card.name.includes('(') && (
+            <span className="text-[10px] sm:text-xs font-bold text-tech-blue/40 tracking-[0.2em] uppercase leading-none">
+              {card.name.split('(')[1].replace(')', '').trim()}
             </span>
-          </div>
+          )}
         </div>
+      </div>
     </div>
   );
 };
