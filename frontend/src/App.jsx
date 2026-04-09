@@ -198,16 +198,28 @@ function App() {
         allowTaint: true,
         backgroundColor: '#161311',
         logging: false,
+        width: 794, // [v2.9.10] 캡처 너비 고정 (A4 96dpi 기준)
+        windowWidth: 794, // 윈도우 너비 봉쇄로 비율 왜곡(가로 늘어남) 방지
         onclone: (clonedDoc) => {
-          // [v2.9.6] NUCLEAR STYLE RESET: 전역 박스 모델 및 레이아웃 강제 집행
+          // [v2.9.11] 전신 다이어트 및 정렬 집행
+          clonedDoc.body.style.width = '794px';
+          clonedDoc.body.style.margin = '0';
+          clonedDoc.body.style.padding = '0';
+
           const style = clonedDoc.createElement('style');
           style.innerHTML = `
-            * { box-sizing: border-box !important; }
-            img { max-width: 100%; height: auto; display: block; }
+            * { 
+              box-sizing: border-box !important; 
+              -webkit-font-smoothing: antialiased;
+              -moz-osx-font-smoothing: grayscale;
+            }
+            img { display: block; margin: 0 auto; }
+            #tarot-result-sheet { text-align: center !important; }
+            h1, h2, h3, p, span, div { text-align: center !important; }
           `;
           clonedDoc.head.appendChild(style);
 
-          // 스타일 세척 (oklch 제거)
+          // 스타일 세척
           const links = clonedDoc.querySelectorAll('link[rel="stylesheet"]');
           links.forEach(link => link.remove()); 
 
@@ -216,14 +228,13 @@ function App() {
             try {
               styleTags[i].innerHTML = styleTags[i].innerHTML.replace(/okl(ch|ab)\([^)]+\)/g, '#161311');
             } catch (e) {
-              console.warn('⚠️ 스타일 세척 무시:', e);
+              console.warn('⚠️ 세척 무시:', e);
             }
           }
 
           const clonedElement = clonedDoc.getElementById('tarot-result-sheet');
           if (clonedElement) {
-            // [v2.9.7] A4 용지 규격 (794px) 강제 박제 및 중앙 정렬
-            clonedElement.style.padding = '60px';
+            clonedElement.style.padding = '60px 50px';
             clonedElement.style.width = '794px'; 
             clonedElement.style.minHeight = '1123px'; 
             clonedElement.style.margin = '0 auto';
@@ -232,8 +243,9 @@ function App() {
             clonedElement.style.display = 'flex';
             clonedElement.style.flexDirection = 'column';
             clonedElement.style.alignItems = 'center';
+            clonedElement.style.justifyContent = 'flex-start';
             
-            // 카드 컨테이너 정밀 타격 (명함 스타일 배치)
+            // 카드 배치 정교화 (1:1.75 비율)
             const cardContainer = clonedElement.querySelector('.flex.justify-center.gap-4') || 
                                   clonedElement.querySelector('.animate-in.fade-in.zoom-in');
             
@@ -242,45 +254,59 @@ function App() {
               cardContainer.style.flexDirection = 'row';
               cardContainer.style.justifyContent = 'center';
               cardContainer.style.alignItems = 'flex-start';
-              cardContainer.style.gap = '50px'; // 넉넉한 간격
+              cardContainer.style.gap = '40px'; 
               cardContainer.style.width = '100%';
               cardContainer.style.marginTop = '40px';
-              cardContainer.style.marginBottom = '40px';
+              cardContainer.style.marginBottom = '20px';
               
-              // [v2.9.8] 이미지 래퍼 크기 강제 고정 (140px x 248px)
               const imageWrappers = cardContainer.querySelectorAll('div.relative');
               imageWrappers.forEach(w => {
                 if (w.classList.contains('aspect-[9/16]') || w.querySelector('img')) {
-                  w.style.width = '140px'; 
-                  w.style.height = '248px';
-                  w.style.minWidth = '140px';
-                  w.style.minHeight = '248px';
+                  // [v2.9.12] 160x280 (1:1.75) 표준 타로 비율 고정
+                  w.style.width = '160px'; 
+                  w.style.height = '280px';
+                  w.style.minWidth = '160px';
+                  w.style.minHeight = '280px';
                   w.style.flexShrink = '0';
                   w.style.borderRadius = '16px';
                   w.style.overflow = 'hidden';
                   w.style.border = '3px solid rgba(139, 92, 246, 0.6)';
-                  w.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
+                  w.style.margin = '0 auto';
                   
                   const img = w.querySelector('img');
                   if (img) {
-                    img.style.width = '140px';
-                    img.style.height = '248px';
+                    img.style.width = '160px';
+                    img.style.height = '280px';
                     img.style.objectFit = 'cover';
                   }
                 }
               });
             }
 
-            // 제목 및 텍스트 폰트 박제
-            const title = clonedElement.querySelector('.px-6.py-2');
-            if (title) {
-              title.style.fontSize = '24px';
-              title.style.padding = '10px 30px';
-              title.style.marginBottom = '20px';
+            // [v2.9.13] 카드 이름 및 제목 중앙 정렬 보강
+            const cardInfo = clonedElement.querySelector('.flex.items-center.gap-3.text-white\\/60');
+            if (cardInfo) {
+              cardInfo.style.width = '100%';
+              cardInfo.style.display = 'flex';
+              cardInfo.style.justifyContent = 'center';
+              cardInfo.style.textAlign = 'center';
+              cardInfo.style.marginTop = '10px';
+              cardInfo.style.fontSize = '18px';
             }
 
-            const mainMsg = clonedElement.querySelector('h2.text-3xl');
-            if (mainMsg) mainMsg.style.fontSize = '30px';
+            const oracleTitle = clonedElement.querySelector('h2.text-3xl');
+            if (oracleTitle) {
+              oracleTitle.style.width = '100%';
+              oracleTitle.style.textAlign = 'center';
+              oracleTitle.style.fontSize = '32px';
+              oracleTitle.style.margin = '15px 0';
+            }
+
+            const titleBar = clonedElement.querySelector('.px-6.py-2.bg-tech-purple\\/20');
+            if (titleBar) {
+              titleBar.style.display = 'inline-block';
+              titleBar.style.margin = '0 auto';
+            }
 
             const summaryBox = clonedElement.querySelector('.p-5.bg-tech-purple\\/10');
             if (summaryBox) {
@@ -288,21 +314,22 @@ function App() {
               summaryBox.style.padding = '40px';
               summaryBox.style.marginTop = '40px';
               summaryBox.style.borderRadius = '30px';
-              summaryBox.style.background = 'rgba(139, 92, 246, 0.05)';
+              summaryBox.style.textAlign = 'center';
               const p = summaryBox.querySelector('p');
               if (p) {
                 p.style.fontSize = '22px';
+                p.style.textAlign = 'center';
+                p.style.width = '100%';
                 p.style.lineHeight = '1.8';
               }
             }
 
-            // 이미지 소스 최종 주입
+            // 이미지 소스 주입
             const summaryImages = clonedElement.querySelectorAll('img');
             if (summaryImages.length >= 1 && img1Data) summaryImages[0].src = img1Data;
             if (summaryImages.length >= 2 && img2Data) summaryImages[1].src = img2Data;
           }
 
-          // [v2.9.9] 잔여 위험 요소 소탕
           const allElements = clonedDoc.querySelectorAll('*');
           allElements.forEach(el => {
             if (el.classList.contains('animate-in')) {
@@ -310,7 +337,6 @@ function App() {
               el.style.transform = 'none';
               el.style.visibility = 'visible';
             }
-            if (el.style.filter && el.style.filter !== 'none') el.style.filter = 'none';
           });
         }
       });
@@ -335,7 +361,7 @@ function App() {
       const serial = String(now.getTime()).slice(-7);
       pdf.save(`COFFEELIKE_TAROT_ORACLE_${dateStr}_${serial}.pdf`);
       
-      console.log('✅ 신탁 PDF 저장 완료! (v2.9.9)');
+      console.log('✅ 신틱 PDF 저장 완료! (v2.9.13)');
     } catch (error) {
       console.error('❌ PDF 저장 실패:', error);
       alert('기록 실패! 사유: ' + (error.message || '알 수 없는 영적 저체'));
