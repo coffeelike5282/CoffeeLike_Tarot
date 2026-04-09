@@ -199,7 +199,10 @@ function App() {
         backgroundColor: '#161311',
         logging: false,
         onclone: (clonedDoc) => {
-          // [v2.8.8] STYLE STRIKE: 클론된 문서의 모든 <style> 태그에서 oklch/oklab 소탕
+          // [v2.8.9] TOTAL CSS STERILIZATION: 외부 링크 차단 및 텍스트 소량 소탕
+          const links = clonedDoc.querySelectorAll('link[rel="stylesheet"]');
+          links.forEach(link => link.remove()); // 실시간 파서 공격 통로 차단 (v7 핵심)
+
           const styleTags = clonedDoc.getElementsByTagName('style');
           for (let i = 0; i < styleTags.length; i++) {
             try {
@@ -217,7 +220,6 @@ function App() {
             clonedElement.style.background = '#161311';
             clonedElement.style.color = '#eae1dd';
             
-            // [v2.8.3] 클론된 문서의 이미지들을 준비된 Base64로 강제 교체
             const summaryImages = clonedElement.querySelectorAll('img');
             if (summaryImages.length >= 1 && img1Data) summaryImages[0].src = img1Data;
             if (summaryImages.length >= 2 && img2Data) summaryImages[1].src = img2Data;
@@ -225,10 +227,8 @@ function App() {
 
           const allElements = clonedDoc.querySelectorAll('*');
           allElements.forEach(el => {
-            // [v2.8.7] 핵폭탄급 스타일 세척 서비스: oklab/oklch 흔적 지우기
             const style = window.getComputedStyle(el);
             
-            // 1. 단색 속성 강제 고정 (브라우저가 계산한 RGB 주입)
             const solidColorProps = [
               'backgroundColor', 'color', 'borderColor', 'borderTopColor', 
               'borderRightColor', 'borderBottomColor', 'borderLeftColor', 
@@ -241,23 +241,18 @@ function App() {
               }
             });
 
-            // 2. 그림자 (html2canvas 발작 버튼 1위) - oklch 그림자를 만나면 파서가 터집니다.
             ['boxShadow', 'textShadow'].forEach(prop => {
               const val = style[prop];
               if (val && val.includes('okl')) {
-                // oklch(...) 부분을 아주 평범한 투명 검정으로 치환하거나 스타일 제거
                 el.style[prop] = val.replace(/okl(ch|ab)\([^)]+\)/g, 'rgba(0,0,0,0.3)');
               }
             });
 
-            // 3. 그라데이션 (발작 버튼 2위)
             const bgImg = style.backgroundImage;
             if (bgImg && bgImg.includes('okl')) {
-              // 그라데이션 내의 oklch를 단순 컬러로 밀어버리거나 치환
               el.style.backgroundImage = bgImg.replace(/okl(ch|ab)\([^)]+\)/g, 'rgba(30, 25, 23, 0.8)');
             }
 
-            // [v2.8.6] 애니메이션 및 필터 정리
             if (el.classList.contains('animate-in')) {
               el.style.opacity = '1';
               el.style.transform = 'none';
