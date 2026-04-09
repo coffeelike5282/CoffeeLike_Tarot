@@ -215,20 +215,20 @@ function App() {
 
           const allElements = clonedDoc.querySelectorAll('*');
           allElements.forEach(el => {
+            // [v2.8.6] oklab/oklch 멱살 잡기: html2canvas 파서 오류 원천 차단
             const style = window.getComputedStyle(el);
             const colorProps = ['backgroundColor', 'color', 'borderColor', 'outlineColor'];
+            
             colorProps.forEach(prop => {
+              // 브라우저의 getComputedStyle은 내부적으로 oklch를 이미 rgb/rgba로 해석해놓은 상태임다.
+              // 이를 클론된 요소의 인라인 스타일로 직접 박아버리면 html2canvas가 파싱할 필요 없이 패스함다.
               const val = style[prop];
-              if (val && (val.includes('okl') || val.includes('var'))) {
-                if (el.classList.contains('bg-tech-purple')) el.style[prop] = '#BF40BF';
-                else if (el.classList.contains('bg-tech-blue')) el.style[prop] = '#007AFF';
-                else if (el.classList.contains('text-tech-purple')) el.style[prop] = '#BF40BF';
-                else if (el.classList.contains('text-tech-blue')) el.style[prop] = '#007AFF';
-                else if (el.classList.contains('glass-panel')) el.style[prop] = (prop === 'backgroundColor' ? 'rgba(26, 22, 20, 0.8)' : '#4b3621');
-                else if (val.includes('okl')) el.style[prop] = (prop === 'color' ? '#eae1dd' : '#161311');
+              if (val && (val.includes('okl') || val.includes('var') || val.includes('canvas'))) {
+                el.style[prop] = val;
               }
             });
 
+            // 애니메이션 초기화 (안 하면 투명하게 나옴다)
             if (el.classList.contains('animate-in')) {
               el.style.opacity = '1';
               el.style.transform = 'none';
