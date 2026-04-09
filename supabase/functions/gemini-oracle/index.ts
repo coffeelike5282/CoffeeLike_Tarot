@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
             body: JSON.stringify({
               contents: [{ parts: [{ text: prompt }] }],
               generationConfig: { 
-                max_output_tokens: 2048
+                max_output_tokens: 4096
               }
             })
           });
