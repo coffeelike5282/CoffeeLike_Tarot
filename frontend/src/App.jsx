@@ -201,7 +201,7 @@ function App() {
         onclone: (clonedDoc) => {
           // [v2.8.9] TOTAL CSS STERILIZATION: 외부 링크 차단 및 텍스트 소량 소탕
           const links = clonedDoc.querySelectorAll('link[rel="stylesheet"]');
-          links.forEach(link => link.remove()); // 실시간 파서 공격 통로 차단 (v7 핵심)
+          links.forEach(link => link.remove()); 
 
           const styleTags = clonedDoc.getElementsByTagName('style');
           for (let i = 0; i < styleTags.length; i++) {
@@ -214,12 +214,50 @@ function App() {
 
           const clonedElement = clonedDoc.getElementById('tarot-result-sheet');
           if (clonedElement) {
+            // [v2.9.0] A4 최적화 레이아웃 강제 주입
             clonedElement.style.padding = '40px';
-            clonedElement.style.width = '800px'; 
+            clonedElement.style.width = '794px'; // A4 width at 96dpi
+            clonedElement.style.minHeight = '1123px'; // A4 height at 96dpi
             clonedElement.style.margin = '0 auto';
             clonedElement.style.background = '#161311';
             clonedElement.style.color = '#eae1dd';
+            clonedElement.style.display = 'flex';
+            clonedElement.style.flexDirection = 'column';
             
+            // [v2.9.1] 카드 이미지 콤팩트화 (명함 사이즈)
+            const cardContainer = clonedElement.querySelector('.flex.justify-center.gap-4');
+            if (cardContainer) {
+              cardContainer.style.display = 'flex';
+              cardContainer.style.justifyContent = 'center';
+              cardContainer.style.gap = '30px';
+              cardContainer.style.marginTop = '20px';
+              cardContainer.style.marginBottom = '20px';
+            }
+
+            const imageWrappers = clonedElement.querySelectorAll('.w-24.sm\\:w-32');
+            imageWrappers.forEach(w => {
+              w.style.width = '120px'; // 콤팩트 크기로 고정
+              w.style.height = 'auto';
+              w.style.aspectRatio = '9/16';
+              w.style.border = '2px solid rgba(139, 92, 246, 0.4)';
+            });
+
+            // [v2.9.2] 텍스트 가독성 최적화
+            const mainTitle = clonedElement.querySelector('h2.text-3xl');
+            if (mainTitle) {
+              mainTitle.style.fontSize = '28px';
+              mainTitle.style.marginTop = '10px';
+            }
+
+            const summaryBox = clonedElement.querySelector('.p-5.bg-tech-purple\\/10');
+            if (summaryBox) {
+              summaryBox.style.padding = '20px';
+              summaryBox.style.marginTop = '20px';
+              const summaryText = summaryBox.querySelector('p.text-xl');
+              if (summaryText) summaryText.style.fontSize = '18px';
+            }
+
+            // [v2.8.3] 클론된 문서의 이미지들을 준비된 Base64로 강제 교체
             const summaryImages = clonedElement.querySelectorAll('img');
             if (summaryImages.length >= 1 && img1Data) summaryImages[0].src = img1Data;
             if (summaryImages.length >= 2 && img2Data) summaryImages[1].src = img2Data;
@@ -264,15 +302,22 @@ function App() {
       });
 
       const pdfImgData = canvas.toDataURL('image/png', 1.0);
+      // [v2.9.5] A4 표준 규격 PDF 생성 진화
       const pdf = new jsPDF({
         orientation: 'portrait',
-        unit: 'px',
-        format: [canvas.width, canvas.height] 
+        unit: 'mm',
+        format: 'a4'
       });
 
-      pdf.addImage(pdfImgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      // [v2.8.5] 큰형님표 파일명 포맷터 (YYYYMMDD 형식)
+      // 캔버스를 A4 너비에 맞게 비율 조정
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(pdfImgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      
       const now = new Date();
       const dateStr = now.getFullYear() + 
                       String(now.getMonth() + 1).padStart(2, '0') + 
