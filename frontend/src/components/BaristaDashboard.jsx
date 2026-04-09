@@ -177,6 +177,15 @@ const BaristaDashboard = ({ onLogout }) => {
 
       } catch (err) {
         console.error('AI Oracle Error:', err);
+        
+        // AI 실패 시 DB에 에러 기록 (고객 화면 무한 대기 방지)
+        await supabase
+          .from('tb_tarot_request')
+          .update({ 
+            ai_tarot_result: JSON.stringify({ isError: true, message: err.message })
+          })
+          .eq('req_id', id);
+
         alert(err.message || 'AI 해설 생성 중 사고가 났슴다!');
       } finally {
         setIsGenerating(prev => ({ ...prev, [id]: false }));

@@ -120,7 +120,7 @@ export const generateAIInterpretation = async (question, card1, card2, engine = 
     
     // 과부하 에러 시 사용자 친화적인 안내 추가
     if (userMsg.includes('high demand') || userMsg.includes('과부하')) {
-      userMsg = "구글 서버가 지금 너무 바쁩니다! 30초 정도만 숨 고르고 다시 시도해 주십쇼, 사장님!";
+      userMsg = "구글 서버가 지금 너무 바쁩니다! 1분 정도만 숨 고르고 다시 시도해 주십쇼, 사장님!";
     }
 
     throw new Error("사장님, " + userMsg);

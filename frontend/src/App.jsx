@@ -112,9 +112,7 @@ function App() {
 
       if (error) {
         console.error('RPC Error:', error.message);
-        alert(error.message || '요청 중 오류가 발생했습니다, 큰형님!');
-        setRequestStatus(null);
-        setSelectedCard2(null);
+        setRequestStatus('error');
         return;
       }
 
@@ -124,16 +122,12 @@ function App() {
         setRequestStatus('pending');
       } else {
         console.error('Unexpected RPC Result:', data);
-        alert('서버 응답이 올바르지 않슴다, 큰형님!');
-        setRequestStatus(null);
-        setSelectedCard2(null);
+        setRequestStatus('error');
       }
     } catch (err) {
       console.error('Network/Internal Error:', err);
       setIsCasting2(false);
-      setRequestStatus(null);
-      setSelectedCard2(null);
-      alert('통신 중 문제가 발생했슴다. 다시 시도해 주세요!');
+      setRequestStatus('error');
     }
   };
 
@@ -141,6 +135,7 @@ function App() {
     if (cards.length === 0 || !selectedCard) return;
     
     setIsCasting2(true);
+    setRequestStatus('processing_init');
 
     // IP 주소 수집 시도 (실패해도 진행은 하되 null로 처리)
     let clientIp = null;
@@ -164,11 +159,29 @@ function App() {
     performDeepTarotRequest(selectedCard, randomCard, clientIp);
   };
 
-  // Poll for approval status
+  const retryDeepProcess = async () => {
+    if (!selectedCard || !selectedCard2) return;
+    setIsCasting2(true);
+    setRequestStatus('processing_init');
+    performDeepTarotRequest(selectedCard, selectedCard2, null);
+  };
+
+  // Poll for approval status with timeout
   useEffect(() => {
     let interval;
+    let startTime = Date.now();
+    
     if ((requestStatus === 'pending' || requestStatus === 'processing') && requestId) {
       interval = setInterval(async () => {
+        // 60초 넘게 결과가 없으면 에러 처리 (먹통 방지)
+        const elapsed = (Date.now() - startTime) / 1000;
+        if (elapsed > 60) {
+          console.warn('AI Oracle Timeout: 60 seconds elapsed without result.');
+          setRequestStatus('error');
+          clearInterval(interval);
+          return;
+        }
+
         const { data } = await supabase
           .from('tb_tarot_request')
           .select('status, ai_tarot_result')
@@ -180,25 +193,36 @@ function App() {
           if (!data.ai_tarot_result) {
             if (requestStatus !== 'processing') {
               setRequestStatus('processing');
-              // 진동 알림 (지원되는 기기에서만)
+              // 진동 알림
               if ("vibrate" in navigator) {
                 navigator.vibrate([200, 100, 200]);
               }
             }
           } else {
-            // AI 결과까지 도착함 (Interpretation Done)
+            // AI 결과까지 도착함
             try {
-              const parsedResult = typeof data.ai_tarot_result === 'string' 
+              const resObj = typeof data.ai_tarot_result === 'string' 
                 ? JSON.parse(data.ai_tarot_result) 
                 : data.ai_tarot_result;
               
-              setDeepResult(parsedResult);
+              // 에러 객체가 들어온 경우 (Barista Dashboard에서 명시적으로 보낸 에러)
+              if (resObj.isError) {
+                setRequestStatus('error');
+                clearInterval(interval);
+                return;
+              }
+
+              setDeepResult(resObj);
               setRequestStatus('approved');
               clearInterval(interval);
             } catch (e) {
               console.error('JSON Parsing Error for AI result:', e);
             }
           }
+        } else if (data && data.status === 2) {
+          // 거절됨
+          setRequestStatus('rejected');
+          clearInterval(interval);
         }
       }, 3000);
     }
@@ -305,9 +329,9 @@ function App() {
                 </footer>
               </div>
             </main>
-          ) : (requestStatus === 'pending' || isCasting2) ? (
+          ) : (requestStatus === 'pending' || isCasting2 || requestStatus === 'processing_init' || requestStatus === 'error') ? (
             <main className="w-full flex-1 flex flex-col items-center justify-center gap-6 sm:gap-10 animate-in fade-in zoom-in duration-500 mx-auto">
-              <div className="glass-panel px-4 py-6 sm:px-6 sm:py-10 flex flex-col items-center justify-center gap-10 shadow-2xl relative overflow-hidden">
+              <div className="glass-panel px-4 py-6 sm:px-6 sm:py-10 flex flex-col items-center justify-center gap-10 shadow-2xl relative overflow-hidden min-h-[500px]">
                 {/* Branding in Wait Screen */}
                 <div className="flex flex-col items-center gap-4 mb-2 w-full text-center">
                   <div className="p-3 bg-coffee-dark/50 rounded-full border border-coffee-light/10 shadow-lg glow-coffee scale-90">
@@ -316,7 +340,37 @@ function App() {
                   <h1 className="text-lg sm:text-xl font-black text-white tracking-widest uppercase italic bg-clip-text text-transparent bg-gradient-to-r from-coffee-light to-white w-full text-center">COFFEELIKE TAROT</h1>
                 </div>
 
-                {isCasting2 ? (
+                {requestStatus === 'error' ? (
+                  <div className="flex flex-col items-center gap-8 py-6 w-full animate-in fade-in duration-500">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-16 h-16 bg-red-500/20 border border-red-500/40 rounded-full flex items-center justify-center">
+                        <RefreshCcw className="text-red-400 w-8 h-8" />
+                      </div>
+                      <h2 className="text-xl font-black text-white uppercase tracking-tighter italic">운명의 연결이 잠시 끊겼슴다</h2>
+                    </div>
+                    
+                    <p className="text-coffee-light/80 text-sm sm:text-base leading-relaxed font-bold max-w-[320px] text-center">
+                      영적 주파수 정렬 중에 약간의 정체가 발생했슴다.<br/>
+                      걱정 마십쇼, 큰형님! 카드는 그대로 있으니<br/>
+                      <span className="text-tech-blue font-black underline underline-offset-4 decoration-2">아래 지팡이를 다시 휘둘러서</span><br/>
+                      마스터를 재촉해 보겠슴다!
+                    </p>
+
+                    <button 
+                      onClick={retryDeepProcess} 
+                      className="w-full max-w-[280px] bg-tech-blue hover:bg-white text-white hover:text-black font-black py-4 rounded-2xl text-lg uppercase tracking-[0.2em] transition-all shadow-2xl active:scale-[0.98] flex items-center justify-center gap-3 group"
+                    >
+                      <Zap size={20} className="group-hover:animate-bounce" /> 다시 시도 (Retry)
+                    </button>
+
+                    <button 
+                       onClick={() => { setRequestStatus(null); setSelectedCard(null); setSelectedCard2(null); }}
+                       className="text-[10px] text-coffee-light/30 font-bold uppercase tracking-widest hover:text-white transition-colors"
+                    >
+                      상담 취소하고 처음으로
+                    </button>
+                  </div>
+                ) : (isCasting2 || requestStatus === 'processing_init') ? (
                   <div className="flex flex-col items-center gap-6 py-10">
                     <div className="relative">
                       <Loader2 className="animate-spin text-tech-purple w-16 h-16" />
@@ -401,7 +455,7 @@ function App() {
                   <p className="text-coffee-light/80 text-sm sm:text-base leading-relaxed font-bold max-w-[320px]">
                     운명의 실타래가 정교하게 엮어지고 있슴다.<br/>
                     <span className="text-tech-purple decoration-2">{selectedCard.name} & {selectedCard2.name}</span> 의<br/>
-                    깊은 진실을 위해 최대 30초 정도 소요될 수 있슴다.
+                    깊은 진실을 위해 최대 1분 정도 소요될 수 있슴다.
                   </p>
                   <p className="text-coffee-light/40 text-[10px] animate-pulse">마스터가 카드 한 장 한 장에 온 마음을 다해 통찰을 불어넣는 중임다...</p>
                 </div>
