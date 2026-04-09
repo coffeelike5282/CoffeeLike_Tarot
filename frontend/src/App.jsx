@@ -145,6 +145,28 @@ function App() {
     try {
       setIsSavingPDF(true);
       
+      // [v2.8.2] 이미지실종 사건 종결을 위한 Base64 선납제 필살기
+      const getBase64 = async (url) => {
+        try {
+          const res = await fetch(url, { mode: 'cors' });
+          const blob = await res.blob();
+          return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+          });
+        } catch (e) {
+          console.warn('Base64 conversion failed, fallback to original:', e);
+          return url;
+        }
+      };
+
+      // 카드 이미지들을 미리 Base64로 구워버림
+      const [img1Data, img2Data] = await Promise.all([
+        selectedCard ? getBase64(selectedCard.image_url) : Promise.resolve(null),
+        selectedCard2 ? getBase64(selectedCard2.image_url) : Promise.resolve(null)
+      ]);
+
       // [v2.6.8] 모든 이미지 로딩 대기
       const images = Array.from(element.querySelectorAll('img'));
       const bgImages = Array.from(element.querySelectorAll('*')).filter(el => {
@@ -168,11 +190,8 @@ function App() {
       ];
       
       await Promise.all(imagePromises);
-      // 추가 여유 시간 확보
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 800)); // 로딩 여유 시간 증표
 
-      // [v2.6.11] oklab/oklch 정밀 타격 쉴드
-      // html2canvas가 oklab/oklch를 파싱조차 못하므로 캡처 전용 클론에서 속성 직접 주입
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
@@ -187,31 +206,29 @@ function App() {
             clonedElement.style.margin = '0 auto';
             clonedElement.style.background = '#161311';
             clonedElement.style.color = '#eae1dd';
+            
+            // [v2.8.3] 클론된 문서의 이미지들을 준비된 Base64로 강제 교체
+            const summaryImages = clonedElement.querySelectorAll('img');
+            if (summaryImages.length >= 1 && img1Data) summaryImages[0].src = img1Data;
+            if (summaryImages.length >= 2 && img2Data) summaryImages[1].src = img2Data;
           }
 
           const allElements = clonedDoc.querySelectorAll('*');
           allElements.forEach(el => {
             const style = window.getComputedStyle(el);
-            
-            // oklch/oklab을 HEX로 변환하여 인라인 스타일로 박아버림 (html2canvas 파서 우회)
             const colorProps = ['backgroundColor', 'color', 'borderColor', 'outlineColor'];
             colorProps.forEach(prop => {
               const val = style[prop];
               if (val && (val.includes('okl') || val.includes('var'))) {
-                // 테마 색상 강제 매핑
                 if (el.classList.contains('bg-tech-purple')) el.style[prop] = '#BF40BF';
                 else if (el.classList.contains('bg-tech-blue')) el.style[prop] = '#007AFF';
                 else if (el.classList.contains('text-tech-purple')) el.style[prop] = '#BF40BF';
                 else if (el.classList.contains('text-tech-blue')) el.style[prop] = '#007AFF';
                 else if (el.classList.contains('glass-panel')) el.style[prop] = (prop === 'backgroundColor' ? 'rgba(26, 22, 20, 0.8)' : '#4b3621');
-                else if (val.includes('okl')) {
-                    // 알 수 없는 oklch는 기본 어두운 색이나 텍스트 색으로 치환
-                    el.style[prop] = (prop === 'color' ? '#eae1dd' : '#161311');
-                }
+                else if (val.includes('okl')) el.style[prop] = (prop === 'color' ? '#eae1dd' : '#161311');
               }
             });
 
-            // 필터 및 애니메이션 고정
             if (el.classList.contains('animate-in')) {
               el.style.opacity = '1';
               el.style.transform = 'none';
@@ -222,20 +239,28 @@ function App() {
         }
       });
 
-      const imgData = canvas.toDataURL('image/png', 1.0);
+      const pdfImgData = canvas.toDataURL('image/png', 1.0);
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'px',
         format: [canvas.width, canvas.height] 
       });
 
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-      pdf.save(`CoffeeLike_Tarot_Oracle_${new Date().getTime()}.pdf`);
+      pdf.addImage(pdfImgData, 'PNG', 0, 0, canvas.width, canvas.height);
       
-      console.log('✅ 신탁 PDF 저장 완료! (v2.6.8)');
+      // [v2.8.5] 큰형님표 파일명 포맷터 (YYYYMMDD 형식)
+      const now = new Date();
+      const dateStr = now.getFullYear() + 
+                      String(now.getMonth() + 1).padStart(2, '0') + 
+                      String(now.getDate()).padStart(2, '0');
+      const serial = String(now.getTime()).slice(-7);
+      
+      pdf.save(`COFFEELIKE_TAROT_ORACLE_${dateStr}_${serial}.pdf`);
+      
+      console.log('✅ 신탁 PDF 저장 완료! (v2.8.5)');
     } catch (error) {
-      console.error('❌ PDF 저장 실패 상세:', error);
-      alert('신령님의 말씀을 기록하는 데 실패했슴다! 사유: ' + (error.message || '알 수 없는 영적 정체'));
+      console.error('❌ PDF 저장 실패:', error);
+      alert('기록 실패! 사유: ' + (error.message || '알 수 없는 영적 저체'));
     } finally {
       setIsSavingPDF(false);
     }
