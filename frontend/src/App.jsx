@@ -137,7 +137,7 @@ function App() {
 
   const [isSavingPDF, setIsSavingPDF] = useState(false);
 
-  // 📄 [v2.5] 신탁 결과 PDF 저장 기능
+  // 📄 [v2.6.3] 신탁 결과 PDF 저장 기능 (oklab 에러 방어)
   const saveAsPDF = async () => {
     const element = document.getElementById('tarot-result-sheet');
     if (!element) return;
@@ -151,6 +151,27 @@ function App() {
         useCORS: true,
         backgroundColor: '#0a0a0a', // 배경색 지정
         logging: false,
+        onclone: (clonedDoc) => {
+          // [v2.6.3] oklab/oklch 등 최신 CSS 색상 함수로 인한 파싱 에러 방지용 전처리
+          const clonedElement = clonedDoc.getElementById('tarot-result-sheet');
+          if (clonedElement) {
+            // 모든 하위 요소의 스타일을 강제로 표준 방식으로 고정 시도
+            const allElements = clonedElement.getElementsByTagName("*");
+            for (let i = 0; i < allElements.length; i++) {
+              const el = allElements[i];
+              const style = window.getComputedStyle(el);
+              // oklab 에러가 주로 발생하는 텍스트 색상 및 배경색을 안전한 색상으로 덮어씀
+              if (style.color.includes('okl') || style.color === 'initial') {
+                el.style.color = '#ffffff';
+              }
+              if (style.backgroundColor.includes('okl')) {
+                el.style.backgroundColor = 'transparent';
+              }
+            }
+            clonedElement.style.color = '#ffffff';
+            clonedElement.style.backgroundColor = '#0a0a0a';
+          }
+        }
       });
 
       const imgData = canvas.toDataURL('image/png');
@@ -169,8 +190,8 @@ function App() {
       
       console.log('✅ 신탁 PDF 저장 완료!');
     } catch (error) {
-      console.error('❌ PDF 저장 실패:', error);
-      alert('신령님의 말씀을 기록하는 데 실패했슴다! 다시 시도해보십쇼.');
+      console.error('❌ PDF 저장 실패 상세:', error);
+      alert('신령님의 말씀을 기록하는 데 실패했슴다! (사유: ' + error.message + ')');
     } finally {
       setIsSavingPDF(false);
     }
@@ -556,10 +577,23 @@ function App() {
                 </div>
               </div>
               <div className="glass-panel px-4 py-6 sm:px-6 sm:py-10 flex flex-col gap-8 shadow-2xl relative overflow-hidden text-center">
-                <div id="tarot-result-sheet" className="flex flex-col gap-6 sm:gap-10 pb-6">
+                <div id="tarot-result-sheet" style={{ color: '#ffffff', backgroundColor: '#0a0a0a' }} className="flex flex-col gap-6 sm:gap-10 pb-6 px-4">
                   <div className="flex flex-col items-center gap-2">
                     <div className="px-6 py-2 bg-tech-purple/20 border border-tech-purple/40 rounded-full text-lg text-tech-purple font-black tracking-[0.2em] uppercase">심층 조합 결과</div>
-                    <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter mt-2 group-hover:text-tech-purple transition-colors italic">운명의 신탁</h2>
+                    
+                    {/* [v2.6.3] 복구된 카드 이름 및 요약 정보 */}
+                    <div className="flex flex-col items-center gap-1 mt-4">
+                      <p className="text-tech-blue font-black tracking-[widest] uppercase text-sm sm:text-base">
+                        {selectedCard?.name} & {selectedCard2?.name}
+                      </p>
+                      {deepResult?.summary && (
+                        <p className="text-white/60 font-medium text-xs sm:text-sm italic mt-1 max-w-[300px] break-keep">
+                          "{deepResult.summary}"
+                        </p>
+                      )}
+                    </div>
+
+                    <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter mt-4 group-hover:text-tech-purple transition-colors italic">운명의 신탁</h2>
                     <div className="w-12 h-1 bg-tech-purple/40 rounded-full mt-2" />
                   </div>
 
@@ -571,7 +605,8 @@ function App() {
                         if (typeof deepResult === 'string') {
                           content = deepResult;
                         } else if (deepResult && typeof deepResult === 'object') {
-                          content = deepResult.deepInsight || deepResult.interpretation || JSON.stringify(deepResult);
+                          // [v2.6.3] interpretation 필드가 주 필드임다
+                          content = deepResult.interpretation || deepResult.deepInsight || JSON.stringify(deepResult);
                         }
                         
                         return content.split('\n\n').filter(p => p.trim()).map((paragraph, idx) => (
