@@ -168,13 +168,11 @@ function App() {
     performDeepTarotRequest(selectedCard, selectedCard2, null);
   };
 
-  // Poll for approval status with timeout & countdown
+  // 🕰️ [v2.2.1] 카운트다운 전용 로직
   useEffect(() => {
-    let interval;
     let countdownInterval;
     
     if ((requestStatus === 'pending' || requestStatus === 'processing') && requestId) {
-      // 카운트다운 로직
       setCountdown(60); 
       setIsExtended(false);
       
@@ -182,12 +180,13 @@ function App() {
         setCountdown(prev => {
           if (prev <= 1) {
             if (!isExtended) {
-              // 60초 만료 시 1회 자동 연장 (30초)
               setIsExtended(true);
               console.log('🔮 영적 주파수 미약... 30초 자동 연장함다!');
               return 30;
             } else {
-              // 연장도 끝났으면 종료
+              // 연장도 끝났으면 종료 및 에러 처리
+              console.warn('AI Oracle Timeout: Final time elapsed.');
+              setRequestStatus('error');
               clearInterval(countdownInterval);
               return 0;
             }
@@ -195,17 +194,18 @@ function App() {
           return prev - 1;
         });
       }, 1000);
+    }
 
+    return () => clearInterval(countdownInterval);
+  }, [requestStatus === 'pending' || requestStatus === 'processing', requestId]); // 시작 시점에만 초기화
+
+  // 📡 [v2.2.1] DB 폴링 전용 로직
+  useEffect(() => {
+    let interval;
+    
+    if ((requestStatus === 'pending' || requestStatus === 'processing') && requestId) {
       interval = setInterval(async () => {
-        // 카운트다운이 0이면 에러 처리 (먹통 방지)
-        if (countdown === 0 && isExtended) {
-          console.warn('AI Oracle Timeout: Extended time elapsed without result.');
-          setRequestStatus('error');
-          clearInterval(interval);
-          clearInterval(countdownInterval);
-          return;
-        }
-
+        // DB 상태 체크
         const { data } = await supabase
           .from('tb_tarot_request')
           .select('status, ai_tarot_result')
@@ -213,51 +213,38 @@ function App() {
           .single();
 
         if (data && data.status === 1) {
-          // 승인됨 (Barista Approved)
           if (!data.ai_tarot_result) {
             if (requestStatus !== 'processing') {
               setRequestStatus('processing');
-              // 진동 알림
-              if ("vibrate" in navigator) {
-                navigator.vibrate([200, 100, 200]);
-              }
+              if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
             }
           } else {
-            // AI 결과까지 도착함
             try {
               const resObj = typeof data.ai_tarot_result === 'string' 
                 ? JSON.parse(data.ai_tarot_result) 
                 : data.ai_tarot_result;
               
-              // 에러 객체가 들어온 경우 (Barista Dashboard에서 명시적으로 보낸 에러)
               if (resObj.isError) {
                 setRequestStatus('error');
                 clearInterval(interval);
-                clearInterval(countdownInterval);
                 return;
               }
 
               setDeepResult(resObj);
               setRequestStatus('approved');
               clearInterval(interval);
-              clearInterval(countdownInterval);
             } catch (e) {
-              console.error('JSON Parsing Error for AI result:', e);
+              console.error('JSON Parsing Error:', e);
             }
           }
         } else if (data && data.status === 2) {
-          // 거절됨
           setRequestStatus('rejected');
           clearInterval(interval);
-          clearInterval(countdownInterval);
         }
       }, 3000);
     }
-    return () => {
-      clearInterval(interval);
-      clearInterval(countdownInterval);
-    };
-  }, [requestStatus, requestId, isExtended, countdown]); // countdown 의존성 추가하여 상태 체크
+    return () => clearInterval(interval);
+  }, [requestStatus, requestId]); // countdown 의존성 제거!
 
   // Handle sequential flipping in approved state
   useEffect(() => {
