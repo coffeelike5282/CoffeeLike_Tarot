@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Coffee, Sparkles, Loader2, RefreshCcw, ChevronRight, Zap, Shield, Moon, CheckCircle2, Download } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -33,7 +33,7 @@ function App() {
   const [isExtended, setIsExtended] = useState(false);
   const { login, user, loading, logout: authLogout } = useAuth();
 
-  // 타로 카드 데이터를 DB에서 가져옵니다.
+  // ?濡?移대뱶 ?곗씠?곕? DB?먯꽌 媛?몄샃?덈떎.
   useEffect(() => {
     const fetchTarotCards = async () => {
       setIsDataLoading(true);
@@ -43,7 +43,7 @@ function App() {
       
       if (error) {
         console.error('Error fetching tarot cards:', error.message);
-        alert('타로 데이터를 불러오는 데 실패했습니다.');
+        alert('?濡??곗씠?곕? 遺덈윭?ㅻ뒗 ???ㅽ뙣?덉뒿?덈떎.');
       } else {
         setCards(data);
       }
@@ -57,7 +57,7 @@ function App() {
     e.preventDefault();
     const fullPhone = `010${phonePart2}${phonePart3}`;
     
-    // 관리자 전용 번호 (01000009999 대응)
+    // 愿由ъ옄 ?꾩슜 踰덊샇 (01000009999 ???
     if (fullPhone === '01000009999') {
       setIsAdminPinModalOpen(true);
       return;
@@ -66,7 +66,7 @@ function App() {
     if (phonePart2.length === 4 && phonePart3.length === 4) {
       login(fullPhone);
     } else {
-      alert('휴대폰 번호 8자리를 모두 입력해주세요!');
+      alert('?대???踰덊샇 8?먮━瑜?紐⑤몢 ?낅젰?댁＜?몄슂!');
     }
   };
 
@@ -91,8 +91,7 @@ function App() {
       setSelectedCard(randomCard);
       setIsCasting(false);
       
-      // 3초 후 자동 뒤집기
-      setTimeout(() => {
+      // 3珥????먮룞 ?ㅼ쭛湲?      setTimeout(() => {
         setFirstCardFlipped(true);
       }, 3000);
     }, 1500);
@@ -109,7 +108,7 @@ function App() {
           p_tarot_card1_name: c1.name,
           p_tarot_card2_name: c2.name,
           p_ip_address: ip,
-          p_question: question // 질문 파라미터 추가
+          p_question: question // 吏덈Ц ?뚮씪誘명꽣 異붽?
         });
 
       setIsCasting2(false);
@@ -137,7 +136,7 @@ function App() {
 
   const [isSavingPDF, setIsSavingPDF] = useState(false);
 
-  // 📄 [v2.6.5] 신탁 결과 PDF 저장 기능 (oklab/oklch 패치 적용)
+  // ?뱞 [v2.5] ?좏긽 寃곌낵 PDF ???湲곕뒫
   const saveAsPDF = async () => {
     const element = document.getElementById('tarot-result-sheet');
     if (!element) return;
@@ -145,97 +144,30 @@ function App() {
     try {
       setIsSavingPDF(true);
       
-      // [v2.6.8] 모든 이미지 로딩 대기
-      const images = Array.from(element.querySelectorAll('img'));
-      const bgImages = Array.from(element.querySelectorAll('*')).filter(el => {
-        const bg = window.getComputedStyle(el).backgroundImage;
-        return bg && bg !== 'none' && bg.startsWith('url');
-      });
-      
-      const imagePromises = [
-        ...images.map(img => img.complete ? Promise.resolve() : new Promise(resolve => {
-          img.onload = resolve;
-          img.onerror = resolve;
-        })),
-        ...bgImages.map(el => new Promise(resolve => {
-          const bg = window.getComputedStyle(el).backgroundImage;
-          const url = bg.slice(4, -1).replace(/"/g, "");
-          const img = new Image();
-          img.src = url;
-          img.onload = resolve;
-          img.onerror = resolve;
-        }))
-      ];
-      
-      await Promise.all(imagePromises);
-      // 추가 여유 시간 확보
-      await new Promise(r => setTimeout(r, 500));
-
-      // [v2.6.11] oklab/oklch 정밀 타격 쉴드
-      // html2canvas가 oklab/oklch를 파싱조차 못하므로 캡처 전용 클론에서 속성 직접 주입
+      // 罹≪쿂 ?덉쭏 ?μ긽???꾪븳 ?듭뀡 ?ㅼ젙
       const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#161311',
-        logging: false,
-        onclone: (clonedDoc) => {
-          const clonedElement = clonedDoc.getElementById('tarot-result-sheet');
-          if (clonedElement) {
-            clonedElement.style.padding = '40px';
-            clonedElement.style.width = '800px'; 
-            clonedElement.style.margin = '0 auto';
-            clonedElement.style.background = '#161311';
-            clonedElement.style.color = '#eae1dd';
-          }
-
-          const allElements = clonedDoc.querySelectorAll('*');
-          allElements.forEach(el => {
-            const style = window.getComputedStyle(el);
-            
-            // oklch/oklab을 HEX로 변환하여 인라인 스타일로 박아버림 (html2canvas 파서 우회)
-            const colorProps = ['backgroundColor', 'color', 'borderColor', 'outlineColor'];
-            colorProps.forEach(prop => {
-              const val = style[prop];
-              if (val && (val.includes('okl') || val.includes('var'))) {
-                // 테마 색상 강제 매핑
-                if (el.classList.contains('bg-tech-purple')) el.style[prop] = '#BF40BF';
-                else if (el.classList.contains('bg-tech-blue')) el.style[prop] = '#007AFF';
-                else if (el.classList.contains('text-tech-purple')) el.style[prop] = '#BF40BF';
-                else if (el.classList.contains('text-tech-blue')) el.style[prop] = '#007AFF';
-                else if (el.classList.contains('glass-panel')) el.style[prop] = (prop === 'backgroundColor' ? 'rgba(26, 22, 20, 0.8)' : '#4b3621');
-                else if (val.includes('okl')) {
-                    // 알 수 없는 oklch는 기본 어두운 색이나 텍스트 색으로 치환
-                    el.style[prop] = (prop === 'color' ? '#eae1dd' : '#161311');
-                }
-              }
-            });
-
-            // 필터 및 애니메이션 고정
-            if (el.classList.contains('animate-in')) {
-              el.style.opacity = '1';
-              el.style.transform = 'none';
-              el.style.visibility = 'visible';
-            }
-            if (style.filter && style.filter !== 'none') el.style.filter = 'none';
-          });
-        }
+        scale: 2, // ?댁긽??2諛?        useCORS: true,
+        backgroundColor: '#0a0a0a', // 諛곌꼍??吏??        logging: false,
       });
 
-      const imgData = canvas.toDataURL('image/png', 1.0);
+      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
         orientation: 'portrait',
-        unit: 'px',
-        format: [canvas.width, canvas.height] 
+        unit: 'mm',
+        format: 'a4'
       });
 
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`CoffeeLike_Tarot_Oracle_${new Date().getTime()}.pdf`);
       
-      console.log('✅ 신탁 PDF 저장 완료! (v2.6.8)');
+      console.log('???좏긽 PDF ????꾨즺!');
     } catch (error) {
-      console.error('❌ PDF 저장 실패 상세:', error);
-      alert('신령님의 말씀을 기록하는 데 실패했슴다! 사유: ' + (error.message || '알 수 없는 영적 정체'));
+      console.error('??PDF ????ㅽ뙣:', error);
+      alert('?좊졊?섏쓽 留먯???湲곕줉?섎뒗 ???ㅽ뙣?덉뒾?? ?ㅼ떆 ?쒕룄?대낫??눥.');
     } finally {
       setIsSavingPDF(false);
     }
@@ -247,7 +179,7 @@ function App() {
     setIsCasting2(true);
     setRequestStatus('processing_init');
 
-    // IP 주소 수집 시도 (실패해도 진행은 하되 null로 처리)
+    // IP 二쇱냼 ?섏쭛 ?쒕룄 (?ㅽ뙣?대룄 吏꾪뻾? ?섎릺 null濡?泥섎━)
     let clientIp = null;
     try {
       const response = await fetch('https://api.ipify.org?format=json');
@@ -257,7 +189,7 @@ function App() {
       console.warn('IP collection failed:', ipErr);
     }
     
-    // 2번째 카드 자동 추첨
+    // 2踰덉㎏ 移대뱶 ?먮룞 異붿꺼
     let randomCard;
     do {
       randomCard = cards[Math.floor(Math.random() * cards.length)];
@@ -265,7 +197,7 @@ function App() {
     
     setSelectedCard2(randomCard);
     
-    // 즉시 서버 요청 수행 (IP 포함)
+    // 利됱떆 ?쒕쾭 ?붿껌 ?섑뻾 (IP ?ы븿)
     performDeepTarotRequest(selectedCard, randomCard, clientIp);
   };
 
@@ -276,11 +208,11 @@ function App() {
     performDeepTarotRequest(selectedCard, selectedCard2, null);
   };
 
-  // 🕰️ [v2.4] 카운트다운 전용 로직 (바리스타 승인 후 시작)
+  // ?빊截?[v2.4] 移댁슫?몃떎???꾩슜 濡쒖쭅 (諛붾━?ㅽ? ?뱀씤 ???쒖옉)
   useEffect(() => {
     let countdownInterval;
     
-    // 바리스타가 승인하여 'processing' 상태가 될 때부터 시계가 돌아감다!
+    // 諛붾━?ㅽ?媛 ?뱀씤?섏뿬 'processing' ?곹깭媛 ???뚮????쒓퀎媛 ?뚯븘媛먮떎!
     if (requestStatus === 'processing' && requestId) {
       setCountdown(60); 
       setIsExtended(false);
@@ -289,13 +221,13 @@ function App() {
         setCountdown(prev => {
           if (prev <= 1) {
             if (!isExtended) {
-              // 60초 만료 시 1회 자동 연장 (60초로 대폭 확대!)
+              // 60珥?留뚮즺 ??1???먮룞 ?곗옣 (60珥덈줈 ????뺣?!)
               setIsExtended(true);
-              console.log('🔮 영적 주파수 미약... 60초 자동 연장함다!');
+              console.log('?뵰 ?곸쟻 二쇳뙆??誘몄빟... 60珥??먮룞 ?곗옣?⑤떎!');
               return 60;
             } else {
-              // 연장(60초)까지 다 썼으면 종료 및 에러 처리
-              // [v2.6] 레이스 컨디션 방지: 이미 성공했으면 에러로 덮어쓰지 않음
+              // ?곗옣(60珥?源뚯? ???쇱쑝硫?醫낅즺 諛??먮윭 泥섎━
+              // [v2.6] ?덉씠??而⑤뵒??諛⑹?: ?대? ?깃났?덉쑝硫??먮윭濡???뼱?곗? ?딆쓬
               setRequestStatus(current => (current === 'approved' ? current : 'error'));
               clearInterval(countdownInterval);
               return 0;
@@ -305,21 +237,21 @@ function App() {
         });
       }, 1000);
     } else if (requestStatus === 'pending') {
-      // 대기 중일 때는 카운트다운을 표시하지 않거나 초기화 상태 유지
+      // ?湲?以묒씪 ?뚮뒗 移댁슫?몃떎?댁쓣 ?쒖떆?섏? ?딄굅??珥덇린???곹깭 ?좎?
       setCountdown(60);
       setIsExtended(false);
     }
 
     return () => clearInterval(countdownInterval);
-  }, [requestStatus, requestId]); // requestStatus 변화에 민감하게 반응함다!
+  }, [requestStatus, requestId]); // requestStatus 蹂?붿뿉 誘쇨컧?섍쾶 諛섏쓳?⑤떎!
 
-  // 📡 [v2.2.1] DB 폴링 전용 로직
+  // ?뱻 [v2.2.1] DB ?대쭅 ?꾩슜 濡쒖쭅
   useEffect(() => {
     let interval;
     
     if ((requestStatus === 'pending' || requestStatus === 'processing') && requestId) {
       interval = setInterval(async () => {
-        // DB 상태 체크
+        // DB ?곹깭 泥댄겕
         const { data } = await supabase
           .from('tb_tarot_request')
           .select('status, ai_tarot_result')
@@ -358,7 +290,7 @@ function App() {
       }, 3000);
     }
     return () => clearInterval(interval);
-  }, [requestStatus, requestId]); // countdown 의존성 제거!
+  }, [requestStatus, requestId]); // countdown ?섏〈???쒓굅!
 
   // Handle sequential flipping in approved state
   useEffect(() => {
@@ -422,8 +354,8 @@ function App() {
 
                 <form onSubmit={handleLogin} className="space-y-8 w-full flex flex-col items-center">
                   <div className="space-y-2 text-center w-full">
-                    <h2 className="font-heading text-xl sm:text-2xl font-bold text-white tracking-tight">시크릿 타로룸 접속</h2>
-                    <p className="text-sm text-coffee-light/40 font-medium">휴대폰 번호를 입력하고 운명을 확인하세요.</p>
+                    <h2 className="font-heading text-xl sm:text-2xl font-bold text-white tracking-tight">?쒗겕由??濡쒕８ ?묒냽</h2>
+                    <p className="text-sm text-coffee-light/40 font-medium">?대???踰덊샇瑜??낅젰?섍퀬 ?대챸???뺤씤?섏꽭??</p>
                   </div>
                   <div className="flex items-center justify-center gap-1 sm:gap-3 w-full">
                     <div className="bg-coffee-dark/50 border border-coffee-light/10 rounded-xl py-3 px-2 sm:py-4 sm:px-3 text-lg sm:text-xl font-heading text-white/50 w-16 sm:w-20 text-center">
@@ -452,11 +384,11 @@ function App() {
                     />
                   </div>
                   <button disabled={loading} className="w-full max-w-[400px] bg-coffee-light text-coffee-dark font-black text-lg py-4 sm:py-5 rounded-2xl transition-all hover:bg-white active:scale-[0.98] shadow-lg shadow-black/20 flex items-center justify-center gap-3">
-                    {loading ? <Loader2 className="animate-spin" /> : <>운명의 문 열기 <ChevronRight size={20} /></>}
+                    {loading ? <Loader2 className="animate-spin" /> : <>?대챸??臾??닿린 <ChevronRight size={20} /></>}
                   </button>
                 </form>
                 <footer className="mt-6 text-[8px] sm:text-[9px] text-coffee-light/10 font-medium uppercase tracking-[0.3em] text-center w-full">
-                  © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
+                  짤 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
                 </footer>
               </div>
             </main>
@@ -477,28 +409,28 @@ function App() {
                       <div className="w-16 h-16 bg-red-500/20 border border-red-500/40 rounded-full flex items-center justify-center">
                         <RefreshCcw className="text-red-400 w-8 h-8" />
                       </div>
-                      <h2 className="text-xl font-black text-white uppercase tracking-tighter italic">운명의 연결이 잠시 끊겼슴다</h2>
+                      <h2 className="text-xl font-black text-white uppercase tracking-tighter italic">?대챸???곌껐???좎떆 ?딄꼈?대떎</h2>
                     </div>
                     
                     <p className="text-coffee-light/80 text-sm sm:text-base leading-relaxed font-bold max-w-[320px] text-center">
-                      영적 주파수 정렬 중에 약간의 정체가 발생했슴다.<br/>
-                      걱정 마십쇼, 큰형님! 카드는 그대로 있으니<br/>
-                      <span className="text-tech-blue font-black underline underline-offset-4 decoration-2">아래 지팡이를 다시 휘둘러서</span><br/>
-                      마스터를 재촉해 보겠슴다!
+                      ?곸쟻 二쇳뙆???뺣젹 以묒뿉 ?쎄컙???뺤껜媛 諛쒖깮?덉뒾??<br/>
+                      嫄깆젙 留덉떗?? ?고삎?? 移대뱶??洹몃?濡??덉쑝??br/>
+                      <span className="text-tech-blue font-black underline underline-offset-4 decoration-2">?꾨옒 吏?≪씠瑜??ㅼ떆 ?섎몮?ъ꽌</span><br/>
+                      留덉뒪?곕? ?ъ큺??蹂닿쿋?대떎!
                     </p>
 
                     <button 
                       onClick={retryDeepProcess} 
                       className="w-full max-w-[280px] bg-tech-blue hover:bg-white text-white hover:text-black font-black py-4 rounded-2xl text-lg uppercase tracking-[0.2em] transition-all shadow-2xl active:scale-[0.98] flex items-center justify-center gap-3 group"
                     >
-                      <Zap size={20} className="group-hover:animate-bounce" /> 다시 시도 (Retry)
+                      <Zap size={20} className="group-hover:animate-bounce" /> ?ㅼ떆 ?쒕룄 (Retry)
                     </button>
 
                     <button 
                        onClick={() => { setRequestStatus(null); setSelectedCard(null); setSelectedCard2(null); }}
                        className="text-[10px] text-coffee-light/30 font-bold uppercase tracking-widest hover:text-white transition-colors"
                     >
-                      상담 취소하고 처음으로
+                      ?곷떞 痍⑥냼?섍퀬 泥섏쓬?쇰줈
                     </button>
                   </div>
                 ) : (isCasting2 || requestStatus === 'processing_init') ? (
@@ -507,7 +439,7 @@ function App() {
                       <Loader2 className="animate-spin text-tech-purple w-16 h-16" />
                       <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-tech-purple w-6 h-6 animate-pulse" />
                     </div>
-                    <h2 className="text-xl font-black text-tech-purple uppercase tracking-[0.2em] animate-pulse">운명의 향기를 조합 중...</h2>
+                    <h2 className="text-xl font-black text-tech-purple uppercase tracking-[0.2em] animate-pulse">?대챸???κ린瑜?議고빀 以?..</h2>
                   </div>
                 ) : (
                   <>
@@ -519,20 +451,20 @@ function App() {
                       </div>
                     </div>
                     <div className="space-y-4 text-center">
-                      <h2 className="font-heading text-xl sm:text-2xl font-black text-white uppercase tracking-tighter italic">바리스타 승인 대기 중</h2>
+                      <h2 className="font-heading text-xl sm:text-2xl font-black text-white uppercase tracking-tighter italic">諛붾━?ㅽ? ?뱀씤 ?湲?以?/h2>
                       <p className="text-coffee-light/60 text-sm sm:text-base leading-relaxed mx-auto font-bold max-w-[280px]">
-                        카운터 바리스타에게 <span className="text-tech-blue font-black underline underline-offset-4 decoration-2">"{waitNumber}번 대기 중"</span>이라고 말씀해주세요. 
+                        移댁슫??諛붾━?ㅽ??먭쾶 <span className="text-tech-blue font-black underline underline-offset-4 decoration-2">"{waitNumber}踰??湲?以?</span>?대씪怨?留먯??댁＜?몄슂. 
                       </p>
                     </div>
                     <div className="w-full p-5 bg-black/30 rounded-2xl border border-white/5 text-[10px] text-coffee-light/40 flex justify-between items-center font-mono">
-                      <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-tech-blue animate-pulse" /> 동기화 중</span>
+                      <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-tech-blue animate-pulse" /> ?숆린??以?/span>
                       <span>ID: {requestId}</span>
                     </div>
                   </>
                 )}
                 
                 <footer className="mt-4 text-[8px] sm:text-[9px] text-coffee-light/10 font-medium uppercase tracking-[0.3em] text-center w-full">
-                  © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
+                  짤 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
                 </footer>
               </div>
             </main>
@@ -581,77 +513,64 @@ function App() {
 
                   <div className="space-y-4 text-center">
                     <div className="inline-flex items-center gap-2 px-4 py-1 bg-tech-purple/20 rounded-full border border-tech-purple/30 text-[10px] font-black text-tech-purple tracking-widest uppercase animate-pulse">
-                      <CheckCircle2 size={12} /> 승인 완료
+                      <CheckCircle2 size={12} /> ?뱀씤 ?꾨즺
                     </div>
                     <h2 className="font-heading text-xl sm:text-2xl font-black text-white uppercase tracking-tighter italic">
-                      {isExtended ? '깊은 영적 통찰을 끌어오는 중' : '마스터의 영적 통찰을 기다리는 중'}
+                      {isExtended ? '源딆? ?곸쟻 ?듭같???뚯뼱?ㅻ뒗 以? : '留덉뒪?곗쓽 ?곸쟻 ?듭같??湲곕떎由щ뒗 以?}
                     </h2>
                     <p className="text-coffee-light/80 text-sm sm:text-base leading-relaxed font-bold max-w-[320px]">
                       {isExtended 
-                        ? '영적 주파수를 정밀하게 조정하고 있슴다. 조금만 더 인내심을 갖고 기다려주십쇼.' 
-                        : '운명의 실타래가 정교하게 엮어지고 있슴다.'}
+                        ? '?곸쟻 二쇳뙆?섎? ?뺣??섍쾶 議곗젙?섍퀬 ?덉뒾?? 議곌툑留????몃궡?ъ쓣 媛뽮퀬 湲곕떎?ㅼ＜??눥.' 
+                        : '?대챸???ㅽ??섍? ?뺢탳?섍쾶 ??뼱吏怨??덉뒾??'}
                       <br/>
-                      <span className="text-tech-purple decoration-2">{selectedCard.name} & {selectedCard2.name}</span> 의<br/>
-                      깊은 진실을 위해 정성을 다하는 중임다.
+                      <span className="text-tech-purple decoration-2">{selectedCard.name} & {selectedCard2.name}</span> ??br/>
+                      源딆? 吏꾩떎???꾪빐 ?뺤꽦???ㅽ븯??以묒엫??
                     </p>
                     {isExtended && (
-                      <p className="text-tech-blue font-black text-[11px] animate-bounce uppercase tracking-widest">⚠️ 영적 통로 개방 시간 연장됨</p>
+                      <p className="text-tech-blue font-black text-[11px] animate-bounce uppercase tracking-widest">?좑툘 ?곸쟻 ?듬줈 媛쒕갑 ?쒓컙 ?곗옣??/p>
                     )}
-                    <p className="text-coffee-light/40 text-[10px] animate-pulse">마스터가 카드 한 장 한 장에 온 마음을 다해 통찰을 불어넣는 중임다...</p>
+                    <p className="text-coffee-light/40 text-[10px] animate-pulse">留덉뒪?곌? 移대뱶 ???????μ뿉 ??留덉쓬???ㅽ빐 ?듭같??遺덉뼱?ｋ뒗 以묒엫??..</p>
                   </div>
 
                 <footer className="mt-4 text-[8px] sm:text-[9px] text-coffee-light/10 font-medium uppercase tracking-[0.3em] text-center w-full">
-                  © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
+                  짤 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
                 </footer>
               </div>
             </main>
           ) : (requestStatus === 'approved' && deepResult) ? (
             <main className="w-full flex-1 flex flex-col items-center justify-center gap-4 sm:gap-6 animate-in slide-in-from-bottom duration-1000 pb-10 mx-auto">
-              <div className="flex flex-row gap-2 sm:gap-12 mb-12 sm:mb-20 scale-[0.8] sm:scale-105 items-start justify-center w-full max-w-full overflow-hidden">
-                <div className="flex flex-col items-center gap-6">
-                  <span className="text-xs sm:text-xl text-white/30 font-black uppercase tracking-[0.3em]">현재 실타래</span>
+              <div className="flex gap-2 sm:gap-4 mb-4 scale-75 sm:scale-100">
+                <div className="flex flex-col items-center gap-4">
+                  <span className="text-xl sm:text-2xl text-white font-black uppercase tracking-[0.1em] mb-1">?꾩옱 ?ㅽ???/span>
                   <TarotCard card={selectedCard} backImage={backImage} size="medium" isFlipped={isResultCard1Flipped} />
                 </div>
-                <div className="hidden lg:flex flex-col items-center justify-center pt-32">
-                  <div className="w-16 h-px bg-tech-purple/20 animate-pulse" />
+                <div className="flex flex-col items-center justify-center pt-8">
+                  <div className="w-8 h-px bg-tech-purple animate-pulse" />
                 </div>
-                <div className="flex flex-col items-center gap-6">
-                  <span className="text-xs sm:text-xl text-tech-purple/30 font-black uppercase tracking-[0.3em]">미래 향기</span>
+                <div className="flex flex-col items-center gap-4">
+                  <span className="text-xl sm:text-2xl text-tech-purple font-black uppercase tracking-[0.1em] mb-1">誘몃옒 ?κ린</span>
                   <TarotCard card={selectedCard2} backImage={backImage} size="medium" isFlipped={isResultCard2Flipped} />
                 </div>
               </div>
               <div className="glass-panel px-4 py-6 sm:px-6 sm:py-10 flex flex-col gap-8 shadow-2xl relative overflow-hidden text-center">
                 <div id="tarot-result-sheet" className="flex flex-col gap-6 sm:gap-10 pb-6">
                   <div className="flex flex-col items-center gap-2">
-                    <div className="px-6 py-2 bg-tech-purple/20 border border-tech-purple/40 rounded-full text-lg text-tech-purple font-black tracking-[0.2em] uppercase">심층 조합 결과</div>
-                    <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter mt-2 group-hover:text-tech-purple transition-colors italic">운명의 신탁</h2>
+                    <div className="px-6 py-2 bg-tech-purple/20 border border-tech-purple/40 rounded-full text-lg text-tech-purple font-black tracking-[0.2em] uppercase">?ъ링 議고빀 寃곌낵</div>
+                    <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter mt-2 group-hover:text-tech-purple transition-colors italic">?대챸???좏긽</h2>
                     <div className="w-12 h-1 bg-tech-purple/40 rounded-full mt-2" />
                   </div>
 
-                   <div className="text-left space-y-6 sm:space-y-8">
-                    {/* [v2.6.6] 요약문(summary) 강조 표시 섹션 */}
-                    {deepResult && (deepResult.mainFortune || deepResult.summary) && (
-                      <div className="p-5 bg-tech-purple/10 border-l-4 border-tech-purple rounded-r-2xl animate-in slide-in-from-left duration-1000">
-                        <h4 className="text-xs font-black text-tech-purple uppercase tracking-widest mb-1">한 줄 요약 (Oracle Summary)</h4>
-                        <p className="text-xl sm:text-2xl text-white font-black leading-tight italic break-keep">
-                          "{deepResult.mainFortune || deepResult.summary}"
-                        </p>
-                      </div>
-                    )}
-
+                  <div className="text-left space-y-6 sm:space-y-8">
                     <div className="prose prose-invert max-w-none">
                       {(() => {
-                        // [v2.6.6] deepResult 데이터 구조 완벽 대응!
+                        // [v2.6] deepResult媛 媛앹껜???섎룄, 臾몄옄?댁씪 ?섎룄 ?덈뒗 ?곹솴 ?꾨꼍 ???
                         let content = "";
                         if (typeof deepResult === 'string') {
                           content = deepResult;
                         } else if (deepResult && typeof deepResult === 'object') {
-                          // deepInsight(라마 호환) 또는 interpretation(제미나이 호환) 우선 추출
-                          content = deepResult.deepInsight || deepResult.interpretation || "";
+                          content = deepResult.deepInsight || deepResult.interpretation || JSON.stringify(deepResult);
                         }
                         
-                        if (!content) return <p className="text-coffee-light/40 italic">신령님의 말씀이 구름에 가려졌슴다...</p>;
-
                         return content.split('\n\n').filter(p => p.trim()).map((paragraph, idx) => (
                           <p key={idx} className="text-lg sm:text-xl text-white/90 font-bold leading-relaxed break-keep tracking-tight bg-white/[0.02] p-4 rounded-2xl border border-white/5 hover:border-tech-purple/20 transition-all">
                             {paragraph.trim()}
@@ -673,7 +592,7 @@ function App() {
                     ) : (
                       <Download size={20} />
                     )}
-                    {isSavingPDF ? 'PDF 저장 중...' : '결과 PDF 저장'}
+                    {isSavingPDF ? 'PDF ???以?..' : '寃곌낵 PDF ???}
                   </button>
 
                   <button 
@@ -688,11 +607,11 @@ function App() {
                     }} 
                     className="w-full bg-white/10 text-white font-black py-4 rounded-2xl text-lg uppercase tracking-[0.2em] hover:bg-white/20 transition-all shadow-2xl active:scale-[0.98]"
                   >
-                    새로운 상담 시작
+                    ?덈줈???곷떞 ?쒖옉
                   </button>
                 </div>
                 <footer className="mt-6 text-[8px] sm:text-[9px] text-coffee-light/10 font-medium uppercase tracking-[0.3em] text-center w-full">
-                  © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
+                  짤 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
                 </footer>
               </div>
             </main>
@@ -700,14 +619,12 @@ function App() {
             <main className="w-full flex-1 flex flex-col items-center justify-center gap-8 mx-auto py-8">
               {selectedCard ? (
                 <div className="flex flex-col items-center justify-center gap-10 w-full animate-in fade-in zoom-in duration-700">
-                  <div className="mb-12">
-                    <TarotCard 
-                      card={selectedCard} 
-                      backImage={backImage} 
-                      isFlipped={firstCardFlipped}
-                      onFlip={() => setFirstCardFlipped(true)}
-                    />
-                  </div>
+                  <TarotCard 
+                    card={selectedCard} 
+                    backImage={backImage} 
+                    isFlipped={firstCardFlipped}
+                    onFlip={() => setFirstCardFlipped(true)}
+                  />
                   
                   <div className="w-full glass-panel px-4 py-6 sm:px-6 sm:py-8 space-y-6">
                     <div className="space-y-4">
@@ -720,56 +637,58 @@ function App() {
                             {selectedCard.name.split('(')[1].replace(')', '').trim()}
                           </span>
                         )}
-                        <h3 className="text-xl font-black text-white/40 tracking-[0.4em] uppercase italic mt-4 border-t border-white/5 pt-4 w-full">오늘의 신탁</h3>
+                        <h3 className="text-xl font-black text-white/40 tracking-[0.4em] uppercase italic mt-4 border-t border-white/5 pt-4 w-full">?ㅻ뒛???좏긽</h3>
                       </div>
                       <div className="text-xl font-bold text-white tracking-tight leading-relaxed break-keep">
-                        <p>{selectedCard.fortune_telling?.join(' ') || '카드의 의미를 읽는 중입니다...'}</p>
+                        <p>{selectedCard.fortune_telling?.join(' ') || '移대뱶???섎?瑜??쎈뒗 以묒엯?덈떎...'}</p>
                         <p className="mt-4 text-sm text-tech-blue/60 font-bold italic animate-pulse break-keep">
-                          이 카드가 속삭이는 더 깊은 진실이 궁금하지 않으신가요?<br/>
-                          운명의 바리스타에게 직접 물어보십쇼.
+                          ??移대뱶媛 ?띿궘?대뒗 ??源딆? 吏꾩떎??沅곴툑?섏? ?딆쑝?좉???<br/>
+                          ?대챸??諛붾━?ㅽ??먭쾶 吏곸젒 臾쇱뼱蹂댁떗??
                         </p>
                       </div>
                     </div>
 
                     <div className="px-4 py-6 bg-white/[0.03] border border-white/5 rounded-2xl group transition-all hover:bg-white/[0.05]">
                         <p className="text-lg text-tech-purple font-bold leading-relaxed mb-4 break-keep">
-                          더 깊은 운명의 향기를 알고 싶으시면<br/>
-                          질문을 입력하고 바리스타에게 말씀해 보세요.
+                          ??源딆? ?대챸???κ린瑜??뚭퀬 ?띠쑝?쒕㈃<br/>
+                          吏덈Ц???낅젰?섍퀬 諛붾━?ㅽ??먭쾶 留먯???蹂댁꽭??
                         </p>
                         
-                        <div className="mb-6">
+                        <div className="mb-6 space-y-3">
+                          <label className="text-lg text-tech-purple font-black uppercase tracking-tight block text-left pl-1">
+                            ?곷떞 吏덈Ц ?낅젰
+                          </label>
                           <textarea 
                             value={question}
                             onChange={(e) => setQuestion(e.target.value)}
-                            placeholder={"예: 올해 연애운이 궁금합니다. / 이직을 고민 중인데 어떨까요?\n\n질문을 입력하지 않으면 오늘의 운세가 자동으로 적용됩니다."}
+                            placeholder={"?? ?ы빐 ?곗븷?댁씠 沅곴툑?⑸땲?? / ?댁쭅??怨좊? 以묒씤???대뼥源뚯슂?\n\n吏덈Ц???낅젰?섏? ?딆쑝硫??ㅻ뒛???댁꽭媛 ?먮룞?쇰줈 ?곸슜?⑸땲??"}
                             className="w-full bg-black/40 border border-tech-purple/30 rounded-xl p-4 text-white text-sm outline-none focus:border-tech-purple transition-all min-h-[120px] resize-none placeholder:text-white/20"
                           />
                         </div>
 
                         <div className="flex items-center justify-center gap-3 py-2 animate-in slide-in-from-bottom-2 duration-700">
                           <span className="px-3 py-1 bg-tech-purple/5 border border-tech-purple/20 rounded-full text-[10px] font-black text-tech-purple/70 uppercase tracking-widest">
-                            1,000P 차감
+                            1,000P 李④컧
                           </span>
                           <div className="w-1 h-1 rounded-full bg-tech-purple/20" />
                           <span className="px-3 py-1 bg-tech-purple/5 border border-tech-purple/20 rounded-full text-[10px] font-black text-tech-purple/70 uppercase tracking-widest">
-                            결제 시 1,000원
-                          </span>
+                            寃곗젣 ??1,000??                          </span>
                         </div>
                         <p className="text-[10px] text-coffee-light/40 font-bold tracking-tight mb-2">
-                          ※ 포인트 차감 신청은 <span className="text-tech-purple">3,000P 이상</span> 보유 시에만 가능합니다.
+                          ???ъ씤??李④컧 ?좎껌? <span className="text-tech-purple">3,000P ?댁긽</span> 蹂댁쑀 ?쒖뿉留?媛?ν빀?덈떎.
                         </p>
                       <button onClick={startDeepProcess} className="w-full bg-tech-purple/20 hover:bg-tech-purple text-tech-purple hover:text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-3 group border border-tech-purple/30 shadow-lg shadow-tech-purple/10">
-                        심층 타로 신청
+                        ?ъ링 ?濡??좎껌
                         <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
                       </button>
                     </div>
                     <footer className="mt-6 text-[8px] sm:text-[9px] text-coffee-light/10 font-medium uppercase tracking-[0.3em] text-center w-full">
-                      © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
+                      짤 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
                     </footer>
                   </div>
 
                   <button onClick={() => { setSelectedCard(null); setFirstCardFlipped(false); }} className="text-[10px] text-coffee-light/30 font-bold uppercase tracking-widest hover:text-white transition-colors">
-                    카드 다시 섞기
+                    移대뱶 ?ㅼ떆 ?욊린
                   </button>
                 </div>
               ) : (
@@ -782,7 +701,7 @@ function App() {
                             <Loader2 className="animate-spin text-tech-blue w-12 h-12" />
                             <Coffee className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-tech-blue w-4 h-4 animate-bounce" />
                           </div>
-                          <span className="text-[10px] text-tech-blue font-black uppercase tracking-[0.3em] animate-pulse">영혼의 향기를 필터링 중...</span>
+                          <span className="text-[10px] text-tech-blue font-black uppercase tracking-[0.3em] animate-pulse">?곹샎???κ린瑜??꾪꽣留?以?..</span>
                         </div>
                       ) : (
                         <div className="relative w-full h-full p-4 flex flex-col items-center justify-center gap-2">
@@ -794,15 +713,15 @@ function App() {
                         </div>
                       )}
                     </div>
-                    {!isCasting && <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-6 py-2 bg-tech-blue text-white text-xs font-black rounded-full shadow-lg animate-bounce uppercase tracking-tighter z-20 whitespace-nowrap">터치하여 카드 뽑기</div>}
+                    {!isCasting && <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-6 py-2 bg-tech-blue text-white text-xs font-black rounded-full shadow-lg animate-bounce uppercase tracking-tighter z-20 whitespace-nowrap">?곗튂?섏뿬 移대뱶 戮묎린</div>}
                   </div>
                   
                   <div className="space-y-4 sm:space-y-6 w-full">
                     <div className="space-y-2">
                       <h3 className="text-white font-black text-xl sm:text-2xl tracking-tight leading-tight">
-                        당신의 운명의 향기를 읽어드립니다.
+                        ?뱀떊???대챸???κ린瑜??쎌뼱?쒕┰?덈떎.
                       </h3>
-                      <p className="text-[10px] sm:text-sm text-coffee-light/60 font-bold">바리스타가 직접 내려주는 오늘의 신비로운 운명 타로</p>
+                      <p className="text-[10px] sm:text-sm text-coffee-light/60 font-bold">諛붾━?ㅽ?媛 吏곸젒 ?대젮二쇰뒗 ?ㅻ뒛???좊퉬濡쒖슫 ?대챸 ?濡?/p>
                     </div>
                     <button 
                       onClick={shuffleAndDraw} 
@@ -814,11 +733,11 @@ function App() {
                       ) : (
                         <RefreshCcw className={isCasting ? "animate-spin text-tech-blue" : "group-hover:rotate-180 transition-transform duration-1000"} />
                       )}
-                      {isDataLoading ? "데이터 로딩 중..." : "운명의 카드 뽑기"}
+                      {isDataLoading ? "?곗씠??濡쒕뵫 以?.." : "?대챸??移대뱶 戮묎린"}
                     </button>
                   </div>
                   <footer className="mt-4 sm:mt-6 text-[8px] sm:text-[9px] text-coffee-light/20 font-medium uppercase tracking-[0.3em] text-center w-full">
-                    © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
+                    짤 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
                   </footer>
                 </div>
               )}
@@ -828,7 +747,7 @@ function App() {
         </div>
       </div>
 
-      {/* 바리스타 이중 보안 PIN 모달 */}
+      {/* 諛붾━?ㅽ? ?댁쨷 蹂댁븞 PIN 紐⑤떖 */}
       <AdminPinModal 
         isOpen={isAdminPinModalOpen}
         onClose={() => setIsAdminPinModalOpen(false)}

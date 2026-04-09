@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 const TarotCard = ({ card, backImage, frontImage, onFlip, size = 'default', isFlipped = false }) => {
@@ -16,7 +16,7 @@ const TarotCard = ({ card, backImage, frontImage, onFlip, size = 'default', isFl
   const playFlipSound = () => {
     try {
       const audio = new Audio('/assets/sfx/card_flip.mp3');
-      audio.volume = 0.4; // 너무 크지 않게 40% 볼륨
+      audio.volume = 0.4; // ?덈Т ?ъ? ?딄쾶 40% 蹂쇰ⅷ
       audio.play().catch(e => console.warn('Audio play failed (waiting for user interaction):', e));
     } catch (err) {
       console.error('SFX playback error:', err);
@@ -25,8 +25,8 @@ const TarotCard = ({ card, backImage, frontImage, onFlip, size = 'default', isFl
   
   const sizeClasses = {
     small: 'w-32 sm:w-40',
-    medium: 'w-48 sm:w-56',
-    default: 'w-64 sm:w-72'
+    medium: 'w-44 sm:w-52',
+    default: 'w-64'
   };
 
   const handleFlip = () => {
@@ -77,18 +77,6 @@ const TarotCard = ({ card, backImage, frontImage, onFlip, size = 'default', isFl
           </div>
           {/* Holographic Sheen */}
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer-fast pointer-events-none" />
-        </div>
-      </motion.div>
-
-        {/* [v2.6.13] 카드 상단 플로팅 이름 띠 - 카드가 뒤집혔을 때만 서서히 나타남 */}
-        <div 
-          className={`absolute top-4 left-0 right-0 z-20 transition-all duration-700 pointer-events-none flex flex-col items-center ${flipped ? 'opacity-100' : 'opacity-0'}`}
-        >
-          <div className="bg-black/60 backdrop-blur-sm px-4 py-1.5 rounded-full border border-white/10 shadow-lg">
-            <span className="text-sm sm:text-base font-black text-tech-blue tracking-tighter whitespace-nowrap">
-              {card.name.includes('(') ? card.name.split('(')[0].trim() : card.name}
-            </span>
-          </div>
         </div>
       </motion.div>
     </div>
