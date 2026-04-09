@@ -90,7 +90,6 @@ const TarotCard = ({ card, backImage, frontImage, onFlip, size = 'default', isFl
             </span>
           </div>
         </div>
-      </motion.div>
     </div>
   );
 };
