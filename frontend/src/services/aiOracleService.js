@@ -47,8 +47,19 @@ const callGeminiEngine = async (question, card1, card2) => {
   });
 
   if (error) {
-    console.error('❌ Supabase 함수 호출 오류:', error);
-    throw new Error(`제미나이 마스터와의 통신에 실패했슴다! (상태: ${error.message})`);
+    console.error('❌ Supabase 함수 호출 오류:', error)
+    
+    // 상세 에러 메시지 추출 시도
+    let detailMsg = error.message
+    if (error.context) {
+      try {
+        const errorBody = await error.context.json()
+        detailMsg = errorBody.error || errorBody.message || JSON.stringify(errorBody)
+      } catch (e) {
+        console.warn('에러 본문 파싱 실패:', e)
+      }
+    }
+    throw new Error(`제미나이 마스터와의 통신에 실패했슴다! (상태: ${detailMsg})`)
   }
   
   if (!data || !data.interpretation) {
@@ -84,7 +95,9 @@ export const generateAIInterpretation = async (question, card1, card2, engine = 
 
   } catch (err) {
     console.error('AI Oracle Service Error:', err);
-    throw new Error('사장님, AI 통신 중에 사고가 났습니다. 잠시 후 다시 시도해 주세요!');
+    // 에러 메시지가 구체적이면(우리가 던진 Error 객체라면) 그 메시지를 쓰고, 아니면 기본 메시지를 씀다.
+    const userMsg = err.message || 'AI 통신 중에 사고가 났습니다. 잠시 후 다시 시도해 주세요!';
+    throw new Error(`사장님, ${userMsg}`);
   }
 };
 
