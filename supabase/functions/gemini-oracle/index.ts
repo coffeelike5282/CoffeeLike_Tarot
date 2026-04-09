@@ -24,7 +24,6 @@ Deno.serve(async (req) => {
     let body;
     try {
       const parsed = JSON.parse(rawBody)
-      // 눈치 백단 로직: 데이터가 { body: { ... } } 형태로 감싸져 있는지 확인
       body = parsed.body && typeof parsed.body === 'object' ? parsed.body : parsed
     } catch (e) {
       throw new Error("JSON 파싱 실패! 보낸 데이터: " + rawBody)
@@ -36,18 +35,13 @@ Deno.serve(async (req) => {
     const card2 = body.card2
 
     if (!card1 || !card2) {
-      console.error("❌ 필수 카드 정보 누락 (수신 데이터 구조):", body)
-      throw new Error("타로 카드가 안 보임다! (수신 구조: " + JSON.stringify(body).substring(0, 100) + "...)")
+      throw new Error("타로 카드가 안 보임다!")
     }
 
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY")
     if (!GEMINI_API_KEY) {
-      console.error("❌ GEMINI_API_KEY가 서버 환경변수에 설정되지 않았슴다!")
-      throw new Error("GEMINI_API_KEY가 서버 금고에 없슴다, 큰형님! 대시보드 설정을 확인해 보십쇼.")
+      throw new Error("GEMINI_API_KEY가 서버 설정에 없슴다.")
     }
-
-    console.log("🔮 질문 접수: " + (question || '없음'))
-    console.log("🎴 카드1: " + card1.name + ", 카드2: " + card2.name)
 
     const prompt = "\n" +
 "      당신은 20년 경력의 베테랑 타로 마스터이자 영적 지혜의 전달자인 '커피라이크 타로 오라클'입니다.\n" +
@@ -59,13 +53,15 @@ Deno.serve(async (req) => {
 "      - 두 번째 카드: " + card2.name + " (" + card2.rank + " - " + card2.suit + ")\n" +
 "\n" +
 "      [응답 형식 및 수칙]\n" +
-"      반드시 아래와 같은 JSON 형식으로만 응답하십시오. (JSON 마크다운 기호 없이 순수 JSON만 출력)\n" +
-"      {\n" +
-"        \"summary\": \"전체 해석을 관통하는 통찰력 있는 한 줄 요약 (50자 이내)\",\n" +
-"        \"interpretation\": \"현재의 에너지가 질문자에게 주는 메시지를 15~20문장 이상의 장문으로 매우 상세하게 서술하십시오.\"\n" +
-"      }\n" +
+"      반드시 아래와 같은 형식으로 응답하십시오. 기호나 부차적인 설명 없이 태그와 내용만 작성하십시오.\n" +
 "\n" +
-"      [해석 가이드 (interpretation 필수 포함 내용)]\n" +
+"      [요약]\n" +
+"      전체 해석을 관통하는 통찰력 있는 한 줄 요약 (50자 이내)\n" +
+"\n" +
+"      [해설]\n" +
+"      현재의 에너지가 질문자에게 주는 메시지를 15~20문장 이상의 장문으로 매우 상세하게 서술하십시오.\n" +
+"\n" +
+"      [해석 가이드 (해설 필수 포함 내용)]\n" +
 "      1. **도입**: 현재 질문자의 주변 에너지와 영적 상태에 대한 통찰 (3~4문장)\n" +
 "      2. **첫 번째 카드 상세 분석**: 카드의 고유한 상징이 현재 질문과 어떻게 연결되는지 심도 있게 분석 (4~5문장)\n" +
 "      3. **두 번째 카드 상세 분석**: 이어지는 카드가 상황에 더하는 구체적인 의미와 변화의 실마리 (4~5문장)\n" +
@@ -73,7 +69,7 @@ Deno.serve(async (req) => {
 "      5. **결론 및 지침**: 질문자가 오늘 바로 실천할 수 있는 구체적인 마음가짐이나 행동지침 (2~3문장)\n" +
 "\n" +
 "      [주의사항]\n" +
-"      - 말투: 정중하고, 신비롭고, 전문적인 마스터의 말투 (~합니다, ~할 것입니다 등)를 사용하십시오.\n" +
+"      - 말투: 정중하고, 신비롭고, 전문적인 마스터의 말투 (~합니다, ~일 것입니다 등)를 사용하십시오.\n" +
 "      - 금기: '큰형님', '안 본부장' 같은 조폭 말투는 절대 금지입니다.\n" +
 "      - 언어: 반드시 한국어로 작성하십시오.\n" +
 "    ";
@@ -98,7 +94,6 @@ Deno.serve(async (req) => {
             body: JSON.stringify({
               contents: [{ parts: [{ text: prompt }] }],
               generationConfig: { 
-                response_mime_type: "application/json",
                 max_output_tokens: 2048
               }
             })
@@ -107,19 +102,17 @@ Deno.serve(async (req) => {
           if (response.ok) {
             const data = await response.json();
             rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-            if (rawText) break; // 성공 시 루프 탈출
+            if (rawText) break;
           } else {
             const errorData = await response.json().catch(() => ({}));
             const msg = errorData.error?.message || JSON.stringify(errorData);
             lastError = msg;
             
-            // 과부하 에러(429, 503, 400 High Demand) 시 대기 후 재시도
             if (response.status === 429 || response.status === 503 || (response.status === 400 && msg.includes("high demand"))) {
               console.warn("⚠️ [" + modelId + "] 과부하 감지 (시도 " + (retryStep + 1) + "/3), 잠시 후 다시 시도함다...");
               await new Promise(r => setTimeout(r, 1000 * (retryStep + 1))); 
               continue;
             }
-            // 그 외 에러는 다음 모델로 즉시 점프
             break;
           }
         } catch (e) {
@@ -128,26 +121,29 @@ Deno.serve(async (req) => {
         }
       }
       
-      if (rawText) break; // 성공 시 전체 모델 시도 중단
+      if (rawText) break;
     }
 
     if (!rawText) {
       throw new Error("구글 신령님이 모든 채널에서 응답하지 않슴다: " + lastError);
     }
 
-    let summary = "운명의 요약문";
-    let interpretation = rawText;
+    // [요약] 및 [해설] 태그 추출 로직
+    const extractTag = (text: string, tag: string) => {
+      const regex = new RegExp("\\[" + tag + "\\]([\\s\\S]*?)(?=\\[|$)", "i");
+      const match = text.match(regex);
+      return match ? match[1].trim() : "";
+    };
 
-    try {
-      const cleanJson = rawText.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(cleanJson);
-      summary = parsed.summary || summary;
-      interpretation = parsed.interpretation || interpretation;
-    } catch (e) {
-      console.warn("⚠️ AI 응답 JSON 파싱 실패, 본문 전체를 사용함다.");
-      if (rawText.includes(".")) {
-        summary = rawText.split(".")[0].substring(0, 50);
-      }
+    let summary = extractTag(rawText, "요약");
+    let interpretation = extractTag(rawText, "해설");
+
+    // 파싱 실패 시 방어 로직
+    if (!summary || !interpretation) {
+      console.warn("⚠️ 태그 기반 파싱 실패, 스마트 폴백 가동함다.");
+      const lines = rawText.replace(/\[.*?\]/g, "").split("\n").filter(l => l.trim());
+      summary = lines[0]?.substring(0, 50) || "운명의 요약문";
+      interpretation = lines.slice(1).join("\n") || rawText;
     }
 
     return new Response(
