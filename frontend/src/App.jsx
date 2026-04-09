@@ -199,6 +199,16 @@ function App() {
         backgroundColor: '#161311',
         logging: false,
         onclone: (clonedDoc) => {
+          // [v2.8.8] STYLE STRIKE: 클론된 문서의 모든 <style> 태그에서 oklch/oklab 소탕
+          const styleTags = clonedDoc.getElementsByTagName('style');
+          for (let i = 0; i < styleTags.length; i++) {
+            try {
+              styleTags[i].innerHTML = styleTags[i].innerHTML.replace(/okl(ch|ab)\([^)]+\)/g, '#161311');
+            } catch (e) {
+              console.warn('⚠️ 스타일 태그 세척 중 오류 발생(무시):', e);
+            }
+          }
+
           const clonedElement = clonedDoc.getElementById('tarot-result-sheet');
           if (clonedElement) {
             clonedElement.style.padding = '40px';
