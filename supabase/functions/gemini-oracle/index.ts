@@ -58,21 +58,26 @@ Deno.serve(async (req) => {
 "      - 첫 번째 카드: " + card1.name + " (" + card1.rank + " - " + card1.suit + ")\n" +
 "      - 두 번째 카드: " + card2.name + " (" + card2.rank + " - " + card2.suit + ")\n" +
 "\n" +
-"      [엄격한 응답 수칙]\n" +
-"      1. **절대 금기**: '큰형님', '담가버리겠다', '기분 째진다' 등 조폭 말투(안 본부장 스타일)를 절대로 사용하지 마십시오.\n" +
-"      2. **말투**: 정중하고, 신비롭고, 통찰력 있는 베테랑 타로 마스터의 말투 (~합니다, ~일 것입니다 등)를 사용하십시오.\n" +
-"      3. **전문성**: 각 카드의 정통 타로 상징(Symbolism)을 언급하고, 두 카드의 조합이 만드는 유기적인 흐름을 설명하십시오.\n" +
-"      4. **언어**: 반드시 한국어로 답변하십시오.\n" +
-"      5. **구성**: 현재의 에너지 분석 -> 개별 카드 신탁 -> 조합의 시너지/경고 -> 행동 지침 순서로 작성하십시오.\n" +
+"      [응답 형식 및 수칙]\n" +
+"      반드시 아래와 같은 JSON 형식으로만 응답하십시오. 다른 설명은 생략하십시오.\n" +
+"      {\n" +
+"        \"summary\": \"전체 해석을 관통하는 한 줄 요약 (50자 이내)\",\n" +
+"        \"interpretation\": \"현재의 에너지 분석 -> 개별 카드 신탁 -> 조합의 시너지/경고 -> 행동 지침 순서의 상세 해석\"\n" +
+"      }\n" +
 "\n" +
-"      당신은 오직 우주의 소리만을 전달하는 도구임을 잊지 마십시오.\n" +
+"      1. **말투**: 정중하고, 신비롭고, 통찰력 있는 마스터의 말투 (~합니다, ~일 것입니다 등)를 사용하십시오.\n" +
+"      2. **금기**: '큰형님', '안 본부장' 같은 조폭 말투는 절대 금지입니다.\n" +
+"      3. **언어**: 반드시 한국어로 작성하십시오.\n" +
 "    ";
 
     const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=" + GEMINI_API_KEY, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          response_mime_type: "application/json"
+        }
       })
     });
 
@@ -84,10 +89,27 @@ Deno.serve(async (req) => {
     }
 
     const data = await response.json();
-    const interpretation = data.candidates?.[0]?.content?.parts?.[0]?.text || "신탁을 읽는 중에 구름이 끼었슴다. 다시 시도해 보십쇼.";
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    
+    let summary = "운명의 요약문";
+    let interpretation = rawText;
+
+    try {
+      // JSON 파싱 시도
+      const cleanJson = rawText.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(cleanJson);
+      summary = parsed.summary || summary;
+      interpretation = parsed.interpretation || interpretation;
+    } catch (e) {
+      console.warn("⚠️ AI 응답 JSON 파싱 실패, 본문 전체를 사용함다:", e);
+      // 파싱 실패 시 본문의 첫 문장을 요약으로 쓰는 등 최소한의 조치
+      if (rawText.includes(".")) {
+        summary = rawText.split(".")[0].substring(0, 50);
+      }
+    }
 
     return new Response(
-      JSON.stringify({ interpretation }),
+      JSON.stringify({ summary, interpretation }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
 

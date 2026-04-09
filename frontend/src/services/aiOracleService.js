@@ -75,7 +75,10 @@ const callGeminiEngine = async (question, card1, card2) => {
     throw new Error('제미나이 마스터가 신탁을 내리지 않았슴다! 응답 형식을 확인해 보십쇼.');
   }
   
-  return data.interpretation;
+  return {
+    summary: data.summary || "운명의 요약문",
+    interpretation: data.interpretation
+  };
 };
 
 export const generateAIInterpretation = async (question, card1, card2, engine = 'llama') => {
@@ -85,20 +88,28 @@ export const generateAIInterpretation = async (question, card1, card2, engine = 
   try {
     console.log(`🔮 [마스터 에이전트 호출] 엔진: ${engine}, 질문:`, question);
     
-    let responseText = "";
+    let summary = "마스터의 깊은 신탁";
+    let interpretation = "";
+
     if (engine === 'gemini') {
-      responseText = await callGeminiEngine(finalQuestion, card1, card2);
+      const result = await callGeminiEngine(finalQuestion, card1, card2);
+      summary = result.summary;
+      interpretation = result.interpretation;
     } else {
-      responseText = await callLlamaEngine(finalQuestion, card1, card2);
+      interpretation = await callLlamaEngine(finalQuestion, card1, card2);
+      // 라마는 평문이므로 첫 문장을 요약으로 활용
+      if (interpretation.includes('.')) {
+        summary = interpretation.split('.')[0].substring(0, 50);
+      }
     }
 
-    console.log(`✅ ${engine === 'gemini' ? '제미나이' : '라마'} 해석 수신 완료`);
+    console.log("✅ " + (engine === 'gemini' ? '제미나이' : '라마') + " 해석 수신 완료");
 
     return {
-      mainFortune: engine === 'gemini' ? "제미나이 1.5의 서버 사이드 신탁" : "마스터의 깊은 신탁",
-      deepInsight: responseText,
+      mainFortune: summary,
+      deepInsight: interpretation,
       caution: "신탁의 조언을 가슴 깊이 새기십시오.",
-      coffeePairing: `마스터의 기운과 어울리는 '오라클 블렌드'를 추천함다.`,
+      coffeePairing: "마스터의 기운과 어울리는 '오라클 블렌드'를 추천함다.",
       generatedAt: new Date().toISOString(),
       engineVersion: engine === 'gemini' ? "Gemini-3.0-Flash (Server)" : "Llama-3-Master"
     };

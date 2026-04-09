@@ -447,13 +447,10 @@ function App() {
                            <div className="w-8 h-px bg-tech-blue/50" /> {selectedCard2.name}
                         </div>
                       </div>
-                      <h3 className="text-xl font-black text-white uppercase tracking-widest flex items-center gap-2">
-                        <Zap size={20} className="text-tech-blue shadow-glow" /> 바리스타의 신탁
+                      <h3 className="text-lg sm:text-xl font-black text-white tracking-widest flex items-start gap-2 break-keep">
+                        <Zap size={20} className="text-tech-blue shadow-glow flex-shrink-0 mt-1" /> {deepResult.mainFortune}
                       </h3>
                     </div>
-                    <p className="text-xl font-bold text-white leading-tight pl-2 border-l-4 border-tech-blue/40">
-                      "{deepResult.mainFortune}"
-                    </p>
                   </section>
 
                   <section className="space-y-3 px-4 py-6 bg-white/5 rounded-3xl border border-white/10 shadow-inner">
