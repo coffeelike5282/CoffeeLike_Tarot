@@ -74,15 +74,11 @@ Deno.serve(async (req) => {
       - 언어: 반드시 한국어로 작성하십시오.
     `;
 
-    // 2026년형 최신 엔진 풀 (April 2026 기준 모델 ID)
+    // 2026년형 고속 Flash 정예 멤버 (큰형님 감수 완료)
     const modelPool = [
-      "gemini-3.1-flash-latest", 
-      "gemini-3.1-pro-latest",
-      "gemini-2.5-flash-latest",
-      "gemini-2.5-pro-latest",
-      "gemini-1.5-flash-latest",
-      "gemini-1.5-pro-latest",
-      "gemini-3.1-flash-lite-latest"
+      "gemini-flash-latest", 
+      "gemini-2.5-flash",
+      "gemini-3-flash-preview"
     ];
 
     // 무작위 셔플로 부하 분산 (Load Balancing)
