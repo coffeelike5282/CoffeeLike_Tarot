@@ -198,11 +198,11 @@ function App() {
         allowTaint: true,
         backgroundColor: '#161311',
         logging: false,
-        width: 794,
-        windowWidth: 794,
+        width: 420,
+        windowWidth: 420,
         onclone: (clonedDoc) => {
-          // [v2.9.15] 슬림 기둥(Slim Pillar) 레이아웃 집행
-          clonedDoc.body.style.width = '794px';
+          // [v2.9.17] 모바일 강제 비율(Mobile Force) 레이아웃 집행
+          clonedDoc.body.style.width = '420px';
           clonedDoc.body.style.background = '#161311';
           clonedDoc.body.style.margin = '0';
           clonedDoc.body.style.padding = '0';
@@ -212,11 +212,13 @@ function App() {
           style.innerHTML = `
             * { box-sizing: border-box !important; }
             img { display: block; }
-            /* 컨텐츠 너비를 580px로 제한하여 슬림한 비율 구현 */
             #tarot-result-sheet { 
-              width: 580px !important; 
-              margin: 0 auto !important; 
+              width: 100% !important; 
+              max-width: 420px !important;
+              margin: 0 !important; 
               background: transparent !important;
+              padding: 40px 20px !important;
+              color: #eae1dd !important;
             }
           `;
           clonedDoc.head.appendChild(style);
@@ -236,13 +238,9 @@ function App() {
 
           const clonedElement = clonedDoc.getElementById('tarot-result-sheet');
           if (clonedElement) {
-            clonedElement.style.padding = '60px 40px';
-            clonedElement.style.width = '580px'; 
-            clonedElement.style.minHeight = '1123px'; 
-            clonedElement.style.color = '#eae1dd';
-            clonedElement.style.display = 'block'; 
+            clonedElement.style.minHeight = '800px'; 
             
-            // [v2.9.12] 상단 섹션: 중앙 정렬 수호
+            // 상단 섹션: 중앙 정렬 수호
             const topHeader = clonedElement.querySelector('.flex.flex-col.items-center.gap-2') || 
                               clonedElement.children[0];
             if (topHeader) {
@@ -259,26 +257,25 @@ function App() {
               cardContainer.style.display = 'flex';
               cardContainer.style.flexDirection = 'row';
               cardContainer.style.justifyContent = 'center';
-              cardContainer.style.gap = '25px'; 
+              cardContainer.style.gap = '15px'; 
               cardContainer.style.width = '100%';
-              cardContainer.style.marginTop = '40px';
+              cardContainer.style.marginTop = '30px';
               cardContainer.style.marginBottom = '20px';
               
               const imageWrappers = cardContainer.querySelectorAll('div.relative');
               imageWrappers.forEach(w => {
-                 w.style.width = '160px'; 
-                 w.style.height = '272px';
-                 w.style.minWidth = '160px';
-                 w.style.minHeight = '272px';
-                 w.style.borderRadius = '16px';
+                 w.style.width = '140px'; 
+                 w.style.height = '238px';
+                 w.style.minWidth = '140px';
+                 w.style.minHeight = '238px';
+                 w.style.borderRadius = '12px';
                  w.style.overflow = 'hidden';
-                 w.style.border = '3px solid rgba(139, 92, 246, 0.6)';
-                 w.style.margin = '0';
+                 w.style.border = '2px solid rgba(139, 92, 246, 0.6)';
                  
                  const img = w.querySelector('img');
                  if (img) {
-                   img.style.width = '160px';
-                   img.style.height = '272px';
+                   img.style.width = '140px';
+                   img.style.height = '238px';
                    img.style.objectFit = 'cover';
                  }
               });
@@ -288,15 +285,14 @@ function App() {
             if (oracleTitle) {
               oracleTitle.style.textAlign = 'center';
               oracleTitle.style.width = '100%';
-              oracleTitle.style.fontSize = '30px';
+              oracleTitle.style.fontSize = '24px';
+              oracleTitle.style.margin = '20px 0';
             }
 
-            // [v2.9.13] 하단 섹션: 가독성 중심 좌측 정렬 복원
+            // 하단 섹션: 가독성 중심 좌측 정렬
             const summaryBox = clonedElement.querySelector('.p-5.bg-tech-purple\\/10');
             if (summaryBox) {
               summaryBox.style.width = '100%';
-              summaryBox.style.padding = '30px';
-              summaryBox.style.marginTop = '35px';
               summaryBox.style.borderRadius = '20px';
               summaryBox.style.textAlign = 'left';
               summaryBox.style.background = 'rgba(139, 92, 246, 0.08)';
