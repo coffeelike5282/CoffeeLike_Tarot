@@ -397,13 +397,13 @@ function App() {
                   <div className="inline-flex items-center gap-2 px-4 py-1 bg-tech-purple/20 rounded-full border border-tech-purple/30 text-[10px] font-black text-tech-purple tracking-widest uppercase animate-pulse">
                     <CheckCircle2 size={12} /> 승인 완료
                   </div>
-                  <h2 className="font-heading text-xl sm:text-2xl font-black text-white uppercase tracking-tighter italic">AI 마스터 해석 중</h2>
+                  <h2 className="font-heading text-xl sm:text-2xl font-black text-white uppercase tracking-tighter italic">마스터의 영적 통찰을 기다리는 중</h2>
                   <p className="text-coffee-light/80 text-sm sm:text-base leading-relaxed font-bold max-w-[320px]">
-                    마스터가 당신의 <br/>
-                    <span className="text-tech-purple decoration-2">{selectedCard.name} & {selectedCard2.name}</span> <br/>
-                    운명을 볶고 있슴다!
+                    운명의 실타래가 정교하게 엮어지고 있슴다.<br/>
+                    <span className="text-tech-purple decoration-2">{selectedCard.name} & {selectedCard2.name}</span> 의<br/>
+                    깊은 진실을 위해 최대 30초 정도 소요될 수 있슴다.
                   </p>
-                  <p className="text-coffee-light/40 text-[10px] animate-pulse">잠시만 기다려 주십쇼. 깊은 성찰을 준비 중임다...</p>
+                  <p className="text-coffee-light/40 text-[10px] animate-pulse">마스터가 카드 한 장 한 장에 온 마음을 다해 통찰을 불어넣는 중임다...</p>
                 </div>
 
                 <footer className="mt-4 text-[8px] sm:text-[9px] text-coffee-light/10 font-medium uppercase tracking-[0.3em] text-center w-full">
