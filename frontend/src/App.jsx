@@ -27,6 +27,8 @@ function App() {
   const [isResultCard1Flipped, setIsResultCard1Flipped] = useState(false);
   const [isResultCard2Flipped, setIsResultCard2Flipped] = useState(false);
   const [question, setQuestion] = useState('');
+  const [countdown, setCountdown] = useState(60);
+  const [isExtended, setIsExtended] = useState(false);
   const { login, user, loading, logout: authLogout } = useAuth();
 
   // 타로 카드 데이터를 DB에서 가져옵니다.
@@ -166,19 +168,41 @@ function App() {
     performDeepTarotRequest(selectedCard, selectedCard2, null);
   };
 
-  // Poll for approval status with timeout
+  // Poll for approval status with timeout & countdown
   useEffect(() => {
     let interval;
-    let startTime = Date.now();
+    let countdownInterval;
     
     if ((requestStatus === 'pending' || requestStatus === 'processing') && requestId) {
+      // 카운트다운 로직
+      setCountdown(60); 
+      setIsExtended(false);
+      
+      countdownInterval = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            if (!isExtended) {
+              // 60초 만료 시 1회 자동 연장 (30초)
+              setIsExtended(true);
+              console.log('🔮 영적 주파수 미약... 30초 자동 연장함다!');
+              return 30;
+            } else {
+              // 연장도 끝났으면 종료
+              clearInterval(countdownInterval);
+              return 0;
+            }
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
       interval = setInterval(async () => {
-        // 60초 넘게 결과가 없으면 에러 처리 (먹통 방지)
-        const elapsed = (Date.now() - startTime) / 1000;
-        if (elapsed > 60) {
-          console.warn('AI Oracle Timeout: 60 seconds elapsed without result.');
+        // 카운트다운이 0이면 에러 처리 (먹통 방지)
+        if (countdown === 0 && isExtended) {
+          console.warn('AI Oracle Timeout: Extended time elapsed without result.');
           setRequestStatus('error');
           clearInterval(interval);
+          clearInterval(countdownInterval);
           return;
         }
 
@@ -209,12 +233,14 @@ function App() {
               if (resObj.isError) {
                 setRequestStatus('error');
                 clearInterval(interval);
+                clearInterval(countdownInterval);
                 return;
               }
 
               setDeepResult(resObj);
               setRequestStatus('approved');
               clearInterval(interval);
+              clearInterval(countdownInterval);
             } catch (e) {
               console.error('JSON Parsing Error for AI result:', e);
             }
@@ -223,11 +249,15 @@ function App() {
           // 거절됨
           setRequestStatus('rejected');
           clearInterval(interval);
+          clearInterval(countdownInterval);
         }
       }, 3000);
     }
-    return () => clearInterval(interval);
-  }, [requestStatus, requestId]);
+    return () => {
+      clearInterval(interval);
+      clearInterval(countdownInterval);
+    };
+  }, [requestStatus, requestId, isExtended, countdown]); // countdown 의존성 추가하여 상태 체크
 
   // Handle sequential flipping in approved state
   useEffect(() => {
@@ -440,25 +470,34 @@ function App() {
                   </div>
                 </div>
 
-                <div className="relative">
-                  <div className="w-24 h-24 rounded-full border-4 border-tech-purple/20 border-t-tech-purple animate-spin" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Sparkles className="text-tech-purple w-8 h-8 animate-pulse" />
+                  <div className="relative">
+                    <div className="w-24 h-24 rounded-full border-4 border-tech-purple/20 border-t-tech-purple animate-spin" />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-xl font-black text-tech-purple animate-pulse leading-none">{countdown}</span>
+                      <span className="text-[8px] font-bold text-tech-purple/60 uppercase">sec</span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-4 text-center">
-                  <div className="inline-flex items-center gap-2 px-4 py-1 bg-tech-purple/20 rounded-full border border-tech-purple/30 text-[10px] font-black text-tech-purple tracking-widest uppercase animate-pulse">
-                    <CheckCircle2 size={12} /> 승인 완료
+                  <div className="space-y-4 text-center">
+                    <div className="inline-flex items-center gap-2 px-4 py-1 bg-tech-purple/20 rounded-full border border-tech-purple/30 text-[10px] font-black text-tech-purple tracking-widest uppercase animate-pulse">
+                      <CheckCircle2 size={12} /> 승인 완료
+                    </div>
+                    <h2 className="font-heading text-xl sm:text-2xl font-black text-white uppercase tracking-tighter italic">
+                      {isExtended ? '깊은 영적 통찰을 끌어오는 중' : '마스터의 영적 통찰을 기다리는 중'}
+                    </h2>
+                    <p className="text-coffee-light/80 text-sm sm:text-base leading-relaxed font-bold max-w-[320px]">
+                      {isExtended 
+                        ? '영적 주파수를 정밀하게 조정하고 있슴다. 조금만 더 인내심을 갖고 기다려주십쇼.' 
+                        : '운명의 실타래가 정교하게 엮어지고 있슴다.'}
+                      <br/>
+                      <span className="text-tech-purple decoration-2">{selectedCard.name} & {selectedCard2.name}</span> 의<br/>
+                      깊은 진실을 위해 정성을 다하는 중임다.
+                    </p>
+                    {isExtended && (
+                      <p className="text-tech-blue font-black text-[11px] animate-bounce uppercase tracking-widest">⚠️ 영적 통로 개방 시간 연장됨</p>
+                    )}
+                    <p className="text-coffee-light/40 text-[10px] animate-pulse">마스터가 카드 한 장 한 장에 온 마음을 다해 통찰을 불어넣는 중임다...</p>
                   </div>
-                  <h2 className="font-heading text-xl sm:text-2xl font-black text-white uppercase tracking-tighter italic">마스터의 영적 통찰을 기다리는 중</h2>
-                  <p className="text-coffee-light/80 text-sm sm:text-base leading-relaxed font-bold max-w-[320px]">
-                    운명의 실타래가 정교하게 엮어지고 있슴다.<br/>
-                    <span className="text-tech-purple decoration-2">{selectedCard.name} & {selectedCard2.name}</span> 의<br/>
-                    깊은 진실을 위해 최대 1분 정도 소요될 수 있슴다.
-                  </p>
-                  <p className="text-coffee-light/40 text-[10px] animate-pulse">마스터가 카드 한 장 한 장에 온 마음을 다해 통찰을 불어넣는 중임다...</p>
-                </div>
 
                 <footer className="mt-4 text-[8px] sm:text-[9px] text-coffee-light/10 font-medium uppercase tracking-[0.3em] text-center w-full">
                   © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.

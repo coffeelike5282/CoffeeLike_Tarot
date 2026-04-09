@@ -91,14 +91,17 @@ Deno.serve(async (req) => {
     for (const modelId of shuffledModels) {
       console.log(`🔮 [${modelId}] 신탁 요청 중...`);
       
-      // 모델당 최대 2회 내부 재시도 (백오프 포함)
-      for (let retryStep = 0; retryStep < 2; retryStep++) {
+      // 모델당 1회 시도 (여러 모델이 있으므로 빠른 페일오버 중점)
+      for (let retryStep = 0; retryStep < 1; retryStep++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000); // 20초 타임아웃
+
         try {
-          // 버전 호환성을 위해 v1과 v1beta를 유연하게 선택 (latest 별칭은 v1beta가 더 안정적일 수 있음)
-          const apiVersion = modelId.includes('3.1') ? 'v1beta' : 'v1beta'; 
+          const apiVersion = 'v1beta'; 
           const response = await fetch(`https://generativelanguage.googleapis.com/${apiVersion}/models/${modelId}:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
             body: JSON.stringify({
               contents: [{ parts: [{ text: prompt }] }],
               generationConfig: { 
@@ -109,6 +112,8 @@ Deno.serve(async (req) => {
             })
           });
 
+          clearTimeout(timeoutId);
+
           if (response.ok) {
             const data = await response.json();
             rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
@@ -118,19 +123,20 @@ Deno.serve(async (req) => {
             const msg = errorData.error?.message || JSON.stringify(errorData);
             lastError = `${modelId} (HTTP ${response.status}): ${msg}`;
             
-            // 429(과부하), 503(일시 불능) 또는 400(잘못된 모델 등) 발생 시 즉시 다음 모델로 전환
             if (response.status === 429 || response.status === 503 || response.status === 400) {
               console.warn(`⚠️ [${modelId}] 에러 발생 (HTTP ${response.status}). 즉시 다음 통로로 이동함다!`);
-              break; // 내부 루프 탈출 -> 다음 모델 시도
+              break; 
             }
-            
-            // 기타 에러 시 잠시 대기 후 재시도
-            console.warn(`⏳ [${modelId}] 일시적 오류... 잠시 대기 (Retry: ${retryStep + 1}/2)`);
-            await new Promise(r => setTimeout(r, 1000 * (retryStep + 1))); 
           }
         } catch (e) {
-          lastError = `${modelId} (Exception): ${e.message}`;
-          console.error(`❌ [${modelId}] 통신 사고 발생:`, e);
+          clearTimeout(timeoutId);
+          if (e.name === 'AbortError') {
+            lastError = `${modelId} (Timeout): 20초 응답 지연 발생`;
+            console.warn(`⏳ [${modelId}] 타임아웃 발생. 다음 엔진으로 전환함다!`);
+          } else {
+            lastError = `${modelId} (Exception): ${e.message}`;
+            console.error(`❌ [${modelId}] 통신 사고 발생:`, e);
+          }
           break; // 다음 모델로
         }
       }
