@@ -12,7 +12,7 @@ import { supabase } from '../lib/supabaseClient';
  */
 const callLlamaEngine = async (question, card1, card2) => {
   const requestBody = {
-    question: question || "오늘의 전반적인 운세가 궁금합니다.",
+    question: question || "오늘의 운세 알려줘",
     cards: [card1.name, card2.name]
   };
 
@@ -80,15 +80,16 @@ const callGeminiEngine = async (question, card1, card2) => {
 
 export const generateAIInterpretation = async (question, card1, card2, engine = 'llama') => {
   if (!card1 || !card2) return null;
+  const finalQuestion = question?.trim() || "오늘의 운세 알려줘";
 
   try {
     console.log(`🔮 [마스터 에이전트 호출] 엔진: ${engine}, 질문:`, question);
     
     let responseText = "";
     if (engine === 'gemini') {
-      responseText = await callGeminiEngine(question, card1, card2);
+      responseText = await callGeminiEngine(finalQuestion, card1, card2);
     } else {
-      responseText = await callLlamaEngine(question, card1, card2);
+      responseText = await callLlamaEngine(finalQuestion, card1, card2);
     }
 
     console.log(`✅ ${engine === 'gemini' ? '제미나이' : '라마'} 해석 수신 완료`);
@@ -99,7 +100,7 @@ export const generateAIInterpretation = async (question, card1, card2, engine = 
       caution: "신탁의 조언을 가슴 깊이 새기십시오.",
       coffeePairing: `마스터의 기운과 어울리는 '오라클 블렌드'를 추천함다.`,
       generatedAt: new Date().toISOString(),
-      engineVersion: engine === 'gemini' ? "Gemini-1.5-Flash (Server)" : "Llama-3-Master"
+      engineVersion: engine === 'gemini' ? "Gemini-3.0-Flash (Server)" : "Llama-3-Master"
     };
 
   } catch (err) {
