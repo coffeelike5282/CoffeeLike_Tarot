@@ -138,7 +138,7 @@ function App() {
   const [isSavingPDF, setIsSavingPDF] = useState(false);
 
   // 📄 [v2.5] 신탁 결과 PDF 저장 기능
-  const handleSavePDF = async () => {
+  const saveAsPDF = async () => {
     const element = document.getElementById('tarot-result-sheet');
     if (!element) return;
 

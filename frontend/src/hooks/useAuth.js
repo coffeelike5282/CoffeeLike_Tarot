@@ -13,7 +13,7 @@ export const useAuth = () => {
         .from('tb_customer')
         .select('*')
         .eq('phone_number', phoneNumber)
-        .single();
+        .maybeSingle();
 
       if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
 
