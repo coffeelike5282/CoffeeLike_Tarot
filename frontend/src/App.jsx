@@ -555,7 +555,7 @@ function App() {
                   <TarotCard card={selectedCard2} backImage={backImage} size="medium" isFlipped={isResultCard2Flipped} />
                 </div>
               </div>
-
+              <div className="glass-panel px-4 py-6 sm:px-6 sm:py-10 flex flex-col gap-8 shadow-2xl relative overflow-hidden text-center">
                 <div id="tarot-result-sheet" className="flex flex-col gap-6 sm:gap-10 pb-6">
                   <div className="flex flex-col items-center gap-2">
                     <div className="px-6 py-2 bg-tech-purple/20 border border-tech-purple/40 rounded-full text-lg text-tech-purple font-black tracking-[0.2em] uppercase">심층 조합 결과</div>
