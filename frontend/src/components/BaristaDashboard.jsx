@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useCallback } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { Check, X, Coffee, Users, Clock, Zap, LogOut, RefreshCcw } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { generateAIInterpretation } from '../services/aiOracleService';
@@ -16,7 +16,7 @@ const BaristaDashboard = ({ onLogout }) => {
   const [showNewOrderToast, setShowNewOrderToast] = useState(false);
   const [aiEngine, setAiEngine] = useState('llama'); // 'llama' or 'gemini'
 
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     setLoading(true);
     const { data: pendingData, error: pendingError } = await supabase
       .from('tb_tarot_request')
@@ -62,9 +62,9 @@ const BaristaDashboard = ({ onLogout }) => {
       });
     }
     setLoading(false);
-  };
+  }, [isSoundEnabled, lastNotifiedReqId, playNotification]);
 
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     const { data, error } = await supabase
       .from('tb_admin_config')
       .select('ai_engine')
@@ -73,7 +73,7 @@ const BaristaDashboard = ({ onLogout }) => {
     if (!error && data) {
       setAiEngine(data.ai_engine || 'llama');
     }
-  };
+  }, []);
 
   const toggleAiEngine = async () => {
     const newEngine = aiEngine === 'llama' ? 'gemini' : 'llama';
@@ -90,11 +90,11 @@ const BaristaDashboard = ({ onLogout }) => {
     }
   };
 
-  const playNotification = () => {
+  const playNotification = useCallback(() => {
     if (!isSoundEnabled) return;
     const audio = new Audio('/assets/sfx/notification.mp3');
     audio.play().catch(err => console.log('Audio play failed (need interaction):', err));
-  };
+  }, [isSoundEnabled]);
 
   useEffect(() => {
     fetchRequests();
@@ -125,7 +125,7 @@ const BaristaDashboard = ({ onLogout }) => {
       clearInterval(pollInterval);
       supabase.removeChannel(subscription);
     };
-  }, [isSoundEnabled, lastNotifiedReqId]);
+  }, [isSoundEnabled, lastNotifiedReqId, fetchRequests, fetchSettings, playNotification]);
 
   const handleAction = async (id, newStatus, requestData = null) => {
     if (newStatus === 1 && requestData) {
@@ -220,7 +220,7 @@ const BaristaDashboard = ({ onLogout }) => {
         hour: '2-digit', minute: '2-digit', second: '2-digit',
         hour12: false
       }).format(new Date(dateString));
-    } catch (e) { return dateString; }
+    } catch { return dateString; }
   };
 
   const formatPhone = (phone) => {

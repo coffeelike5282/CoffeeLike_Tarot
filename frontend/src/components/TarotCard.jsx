@@ -1,19 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 
-const TarotCard = ({ card, backImage, frontImage, onFlip, size = 'default', isFlipped = false }) => {
+const TarotCard = ({ card, backImage, onFlip, size = 'default', isFlipped = false }) => {
   const [flipped, setFlipped] = useState(isFlipped);
   
-  useEffect(() => {
-    if (isFlipped && !flipped) {
-      setFlipped(true);
-      playFlipSound();
-    } else if (!isFlipped && flipped) {
-      setFlipped(false);
-    }
-  }, [isFlipped]);
-
-  const playFlipSound = () => {
+  const playFlipSound = useCallback(() => {
     try {
       const audio = new Audio('/assets/sfx/card_flip.mp3');
       audio.volume = 0.4; // 너무 크지 않게 40% 볼륨
@@ -21,7 +13,23 @@ const TarotCard = ({ card, backImage, frontImage, onFlip, size = 'default', isFl
     } catch (err) {
       console.error('SFX playback error:', err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (isFlipped && !flipped) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFlipped(prev => {
+        if (!prev) {
+          playFlipSound();
+          return true;
+        }
+        return prev;
+      });
+    } else if (!isFlipped && flipped) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFlipped(false);
+    }
+  }, [isFlipped, flipped, playFlipSound]);
   
   const sizeClasses = {
     small: 'w-32 sm:w-40',
