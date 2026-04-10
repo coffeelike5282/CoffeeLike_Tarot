@@ -295,6 +295,28 @@ function App() {
                });
              }
 
+             // [v3.3.1] 카드 이름 가독성 및 공백 사수 (큰형님 정밀 지시)
+             const cardNamesRow = clonedElement.querySelector('.flex.items-center.gap-3.text-white\\/60');
+             if (cardNamesRow) {
+               cardNamesRow.style.display = 'flex';
+               cardNamesRow.style.alignItems = 'center';
+               cardNamesRow.style.justifyContent = 'center';
+               cardNamesRow.style.gap = '20px'; 
+               cardNamesRow.style.marginTop = '10px';
+               cardNamesRow.style.fontSize = '20px';
+               cardNamesRow.style.fontWeight = '900';
+               cardNamesRow.style.color = 'rgba(255, 255, 255, 0.6)';
+               
+               // 앰퍼샌드(&) 기호 색상 및 간격 추가 타격
+               const ampersand = cardNamesRow.querySelector('.text-tech-purple\\/60');
+               if (ampersand) {
+                 ampersand.style.color = '#8B5CF6';
+                 ampersand.style.opacity = '0.6';
+                 ampersand.style.margin = '0 5px';
+                 ampersand.innerText = '&';
+               }
+             }
+
              // 요약문 박스 세탁
              const summaryBox = clonedElement.querySelector('.p-5.bg-tech-purple\\/10');
              if (summaryBox) {
@@ -716,7 +738,7 @@ function App() {
                         ? '영적 주파수를 정밀하게 조정하고 있슴다. 조금만 더 인내심을 갖고 기다려주십쇼.' 
                         : '운명의 실타래가 정교하게 엮어지고 있슴다.'}
                       <br/>
-                      <span className="text-tech-purple decoration-2">{selectedCard.name} and {selectedCard2.name}</span> 의<br/>
+                      <span className="text-tech-purple decoration-2">{selectedCard.name} & {selectedCard2.name}</span> 의<br/>
                       깊은 진실을 위해 정성을 다하는 중임다.
                     </p>
                     {isExtended && (
@@ -788,7 +810,7 @@ function App() {
                     {(selectedCard || selectedCard2) && (
                       <div className="flex items-center gap-3 text-white/60 font-black tracking-tight mt-2 animate-in fade-in slide-in-from-top-4 duration-1500 fill-mode-both">
                         {selectedCard && <span>{selectedCard.name.split('(')[0].trim()}</span>}
-                        {selectedCard && selectedCard2 && <span className="text-tech-purple/60 mx-2">and</span>}
+                        {selectedCard && selectedCard2 && <span className="text-tech-purple/60 mx-2">&</span>}
                         {selectedCard2 && <span>{selectedCard2.name.split('(')[0].trim()}</span>}
                       </div>
                     )}
