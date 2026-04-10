@@ -114,19 +114,26 @@ const BaristaDashboard = ({ onLogout }) => {
     }
   };
 
+  // 🚀 초기 로딩 (최초 1회만 실행)
   useEffect(() => {
     fetchRequests();
     fetchHistory(0);
     fetchSettings();
+  }, [fetchRequests, fetchHistory, fetchSettings]);
 
+  // 🔄 탭 전환 시 히스토리 최신화 (0페이지일 때만)
+  useEffect(() => {
+    if (activeTab === 'history' && historyPage === 0) {
+      fetchHistory(0);
+    }
+  }, [activeTab, historyPage, fetchHistory]);
+
+  // ⚡ 실시간 전용 및 폴링 관리
+  useEffect(() => {
     // 🚀 10초 주기 폴링 (백업용)
     const pollInterval = setInterval(() => {
       console.log('🔄 10초 주기 폴링 중...');
       fetchRequests();
-      // 히스토리는 0페이지일 때만 최신화 (사용자 방해 방지)
-      if (activeTab === 'history' && historyPage === 0) {
-        fetchHistory(0);
-      }
     }, 10000);
 
     // ⚡ 수파베이스 리얼타임 구독
@@ -141,6 +148,10 @@ const BaristaDashboard = ({ onLogout }) => {
         }
         
         fetchRequests();
+        // 히스토리 첫 페이지라면 리얼타임으로 같이 갱신
+        if (historyPage === 0) {
+          fetchHistory(0);
+        }
       })
       .subscribe();
 
@@ -148,7 +159,7 @@ const BaristaDashboard = ({ onLogout }) => {
       clearInterval(pollInterval);
       supabase.removeChannel(subscription);
     };
-  }, [isSoundEnabled, lastNotifiedReqId, fetchRequests, fetchSettings, playNotification, activeTab, fetchHistory, historyPage]);
+  }, [fetchRequests, fetchHistory, playNotification, historyPage]);
 
   const handleAction = async (id, newStatus, requestData = null) => {
     if (newStatus === 1 && requestData) {
