@@ -242,6 +242,33 @@ function App() {
 
           const clonedElement = clonedDoc.getElementById('tarot-result-sheet');
           if (clonedElement) {
+             // [v3.3.0] 스마트 페이지 분할 (Spacer Injection) - 글자 잘림 방지 태클
+             // A4 높이 수치 계산 (800px 가로 기준 약 1130px)
+             const pxPageHeight = 1131; 
+             const blocks = clonedElement.querySelectorAll('.p-5, .text-left p, h4');
+             
+             // clonedDoc이 레이아웃을 가지도록 임시 렌더링 환경 확인이 필요할 수 있으나,
+             // html2canvas의 onclone 내부에서는 어느 정도 거리 계산이 가능함다.
+             blocks.forEach((block) => {
+               const rect = block.getBoundingClientRect();
+               const containerRect = clonedElement.getBoundingClientRect();
+               const relativeTop = rect.top - containerRect.top;
+               const relativeBottom = relativeTop + rect.height;
+               
+               const currentPage = Math.floor(relativeTop / pxPageHeight);
+               const pageBoundary = (currentPage + 1) * pxPageHeight;
+               
+               // 문단이 페이지 경계에 걸리면 (경계선 50px 전부터 체크)
+               if (relativeBottom > pageBoundary - 50 && relativeTop < pageBoundary) {
+                 const spacerNeeded = pageBoundary - relativeTop;
+                 const spacer = clonedDoc.createElement('div');
+                 spacer.style.height = `${spacerNeeded}px`;
+                 spacer.style.width = '100%';
+                 spacer.className = 'pdf-page-spacer';
+                 block.parentNode.insertBefore(spacer, block);
+               }
+             });
+
              // 카드 배치 비율 수호
              const cardContainer = clonedElement.querySelector('.flex.justify-center.gap-4') || 
                                    clonedElement.querySelector('.animate-in.fade-in.zoom-in');
@@ -306,7 +333,14 @@ function App() {
       let heightLeft = imgHeight;
       let position = 0;
 
+      // [v3.3.0] 배경색 사전에 칠하기 (하얀 속살 방지)
+      const fillBackground = () => {
+        pdf.setFillColor(22, 19, 17); // #161311
+        pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+      };
+
       // 첫 페이지 추가
+      fillBackground();
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
 
@@ -314,6 +348,7 @@ function App() {
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
+        fillBackground(); // 새 페이지에도 배경색 주입
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
       }
