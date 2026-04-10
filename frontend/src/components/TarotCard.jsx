@@ -26,7 +26,6 @@ const TarotCard = ({ card, backImage, onFlip, size = 'default', isFlipped = fals
         return prev;
       });
     } else if (!isFlipped && flipped) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFlipped(false);
     }
   }, [isFlipped, flipped, playFlipSound]);

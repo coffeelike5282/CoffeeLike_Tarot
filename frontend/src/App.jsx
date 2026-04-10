@@ -182,7 +182,6 @@ function App() {
     if (requestStatus === 'processing' && requestId) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setCountdown(prev => (prev === 60 ? prev : 60)); 
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsExtended(prev => (prev === false ? prev : false));
       
       countdownInterval = setInterval(() => {
@@ -206,9 +205,7 @@ function App() {
       }, 1000);
     } else if (requestStatus === 'pending') {
       // 대기 중일 때는 카운트다운을 표시하지 않거나 초기화 상태 유지
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCountdown(prev => (prev === 60 ? prev : 60));
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsExtended(prev => (prev === false ? prev : false));
     }
 

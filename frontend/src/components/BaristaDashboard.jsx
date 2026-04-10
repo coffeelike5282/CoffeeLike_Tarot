@@ -16,6 +16,23 @@ const BaristaDashboard = ({ onLogout }) => {
   const [showNewOrderToast, setShowNewOrderToast] = useState(false);
   const [aiEngine, setAiEngine] = useState('llama'); // 'llama' or 'gemini'
 
+  const playNotification = useCallback(() => {
+    if (!isSoundEnabled) return;
+    const audio = new Audio('/assets/sfx/notification.mp3');
+    audio.play().catch(err => console.log('Audio play failed (need interaction):', err));
+  }, [isSoundEnabled]);
+
+  const fetchSettings = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('tb_admin_config')
+      .select('ai_engine')
+      .single();
+    
+    if (!error && data) {
+      setAiEngine(data.ai_engine || 'llama');
+    }
+  }, []);
+
   const fetchRequests = useCallback(async () => {
     setLoading(true);
     const { data: pendingData, error: pendingError } = await supabase
@@ -64,17 +81,6 @@ const BaristaDashboard = ({ onLogout }) => {
     setLoading(false);
   }, [isSoundEnabled, lastNotifiedReqId, playNotification]);
 
-  const fetchSettings = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('tb_admin_config')
-      .select('ai_engine')
-      .single();
-    
-    if (!error && data) {
-      setAiEngine(data.ai_engine || 'llama');
-    }
-  }, []);
-
   const toggleAiEngine = async () => {
     const newEngine = aiEngine === 'llama' ? 'gemini' : 'llama';
     setAiEngine(newEngine);
@@ -89,12 +95,6 @@ const BaristaDashboard = ({ onLogout }) => {
       setAiEngine(aiEngine); // 롤백
     }
   };
-
-  const playNotification = useCallback(() => {
-    if (!isSoundEnabled) return;
-    const audio = new Audio('/assets/sfx/notification.mp3');
-    audio.play().catch(err => console.log('Audio play failed (need interaction):', err));
-  }, [isSoundEnabled]);
 
   useEffect(() => {
     fetchRequests();
