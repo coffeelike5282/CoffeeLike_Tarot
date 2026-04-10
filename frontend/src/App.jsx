@@ -212,52 +212,94 @@ function App() {
     return () => clearInterval(countdownInterval);
   }, [requestStatus, requestId, isExtended]); // requestStatus 변화에 민감하게 반응함다!
 
-  // 📡 [v2.2.1] DB 폴링 전용 로직
+  // 📡 [v2.7] 데이터 리얼타임(WebSocket) 전용 로직
   useEffect(() => {
-    let interval;
+    let channel;
     
-    if ((requestStatus === 'pending' || requestStatus === 'processing') && requestId) {
-      interval = setInterval(async () => {
-        // DB 상태 체크
-        const { data } = await supabase
-          .from('tb_tarot_request')
-          .select('status, ai_tarot_result')
-          .eq('req_id', requestId)
-          .single();
-
-        if (data && data.status === 1) {
-          if (!data.ai_tarot_result) {
-            if (requestStatus !== 'processing') {
-              setRequestStatus('processing');
-              if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
-            }
-          } else {
-            try {
-              const resObj = typeof data.ai_tarot_result === 'string' 
-                ? JSON.parse(data.ai_tarot_result) 
-                : data.ai_tarot_result;
-              
-              if (resObj.isError) {
-                setRequestStatus('error');
-                clearInterval(interval);
-                return;
-              }
-
+    // 상태 처리를 위한 공통 핸들러
+    const handleStatusUpdate = (data) => {
+      if (data.status === 1) {
+        if (!data.ai_tarot_result) {
+          if (requestStatus !== 'processing') {
+            setRequestStatus('processing');
+            if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
+          }
+        } else {
+          try {
+            const resObj = typeof data.ai_tarot_result === 'string' 
+              ? JSON.parse(data.ai_tarot_result) 
+              : data.ai_tarot_result;
+            
+            if (resObj.isError) {
+              setRequestStatus('error');
+            } else {
               setDeepResult(resObj);
               setRequestStatus('approved');
-              clearInterval(interval);
-            } catch (e) {
-              console.error('JSON Parsing Error:', e);
             }
+          } catch (e) {
+            console.error('JSON Parsing Error:', e);
           }
-        } else if (data && data.status === 2) {
-          setRequestStatus('rejected');
-          clearInterval(interval);
         }
-      }, 3000);
+      } else if (data.status === 2) {
+        setRequestStatus('rejected');
+      }
+    };
+
+    if ((requestStatus === 'pending' || requestStatus === 'processing') && requestId) {
+      // 1. 혹시 모를 레이스 컨디션 방지: 구독 시작과 동시에 현재 상태 한 번 더 체크!
+      const syncCurrentStatus = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('tb_tarot_request')
+            .select('status, ai_tarot_result')
+            .eq('req_id', requestId)
+            .single();
+          
+          if (error) {
+             console.error('초기 상태 동기화 실패:', error.message);
+             return;
+          }
+          if (data) handleStatusUpdate(data);
+        } catch (err) {
+          console.warn('동기화 중 오류 발생:', err);
+        }
+      };
+
+      syncCurrentStatus();
+
+      // 2. 실시간 채널 구독 시작 (정밀 타겟팅 필터 적용)
+      channel = supabase
+        .channel(`tarot_req_${requestId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'tb_tarot_request',
+            filter: `req_id=eq.${requestId}`
+          },
+          (payload) => {
+            console.log('🔮 실시간 운명 감지:', payload.new);
+            handleStatusUpdate(payload.new);
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('✅ 운명의 실시간 채널 연결 완료!');
+          }
+        });
     }
-    return () => clearInterval(interval);
-  }, [requestStatus, requestId]); // countdown 의존성 제거!
+
+    return () => {
+      // [Stabilization] 채널 해제 시 에러 방지용 안전 장치
+      if (channel) {
+        console.log('🚿 운명의 실시간 채널 해제 중... req_id:', requestId);
+        supabase.removeChannel(channel).catch(err => {
+          console.warn('채널 해제 중 지연 발생 (정상 범위내):', err.message);
+        });
+      }
+    };
+  }, [requestStatus, requestId]); // 연동성 강화를 위해 requestId와 requestStatus를 주시함다!
 
   // Handle sequential flipping in approved state
   useEffect(() => {
