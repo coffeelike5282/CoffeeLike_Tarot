@@ -40,11 +40,12 @@
 
 ---
 
-## ✨ Micro-Animations (상호작용)
+## ✨ Micro-Animations & Mystic System (상호작용)
 
 1. **Card Orbit**: 선택된 카드는 은은하게 발광(`glow-coffee`)하며 숨을 쉬듯이 움직임.
 2. **Flash Entry**: 결과 페이지 진입 시 강력한 화이트 플래시 효과로 '운명의 순간'을 연출.
 3. **Ghost Scroll**: 바리스타 히스토리 이동 시 부드러운 트랜지션 적용.
+4. **Mystic Queue (Wait Number)**: 대기 번호의 순차적 노출을 지양하고, **1~999 사이의 완전 랜덤한 3자리 숫자(001~999)**를 부여하여 신비감과 보안성을 동시에 확보함.
 
 ---
 
