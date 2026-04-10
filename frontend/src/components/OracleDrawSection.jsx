@@ -60,7 +60,7 @@ const OracleDrawSection = ({
                   <textarea 
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
-                    placeholder={"예: 올해 연애운이 궁금합니다. / 이직을 고민 중인데 어떨까요?\n\n질문을 입력하지 않으면 오늘의 운세가 자동으로 적용됩니다."}
+                    placeholder={"예: 올해 연애운이 궁금합니다. / 이직을 고민 중인데 어떨까요?\n\n(질문을 입력하지 않으면 '오늘의 운세 알려줘'가 자동으로 적용됩니다.)"}
                     className="w-full bg-black/40 border border-tech-purple/30 rounded-xl p-4 text-white text-sm outline-none focus:border-tech-purple transition-all min-h-[120px] resize-none placeholder:text-white/20"
                   />
                 </div>

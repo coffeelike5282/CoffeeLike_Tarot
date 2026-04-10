@@ -96,7 +96,14 @@ function App() {
       localStorage.setItem('tarot_requestId', requestId);
       if (requestStatus) localStorage.setItem('tarot_requestStatus', requestStatus);
       if (waitNumber) localStorage.setItem('tarot_waitNumber', waitNumber);
-      if (question) localStorage.setItem('tarot_question', question);
+      
+      // 질문 데이터 동기화 (빈 값일 경우 삭제)
+      if (question && question.trim()) {
+        localStorage.setItem('tarot_question', question);
+      } else {
+        localStorage.removeItem('tarot_question');
+      }
+
       if (deepResult) localStorage.setItem('tarot_deepResult', JSON.stringify(deepResult));
       if (selectedCard) localStorage.setItem('tarot_selectedCard', selectedCard.name);
       if (selectedCard2) localStorage.setItem('tarot_selectedCard2', selectedCard2.name);
@@ -120,6 +127,16 @@ function App() {
     }
   };
 
+  const clearTarotSession = () => {
+    localStorage.removeItem('tarot_requestId');
+    localStorage.removeItem('tarot_requestStatus');
+    localStorage.removeItem('tarot_waitNumber');
+    localStorage.removeItem('tarot_deepResult');
+    localStorage.removeItem('tarot_selectedCard');
+    localStorage.removeItem('tarot_selectedCard2');
+    localStorage.removeItem('tarot_question');
+  };
+
   const handleLogout = () => {
     setIsAdmin(false);
     authLogout();
@@ -134,13 +151,22 @@ function App() {
     setWaitNumber('');
     setQuestion('');
     // 로컬 스토리지 비우기
-    localStorage.removeItem('tarot_requestId');
-    localStorage.removeItem('tarot_requestStatus');
-    localStorage.removeItem('tarot_waitNumber');
-    localStorage.removeItem('tarot_deepResult');
-    localStorage.removeItem('tarot_selectedCard');
-    localStorage.removeItem('tarot_selectedCard2');
-    localStorage.removeItem('tarot_question');
+    clearTarotSession();
+  };
+
+  const handleStartNewConsultation = () => {
+    console.log('🔄 [세션 정화] 새로운 상담을 위해 이전의 묵은 정보를 모두 삭제함다!');
+    setSelectedCard(null);
+    setSelectedCard2(null);
+    setRequestStatus(null);
+    setFirstCardFlipped(false);
+    setIsResultCard1Flipped(false);
+    setIsResultCard2Flipped(false);
+    setDeepResult(null);
+    setRequestId(null);
+    setWaitNumber('');
+    setQuestion('');
+    clearTarotSession();
   };
 
   const shuffleAndDraw = () => {
@@ -485,6 +511,7 @@ function App() {
               setIsResultCard1Flipped={setIsResultCard1Flipped}
               setIsResultCard2Flipped={setIsResultCard2Flipped}
               backImage={backImage}
+              handleStartNew={handleStartNewConsultation}
             />
           ) : (
             <OracleDrawSection 
