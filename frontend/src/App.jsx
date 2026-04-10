@@ -49,12 +49,59 @@ function App() {
         alert('타로 데이터를 불러오는 데 실패했습니다.');
       } else {
         setCards(data);
+        // 카드 로드 후 세션 복구 수행
+        restoreSession(data);
       }
       setIsDataLoading(false);
     };
 
+    const restoreSession = (allCards) => {
+      try {
+        const savedReqId = localStorage.getItem('tarot_requestId');
+        const savedStatus = localStorage.getItem('tarot_requestStatus');
+        const savedWaitNum = localStorage.getItem('tarot_waitNumber');
+        const savedResult = localStorage.getItem('tarot_deepResult');
+        const savedCard1 = localStorage.getItem('tarot_selectedCard');
+        const savedCard2 = localStorage.getItem('tarot_selectedCard2');
+        const savedQuestion = localStorage.getItem('tarot_question');
+
+        if (savedReqId) {
+          console.log('🔄 [세션 복구] 이전 상담 정보를 불러옵니다:', savedReqId);
+          setRequestId(savedReqId);
+          if (savedStatus) setRequestStatus(savedStatus);
+          if (savedWaitNum) setWaitNumber(savedWaitNum);
+          if (savedQuestion) setQuestion(savedQuestion);
+          if (savedResult) setDeepResult(JSON.parse(savedResult));
+          
+          if (savedCard1 && allCards.length > 0) {
+            const c1 = allCards.find(c => c.name === savedCard1);
+            if (c1) setSelectedCard(c1);
+          }
+          if (savedCard2 && allCards.length > 0) {
+            const c2 = allCards.find(c => c.name === savedCard2);
+            if (c2) setSelectedCard2(c2);
+          }
+        }
+      } catch (e) {
+        console.warn('⚠️ 세션 복구 중 오류 발생 (무시함):', e);
+      }
+    };
+
     fetchTarotCards();
   }, []);
+
+  // 상태 변경 시 로컬 스토리지 동기화
+  useEffect(() => {
+    if (requestId) {
+      localStorage.setItem('tarot_requestId', requestId);
+      if (requestStatus) localStorage.setItem('tarot_requestStatus', requestStatus);
+      if (waitNumber) localStorage.setItem('tarot_waitNumber', waitNumber);
+      if (question) localStorage.setItem('tarot_question', question);
+      if (deepResult) localStorage.setItem('tarot_deepResult', JSON.stringify(deepResult));
+      if (selectedCard) localStorage.setItem('tarot_selectedCard', selectedCard.name);
+      if (selectedCard2) localStorage.setItem('tarot_selectedCard2', selectedCard2.name);
+    }
+  }, [requestId, requestStatus, waitNumber, deepResult, selectedCard, selectedCard2, question]);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -83,6 +130,17 @@ function App() {
     setIsResultCard1Flipped(false);
     setIsResultCard2Flipped(false);
     setDeepResult(null);
+    setRequestId(null);
+    setWaitNumber('');
+    setQuestion('');
+    // 로컬 스토리지 비우기
+    localStorage.removeItem('tarot_requestId');
+    localStorage.removeItem('tarot_requestStatus');
+    localStorage.removeItem('tarot_waitNumber');
+    localStorage.removeItem('tarot_deepResult');
+    localStorage.removeItem('tarot_selectedCard');
+    localStorage.removeItem('tarot_selectedCard2');
+    localStorage.removeItem('tarot_question');
   };
 
   const shuffleAndDraw = () => {
@@ -215,18 +273,22 @@ function App() {
   const handleStatusUpdate = React.useCallback((data) => {
     if (!data) return;
     
+    const statusCode = Number(data.status);
+    console.log(`🔔 [동기화 알림] ID: ${data.req_id || requestId}, Status: ${statusCode}, ResultExist: ${!!data.ai_tarot_result}`);
+
     // 1. 거절된 경우
-    if (data.status === 2) {
+    if (statusCode === 2) {
       setRequestStatus(curr => curr !== 'rejected' ? 'rejected' : curr);
       return;
     }
 
     // 2. 승인(수락)된 경우
-    if (data.status === 1) {
+    if (statusCode === 1) {
       // AI 결과가 아직 없는 경우 -> 해석 중 상태로 전환
       if (!data.ai_tarot_result) {
         setRequestStatus(current => {
           if (current !== 'processing' && current !== 'approved') {
+             console.log('🚀 바리스타 승인됨! 해석 대기 모드로 전환함다.');
              if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
              return 'processing';
           }
@@ -241,17 +303,38 @@ function App() {
             : data.ai_tarot_result;
           
           if (resObj.isError) {
+            console.warn('⚠️ 신탁 엔진 내부 오류 보고됨:', resObj.message);
             setRequestStatus(curr => curr !== 'error' ? 'error' : curr);
           } else {
+            console.log('✅ 결과 수신 완료! 결과 리포트 전환함다.');
             setDeepResult(resObj);
             setRequestStatus(curr => curr !== 'approved' ? 'approved' : curr);
           }
         } catch (e) {
-          console.error('JSON Parsing Error:', e);
+          console.error('❌ 결과 파싱 오류:', e);
         }
       }
     }
-  }, []);
+  }, [requestId]);
+
+  // 수동 동기화 체크 함수
+  const manualCheckStatus = async () => {
+    if (!requestId) return;
+    console.log('🔍 [수동 동기화] 직접 데이터를 조회함다...');
+    try {
+      const { data, error } = await supabase
+        .from('tb_tarot_request')
+        .select('status, ai_tarot_result, req_id')
+        .eq('req_id', requestId)
+        .single();
+      
+      if (error) throw error;
+      if (data) handleStatusUpdate(data);
+    } catch (err) {
+      console.error('❌ 수동 동기화 실패:', err.message);
+      alert('동기화 실패했슴다, 큰형님! 서버 상태를 확인해주세요.');
+    }
+  };
 
   // 📡 [v2.8.1] 5초 주기 폴링(Polling) 폴백 로직
   useEffect(() => {
@@ -381,6 +464,7 @@ function App() {
                countdown={countdown} isExtended={isExtended}
                selectedCard={selectedCard} selectedCard2={selectedCard2}
                backImage={backImage}
+               manualCheckStatus={manualCheckStatus}
             />
           ) : (requestStatus === 'approved' && deepResult) ? (
             <TarotResultReport 

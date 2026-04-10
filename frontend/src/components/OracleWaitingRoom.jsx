@@ -15,7 +15,8 @@ const OracleWaitingRoom = ({
   isExtended,
   selectedCard,
   selectedCard2,
-  backImage
+  backImage,
+  manualCheckStatus // 수동 동기화 함수 추가
 }) => {
   // 에러 화면
   if (requestStatus === 'error') {
@@ -116,9 +117,18 @@ const OracleWaitingRoom = ({
               카운터 바리스타에게 <span className="text-tech-blue font-black underline underline-offset-4 decoration-2">"{waitNumber}번 대기 중"</span>이라고 말씀해주세요. 
             </p>
           </div>
-          <div className="w-full p-5 bg-black/30 rounded-2xl border border-white/5 text-[10px] text-coffee-light/40 flex justify-between items-center font-mono">
-            <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-tech-blue animate-pulse" /> 동기화 중</span>
-            <span>ID: {requestId}</span>
+          <div className="flex flex-col gap-3 w-full">
+            <button 
+              onClick={manualCheckStatus}
+              className="w-full py-3 bg-tech-blue/20 hover:bg-tech-blue/30 border border-tech-blue/30 rounded-xl text-[11px] font-black text-white tracking-widest uppercase transition-all flex items-center justify-center gap-2 group"
+            >
+              <RefreshCcw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
+              신탁 응답 강제 확인 (Sync Now)
+            </button>
+            <div className="w-full p-4 bg-black/30 rounded-xl border border-white/5 text-[10px] text-coffee-light/40 flex justify-between items-center font-mono">
+              <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-tech-blue animate-pulse" /> 실시간 동기화 활성</span>
+              <span>ID: {requestId?.slice(0, 8)}...</span>
+            </div>
           </div>
           <footer className="mt-4 text-[8px] sm:text-[9px] text-coffee-light/10 font-medium uppercase tracking-[0.3em] text-center w-full">
             © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
