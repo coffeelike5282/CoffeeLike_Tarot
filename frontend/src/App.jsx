@@ -160,8 +160,11 @@ function App() {
   };
 
 
-  const performDeepTarotRequest = async (c1, c2, ip = null) => {
+  const performDeepTarotRequest = async (c1, c2, ip = null, finalQuestion = null) => {
     if (!user || !c1 || !c2) return;
+    
+    // finalQuestion이 없으면 상태값의 question 사용
+    const qText = finalQuestion || question;
     
     try {
       const { data, error } = await supabase
@@ -170,7 +173,7 @@ function App() {
           p_tarot_card1_name: c1.name,
           p_tarot_card2_name: c2.name,
           p_ip_address: ip,
-          p_question: question // 질문 파라미터 추가
+          p_question: qText // 질문 파라미터 사용
         });
 
       setIsCasting2(false);
@@ -222,8 +225,14 @@ function App() {
     
     setSelectedCard2(randomCard);
     
-    // 즉시 서버 요청 수행 (IP 포함)
-    performDeepTarotRequest(selectedCard, randomCard, clientIp);
+    // [v2.9] 질문 자동 완성 로직 적용
+    const finalQuestion = question.trim() || '오늘의 운세 알려줘';
+    if (question.trim() === '') {
+      setQuestion(finalQuestion);
+    }
+    
+    // 즉시 서버 요청 수행 (IP 및 확정된 질문 포함)
+    performDeepTarotRequest(selectedCard, randomCard, clientIp, finalQuestion);
   };
 
   const retryDeepProcess = async () => {
