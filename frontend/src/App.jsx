@@ -138,6 +138,7 @@ function App() {
   const [isSavingPDF, setIsSavingPDF] = useState(false);
 
   // 📄 [v2.6.5] 신탁 결과 PDF 저장 기능 (oklab/oklch 패치 적용)
+  // 📄 [v3.0.0] 신탁 결과 PDF 저장 기능 (황금비율 & 멀티페이지 정밀 타격)
   const saveAsPDF = async () => {
     const element = document.getElementById('tarot-result-sheet');
     if (!element) return;
@@ -145,7 +146,6 @@ function App() {
     try {
       setIsSavingPDF(true);
       
-      // [v2.8.2] 이미지실종 사건 종결을 위한 Base64 선납제 필살기
       const getBase64 = async (url) => {
         try {
           const res = await fetch(url, { mode: 'cors' });
@@ -156,210 +156,151 @@ function App() {
             reader.readAsDataURL(blob);
           });
         } catch (e) {
-          console.warn('Base64 conversion failed, fallback to original:', e);
+          console.warn('Base64 conversion failed:', e);
           return url;
         }
       };
 
-      // 카드 이미지들을 미리 Base64로 구워버림
       const [img1Data, img2Data] = await Promise.all([
         selectedCard ? getBase64(selectedCard.image_url) : Promise.resolve(null),
         selectedCard2 ? getBase64(selectedCard2.image_url) : Promise.resolve(null)
       ]);
 
-      // [v2.6.8] 모든 이미지 로딩 대기
       const images = Array.from(element.querySelectorAll('img'));
-      const bgImages = Array.from(element.querySelectorAll('*')).filter(el => {
-        const bg = window.getComputedStyle(el).backgroundImage;
-        return bg && bg !== 'none' && bg.startsWith('url');
-      });
-      
-      const imagePromises = [
-        ...images.map(img => img.complete ? Promise.resolve() : new Promise(resolve => {
-          img.onload = resolve;
-          img.onerror = resolve;
-        })),
-        ...bgImages.map(el => new Promise(resolve => {
-          const bg = window.getComputedStyle(el).backgroundImage;
-          const url = bg.slice(4, -1).replace(/"/g, "");
-          const img = new Image();
-          img.src = url;
-          img.onload = resolve;
-          img.onerror = resolve;
-        }))
-      ];
-      
-      await Promise.all(imagePromises);
-      await new Promise(r => setTimeout(r, 800)); // 로딩 여유 시간 증표
+      await Promise.all(images.map(img => img.complete ? Promise.resolve() : new Promise(resolve => {
+        img.onload = resolve;
+        img.onerror = resolve;
+      })));
+      await new Promise(r => setTimeout(r, 1000)); 
 
+      const TARGET_WIDTH = 800; // A4 최적 가로폭
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 1, // 800px면 충분하므로 배율 1로 조정 (메모리 효율)
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#161311',
         logging: false,
-        width: 420,
-        windowWidth: 420,
+        width: TARGET_WIDTH,
+        windowWidth: TARGET_WIDTH,
         onclone: (clonedDoc) => {
-          // [v2.9.17] 모바일 강제 비율(Mobile Force) 레이아웃 집행
-          clonedDoc.body.style.width = '420px';
+          clonedDoc.body.style.width = `${TARGET_WIDTH}px`;
           clonedDoc.body.style.background = '#161311';
-          clonedDoc.body.style.margin = '0';
-          clonedDoc.body.style.padding = '0';
-          clonedDoc.body.style.overflow = 'hidden';
-
+          
           const style = clonedDoc.createElement('style');
           style.innerHTML = `
-            * { box-sizing: border-box !important; }
-            img { display: block; }
+            * { box-sizing: border-box !important; -webkit-print-color-adjust: exact; }
             #tarot-result-sheet { 
-              width: 100% !important; 
-              max-width: 420px !important;
+              width: ${TARGET_WIDTH}px !important; 
+              max-width: ${TARGET_WIDTH}px !important;
               margin: 0 !important; 
-              background: transparent !important;
-              padding: 40px 20px !important;
+              padding: 60px 50px !important; 
+              background: #161311 !important;
               color: #eae1dd !important;
+              display: flex !important;
+              flex-direction: column !important;
+              align-items: center !important;
             }
+            .text-left { text-align: left !important; width: 100% !important; }
+            .flex-col { display: flex !important; flex-direction: column !important; align-items: center !important; }
+            .justify-center { justify-content: center !important; }
           `;
           clonedDoc.head.appendChild(style);
 
-          // 스타일 세척 (oklab 오류 방지)
-          const links = clonedDoc.querySelectorAll('link[rel="stylesheet"]');
-          links.forEach(link => link.remove()); 
-
+          // oklch 컬러 정밀 세척 (보랏빛 전설 복구)
           const styleTags = clonedDoc.getElementsByTagName('style');
           for (let i = 0; i < styleTags.length; i++) {
-            try {
-              styleTags[i].innerHTML = styleTags[i].innerHTML.replace(/okl(ch|ab)\([^)]+\)/g, '#161311');
-            } catch (e) {
-              console.warn('⚠️ 세척 무시:', e);
-            }
+            styleTags[i].innerHTML = styleTags[i].innerHTML
+              .replace(/oklch\(\s*0\.596\s*0\.145\s*272\.61\s*\)/g, '#8B5CF6') // tech-purple
+              .replace(/oklch\(\s*0\.623\s*0\.214\s*259\.815\s*\)/g, '#3B82F6') // tech-blue
+              .replace(/oklch\([^)]+\)/g, '#eae1dd'); // 나머지는 기본색
           }
 
           const clonedElement = clonedDoc.getElementById('tarot-result-sheet');
           if (clonedElement) {
-            clonedElement.style.minHeight = '800px'; 
-            
-            // 상단 섹션: 중앙 정렬 수호
-            const topHeader = clonedElement.querySelector('.flex.flex-col.items-center.gap-2') || 
-                              clonedElement.children[0];
-            if (topHeader) {
-              topHeader.style.display = 'flex';
-              topHeader.style.flexDirection = 'column';
-              topHeader.style.alignItems = 'center';
-              topHeader.style.width = '100%';
-              topHeader.style.textAlign = 'center';
-            }
+             // 카드 배치 비율 수호
+             const cardContainer = clonedElement.querySelector('.flex.justify-center.gap-4') || 
+                                   clonedElement.querySelector('.animate-in.fade-in.zoom-in');
+             if (cardContainer) {
+               cardContainer.style.display = 'flex';
+               cardContainer.style.justifyContent = 'center';
+               cardContainer.style.gap = '30px'; 
+               cardContainer.style.marginTop = '40px';
+               
+               const imageWrappers = cardContainer.querySelectorAll('div.relative');
+               imageWrappers.forEach((w, idx) => {
+                  w.style.width = '220px'; 
+                  w.style.height = '374px'; // 1:1.7 비율 유지
+                  w.style.borderRadius = '20px';
+                  w.style.border = '3px solid rgba(139, 92, 246, 0.5)';
+                  
+                  const img = w.querySelector('img');
+                  if (img) {
+                    img.src = idx === 0 ? img1Data : img2Data;
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.objectFit = 'cover';
+                  }
+               });
+             }
 
-            const cardContainer = clonedElement.querySelector('.flex.justify-center.gap-4') || 
-                                  clonedElement.querySelector('.animate-in.fade-in.zoom-in');
-            if (cardContainer) {
-              cardContainer.style.display = 'flex';
-              cardContainer.style.flexDirection = 'row';
-              cardContainer.style.justifyContent = 'center';
-              cardContainer.style.gap = '15px'; 
-              cardContainer.style.width = '100%';
-              cardContainer.style.marginTop = '30px';
-              cardContainer.style.marginBottom = '20px';
-              
-              const imageWrappers = cardContainer.querySelectorAll('div.relative');
-              imageWrappers.forEach(w => {
-                 w.style.width = '140px'; 
-                 w.style.height = '238px';
-                 w.style.minWidth = '140px';
-                 w.style.minHeight = '238px';
-                 w.style.borderRadius = '12px';
-                 w.style.overflow = 'hidden';
-                 w.style.border = '2px solid rgba(139, 92, 246, 0.6)';
-                 
-                 const img = w.querySelector('img');
-                 if (img) {
-                   img.style.width = '140px';
-                   img.style.height = '238px';
-                   img.style.objectFit = 'cover';
-                 }
-              });
-            }
+             // 요약문 박스 세탁
+             const summaryBox = clonedElement.querySelector('.p-5.bg-tech-purple\\/10');
+             if (summaryBox) {
+               summaryBox.style.background = 'rgba(139, 92, 246, 0.15)';
+               summaryBox.style.border = '1px solid rgba(139, 92, 246, 0.3)';
+               const p = summaryBox.querySelector('p');
+               if (p) {
+                 p.style.fontSize = '22px';
+                 p.style.lineHeight = '1.8';
+                 p.style.color = '#ffffff';
+                 p.style.fontWeight = '700';
+               }
+             }
 
-            const oracleTitle = clonedElement.querySelector('h2.text-3xl');
-            if (oracleTitle) {
-              oracleTitle.style.textAlign = 'center';
-              oracleTitle.style.width = '100%';
-              oracleTitle.style.fontSize = '24px';
-              oracleTitle.style.margin = '20px 0';
-            }
-
-            // 하단 섹션: 가독성 중심 좌측 정렬
-            const summaryBox = clonedElement.querySelector('.p-5.bg-tech-purple\\/10');
-            if (summaryBox) {
-              summaryBox.style.width = '100%';
-              summaryBox.style.borderRadius = '20px';
-              summaryBox.style.textAlign = 'left';
-              summaryBox.style.background = 'rgba(139, 92, 246, 0.08)';
-              const summaryLabels = summaryBox.querySelectorAll('h3, span, div');
-              summaryLabels.forEach(l => l.style.textAlign = 'left');
-              const p = summaryBox.querySelector('p');
-              if (p) {
-                p.style.fontSize = '19px';
-                p.style.textAlign = 'left';
-                p.style.lineHeight = '1.6';
-              }
-            }
-
-            const mainTextContainer = clonedElement.querySelector('.text-left.space-y-6');
-            if (mainTextContainer) {
-              mainTextContainer.style.textAlign = 'left';
-              mainTextContainer.style.width = '100%';
-              mainTextContainer.style.marginTop = '40px';
-              const paras = mainTextContainer.querySelectorAll('p');
-              paras.forEach(p => {
-                p.style.textAlign = 'left';
-                p.style.fontSize = '16px';
-                p.style.lineHeight = '1.7';
-                p.style.marginBottom = '15px';
-              });
-            }
-
-            // 이미지 소스 주입
-            const summaryImages = clonedElement.querySelectorAll('img');
-            if (summaryImages.length >= 1 && img1Data) summaryImages[0].src = img1Data;
-            if (summaryImages.length >= 2 && img2Data) summaryImages[1].src = img2Data;
+             // 장문 해설 줄간격 확보
+             const paras = clonedElement.querySelectorAll('.text-left p');
+             paras.forEach(p => {
+               p.style.fontSize = '18px';
+               p.style.lineHeight = '1.9';
+               p.style.marginBottom = '20px';
+               p.style.color = '#eae1dd';
+             });
           }
-
-          const allElements = clonedDoc.querySelectorAll('*');
-          allElements.forEach(el => {
-            if (el.classList.contains('animate-in')) {
-              el.style.opacity = '1';
-              el.style.transform = 'none';
-              el.style.visibility = 'visible';
-            }
-          });
         }
       });
 
-      const pdfImgData = canvas.toDataURL('image/png', 1.0);
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * pageWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
 
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pdfWidth;
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      pdf.addImage(pdfImgData, 'PNG', 0, 0, imgWidth, Math.min(imgHeight, pdfHeight));
-      
+      // 첫 페이지 추가
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // 내용이 넘치면 멀티 페이지 생성 루프 (뚱보 방지 핵심 로직)
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
       const now = new Date();
-      const dateStr = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
-      const serial = String(now.getTime()).slice(-7);
-      pdf.save(`COFFEELIKE_TAROT_ORACLE_${dateStr}_${serial}.pdf`);
+      const filename = `COFFEELIKE_REPORT_${now.getTime().toString().slice(-6)}.pdf`;
+      pdf.save(filename);
       
-      console.log('✅ 신틱 PDF 저장 완료! (v2.9.15)');
+      console.log('✅ 마스터 피규어 비율 복구 완료! (v3.0.0)');
     } catch (error) {
       console.error('❌ PDF 저장 실패:', error);
-      alert('기록 실패! 사유: ' + (error.message || '알 수 없는 영적 저체'));
+      alert('영적 전송 실패: ' + (error.message || '알 수 없는 방해'));
     } finally {
       setIsSavingPDF(false);
     }

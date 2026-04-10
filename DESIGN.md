@@ -21,16 +21,14 @@
 
 ---
 
-## 📄 PDF Export Standard: "Slim Pillar" Layout
+## 📄 PDF Export Standard: "Golden Ratio" Report
 
-그동안 우리를 괴롭혔던 PDF 가로 늘어짐 현상을 **안 본부장**이 '슬림 필러(Slim Pillar)' 공법으로 해결해버렸슴다! 
+가로로 뚱뚱해지던 '전설의 뚱보 영수증' 사건을 종결하고, 이제는 **800px 정규 보고서** 규격을 준수함다.
 
-- **Target Width**: `420px` (강제 클로닝 가로폭)
-- **Grid Strategy**: 
-    - **Header/Cards**: 정밀한 `Center` 정렬로 무게중심 확보.
-    - **Body Text**: 가독성을 위해 `Left` 정렬. (긴 문장은 왼쪽이 국룰!)
-- **Image Treatment**: 카드 이미지는 Base64로 미리 구워서(Pre-bake) 네트워크 누락을 원천 차단.
-- **Color Correction**: PDF 렌더링 엔진에서 지원하지 않는 `oklch/oklab` 컬러는 자동으로 고전적인 `HEX`로 치환하여 집행.
+- **Target Width**: `800px` (A4 최적 가로 비율)
+- **Multi-Page**: 문서가 길어지면 억지로 압축하지 않고, 자연스럽게 **다음 페이지(AddPage)**로 넘겨서 **1:1 종횡비**를 철저히 수호함.
+- **Color Accuracy**: `oklch`를 `Standard HEX`로 정밀 치환하여 보랏빛 네온과 블루 광채를 그대로 유지함.
+- **Typography**: 줄 간격을 `1.9`로 상향하여 장문의 해설도 막힘없이 읽히도록 최적화.
 
 ---
 
