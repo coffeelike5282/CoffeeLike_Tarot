@@ -57,6 +57,12 @@ function App() {
 
     const restoreSession = (allCards) => {
       try {
+        // [v5.0] 익명 유저이거나 유저 정보가 아직 없으면 복구하지 않음다.
+        if (!localStorage.getItem('coffee_tarot_user')) {
+           console.log('ℹ️ [세션 복구 건너뜀] 로그인 전이므로 복구를 대기함다.');
+           return;
+        }
+
         const savedReqId = localStorage.getItem('tarot_requestId');
         const savedStatus = localStorage.getItem('tarot_requestStatus');
         const savedWaitNum = localStorage.getItem('tarot_waitNumber');
@@ -121,6 +127,8 @@ function App() {
     }
     
     if (phonePart2.length === 4 && phonePart3.length === 4) {
+      // 새로운 번호로 로그인 시 이전 세션 오염 방지를 위해 선제적 정화!
+      handleStartNewConsultation();
       login(fullPhone);
     } else {
       alert('휴대폰 번호 8자리를 모두 입력해주세요!');
