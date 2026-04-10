@@ -716,7 +716,7 @@ function App() {
                         ? '영적 주파수를 정밀하게 조정하고 있슴다. 조금만 더 인내심을 갖고 기다려주십쇼.' 
                         : '운명의 실타래가 정교하게 엮어지고 있슴다.'}
                       <br/>
-                      <span className="text-tech-purple decoration-2">{selectedCard.name} & {selectedCard2.name}</span> 의<br/>
+                      <span className="text-tech-purple decoration-2">{selectedCard.name} and {selectedCard2.name}</span> 의<br/>
                       깊은 진실을 위해 정성을 다하는 중임다.
                     </p>
                     {isExtended && (
@@ -788,7 +788,7 @@ function App() {
                     {(selectedCard || selectedCard2) && (
                       <div className="flex items-center gap-3 text-white/60 font-black tracking-tight mt-2 animate-in fade-in slide-in-from-top-4 duration-1500 fill-mode-both">
                         {selectedCard && <span>{selectedCard.name.split('(')[0].trim()}</span>}
-                        {selectedCard && selectedCard2 && <span className="text-tech-purple/60">&</span>}
+                        {selectedCard && selectedCard2 && <span className="text-tech-purple/60 mx-2">and</span>}
                         {selectedCard2 && <span>{selectedCard2.name.split('(')[0].trim()}</span>}
                       </div>
                     )}
