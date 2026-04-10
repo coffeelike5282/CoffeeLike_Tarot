@@ -293,10 +293,19 @@ function App() {
     return () => {
       // [Stabilization] 채널 해제 시 에러 방지용 안전 장치
       if (channel) {
-        console.log('🚿 운명의 실시간 채널 해제 중... req_id:', requestId);
-        supabase.removeChannel(channel).catch(err => {
-          console.warn('채널 해제 중 지연 발생 (정상 범위내):', err.message);
-        });
+        // [v2.7.1] 연결 시도 중 해제 시 콘솔 경고 방지 로직 추가
+        const channelId = requestId;
+        console.log('🚿 운명의 실시간 채널 해제 대기 중... req_id:', channelId);
+        
+        // 채널을 즉시 제거하지만, 에러 발생 시(연결 중 해제 등)를 대비해 완전히 가둡니다.
+        const cleanup = async () => {
+          try {
+            await supabase.removeChannel(channel);
+          } catch {
+            // 연결 전 해제 등 무시해도 좋은 에러는 조용히 넘어감다.
+          }
+        };
+        cleanup();
       }
     };
   }, [requestStatus, requestId]); // 연동성 강화를 위해 requestId와 requestStatus를 주시함다!
