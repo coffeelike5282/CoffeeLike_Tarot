@@ -229,6 +229,17 @@ const BaristaDashboard = ({ onLogout }) => {
     return phone.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
   };
 
+  const formatDuration = (start, end) => {
+    if (!start || !end) return '-';
+    try {
+      const diff = Math.floor((new Date(end) - new Date(start)) / 1000);
+      if (diff < 0) return '0s';
+      const mins = Math.floor(diff / 60);
+      const secs = diff % 60;
+      return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+    } catch { return '-'; }
+  };
+
   return (
     <div className="w-full max-w-[720px] mx-auto flex flex-col gap-6 animate-in fade-in duration-700">
       
@@ -254,7 +265,7 @@ const BaristaDashboard = ({ onLogout }) => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between sm:justify-end gap-4 bg-white/[0.03] px-4 py-3 rounded-2xl border border-white/5 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3 bg-white/[0.03] px-3 py-3 rounded-2xl border border-white/5 w-full sm:w-auto">
             <div className="flex items-center gap-2.5">
               <div className="relative">
                 <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]" />
@@ -388,18 +399,29 @@ const BaristaDashboard = ({ onLogout }) => {
                            <Clock size={10} className="text-white/20" />
                            <span className="text-[10px] text-white/40 font-mono tracking-tighter">{formatDate(order.created_at)}</span>
                         </div>
-                        <div className="flex flex-col gap-0.5">
+                        <div className="flex flex-col gap-0.5 mt-2">
                           <span className="text-coffee-light/40 font-black text-[9px] uppercase tracking-widest">심층 조합</span>
-                          <div className="flex flex-col gap-1 mt-0.5">
-                            <div className="flex items-center gap-2">
+                          <div className="flex flex-row gap-3 mt-1">
+                            <div className="flex items-center gap-1.5 bg-tech-blue/5 px-2 py-0.5 rounded-lg border border-tech-blue/10">
                               <div className="w-1 h-1 bg-tech-blue rounded-full shadow-[0_0_5px_rgba(59,130,246,0.5)]" />
-                              <span className="text-tech-blue font-bold text-[11px] leading-none">{order.tarot_card_name}</span>
+                              <span className="text-tech-blue font-bold text-[10px] leading-none">{order.tarot_card_name}</span>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5 bg-tech-purple/5 px-2 py-0.5 rounded-lg border border-tech-purple/10">
                               <div className="w-1 h-1 bg-tech-purple rounded-full shadow-[0_0_5px_rgba(168,85,247,0.5)]" />
-                              <span className="text-tech-purple font-bold text-[11px] leading-none">{order.tarot_card2_name}</span>
+                              <span className="text-tech-purple font-bold text-[10px] leading-none">{order.tarot_card2_name}</span>
                             </div>
                           </div>
+                        </div>
+
+                        {/* 💬 상담 질문 노출 */}
+                        <div className="mt-4 bg-black/40 px-3 py-3 rounded-xl border border-white/5 shadow-inner">
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <Coffee size={10} className="text-tech-blue" />
+                            <span className="text-[9px] text-tech-blue/60 font-black uppercase tracking-widest">상담 요청 내용</span>
+                          </div>
+                          <p className="text-[11px] text-coffee-light/90 leading-relaxed font-medium line-clamp-3 md:line-clamp-none italic">
+                            "{order.question || "질문 없이 셔플된 패임다."}"
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -466,15 +488,55 @@ const BaristaDashboard = ({ onLogout }) => {
                       </div>
                     </div>
                     
+                    {/* 🕒 상세 타임스탬프 & 엔진 정보 */}
+                    {order.status === 1 && order.ai_tarot_result && (
+                      <div className="mt-3 bg-tech-blue/[0.03] border border-tech-blue/10 rounded-xl p-3 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[8px] text-tech-blue/50 font-black uppercase tracking-widest">사용 엔진</span>
+                          <span className="text-[10px] text-tech-blue font-bold italic">
+                            {JSON.parse(order.ai_tarot_result).engineVersion || "Unknown"}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[8px] text-white/30 font-black uppercase tracking-widest">승인 시각</span>
+                          <span className="text-[10px] text-white/60 font-mono">
+                            {new Date(order.approved_at).toLocaleTimeString('ko-KR', { hour12: false })}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[8px] text-white/30 font-black uppercase tracking-widest">완료 시각</span>
+                          <span className="text-[10px] text-white/60 font-mono">
+                            {JSON.parse(order.ai_tarot_result).generatedAt ? new Date(JSON.parse(order.ai_tarot_result).generatedAt).toLocaleTimeString('ko-KR', { hour12: false }) : '-'}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[8px] text-amber-500/50 font-black uppercase tracking-widest">응답 소요시간</span>
+                          <span className="text-[10px] text-amber-500 font-black italic">
+                            {formatDuration(order.approved_at, JSON.parse(order.ai_tarot_result).generatedAt)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 💬 신청 시 상담 질문 */}
+                    <div className="mt-2 text-left bg-black/20 p-2.5 rounded-lg border border-white/5">
+                      <p className="text-[11px] text-coffee-light/70 leading-relaxed italic">
+                        "{order.question || "질문 없음"}"
+                      </p>
+                    </div>
+                    
                     {/* ID 하단 배치로 가독성 확보 */}
-                    <div className="border-t border-white/[0.03] pt-3 flex flex-wrap justify-between items-center gap-2">
+                    <div className="border-t border-white/[0.03] mt-3 pt-3 flex flex-wrap justify-between items-center gap-2">
                       <div className="flex flex-col gap-1">
                         <span className="text-[10px] text-white/40 font-mono tracking-tighter uppercase">ID: {order.req_id}</span>
                         {order.ip_address && (
                           <span className="text-[9px] text-tech-purple/50 font-mono italic">IP: {order.ip_address}</span>
                         )}
                       </div>
-                      <span className="text-[10px] text-coffee-light/40 font-black italic">{formatDate(order.created_at)}</span>
+                      <div className="flex flex-col items-end">
+                        <span className="text-[8px] text-white/20 font-black uppercase">요청 일시</span>
+                        <span className="text-[10px] text-coffee-light/40 font-black italic">{formatDate(order.created_at)}</span>
+                      </div>
                     </div>
                   </div>
                 ))
