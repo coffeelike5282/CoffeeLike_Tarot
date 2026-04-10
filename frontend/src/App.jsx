@@ -206,14 +206,26 @@ function App() {
           `;
           clonedDoc.head.appendChild(style);
 
-          // oklch 컬러 정밀 세척 (보랏빛 전설 복구)
+          // oklch/oklab 컬러 전방위 세척 (Tailwind v4 에러 타격)
           const styleTags = clonedDoc.getElementsByTagName('style');
           for (let i = 0; i < styleTags.length; i++) {
             styleTags[i].innerHTML = styleTags[i].innerHTML
               .replace(/oklch\(\s*0\.596\s*0\.145\s*272\.61\s*\)/g, '#8B5CF6') // tech-purple
               .replace(/oklch\(\s*0\.623\s*0\.214\s*259\.815\s*\)/g, '#3B82F6') // tech-blue
-              .replace(/oklch\([^)]+\)/g, '#eae1dd'); // 나머지는 기본색
+              .replace(/oklch\([^)]+\)/g, '#eae1dd')
+              .replace(/oklab\([^)]+\)/g, '#eae1dd'); // oklab 긴급 추가
           }
+
+          // 인라인 스타일도 저인망 그물로 싹 긁어버립니다.
+          const allElements = clonedDoc.querySelectorAll('*');
+          allElements.forEach(el => {
+            const styleAttr = el.getAttribute('style');
+            if (styleAttr && (styleAttr.includes('oklch') || styleAttr.includes('oklab'))) {
+              el.setAttribute('style', styleAttr
+                .replace(/oklch\([^)]+\)/g, '#8B5CF6') 
+                .replace(/oklab\([^)]+\)/g, '#8B5CF6'));
+            }
+          });
 
           const clonedElement = clonedDoc.getElementById('tarot-result-sheet');
           if (clonedElement) {
