@@ -183,49 +183,62 @@ function App() {
         width: TARGET_WIDTH,
         windowWidth: TARGET_WIDTH,
         onclone: (clonedDoc) => {
-          clonedDoc.body.style.width = `${TARGET_WIDTH}px`;
-          clonedDoc.body.style.background = '#161311';
-          
+          // [v3.2.0] '스타일 격리(Isolation)' 공법: oklab/oklch 지뢰밭 원천 봉쇄
+          // 기존 모든 style/link 태그를 삭제하여 html2canvas가 oklab을 만날 기회조차 주지 않슴다.
+          clonedDoc.querySelectorAll('link, style').forEach(el => el.remove());
+
           const style = clonedDoc.createElement('style');
           style.innerHTML = `
             * { box-sizing: border-box !important; -webkit-print-color-adjust: exact; }
+            body { background: #161311 !important; margin: 0 !important; font-family: sans-serif !important; }
             #tarot-result-sheet { 
               width: ${TARGET_WIDTH}px !important; 
               max-width: ${TARGET_WIDTH}px !important;
-              margin: 0 !important; 
-              padding: 60px 50px !important; 
+              margin: 0 auto !important; 
+              padding: 60px 40px !important; 
               background: #161311 !important;
               color: #eae1dd !important;
               display: flex !important;
               flex-direction: column !important;
               align-items: center !important;
+              gap: 40px !important;
             }
             .text-left { text-align: left !important; width: 100% !important; }
             .flex-col { display: flex !important; flex-direction: column !important; align-items: center !important; }
+            .flex { display: flex !important; }
             .justify-center { justify-content: center !important; }
+            .gap-4 { gap: 1rem !important; }
+            .gap-30px { gap: 30px !important; }
+            .w-full { width: 100% !important; }
+            .text-white { color: #ffffff !important; }
+            .text-tech-purple { color: #8B5CF6 !important; }
+            .bg-tech-purple\\/10 { background-color: rgba(139, 92, 246, 0.1) !important; }
+            .border-tech-purple { border-color: #8B5CF6 !important; }
+            .border-l-4 { border-left-width: 4px !important; border-left-style: solid !important; }
+            .rounded-r-2xl { border-top-right-radius: 1rem !important; border-bottom-right-radius: 1rem !important; }
+            .rounded-2xl { border-radius: 1rem !important; }
+            .p-4 { padding: 1rem !important; }
+            .p-5 { padding: 1.25rem !important; }
+            .mb-1 { margin-bottom: 0.25rem !important; }
+            .mb-4 { margin-bottom: 1rem !important; }
+            .mb-12 { margin-bottom: 3rem !important; }
+            .font-bold { font-weight: 700 !important; }
+            .font-black { font-weight: 900 !important; }
+            .uppercase { text-transform: uppercase !important; }
+            .tracking-widest { letter-spacing: 0.1em !important; }
+            .italic { font-style: italic !important; }
+            .leading-tight { line-height: 1.25 !important; }
+            .leading-relaxed { line-height: 1.625 !important; }
+            .break-keep { word-break: keep-all !important; }
+            .bg-white\\/\\[0\\.02\\] { background-color: rgba(255, 255, 255, 0.02) !important; }
+            .border-white\\/5 { border: 1px solid rgba(255, 255, 255, 0.05) !important; }
+            
+            /* 카드 배치 수호 */
+            .card-container-pdf { display: flex !important; justify-content: center !important; gap: 30px !important; margin-top: 40px !important; }
+            .card-wrapper-pdf { width: 220px !important; height: 374px !important; border-radius: 20px !important; border: 3px solid rgba(139, 92, 246, 0.5) !important; overflow: hidden !important; position: relative !important; }
+            .card-img-pdf { width: 100% !important; height: 100% !important; object-fit: cover !important; }
           `;
           clonedDoc.head.appendChild(style);
-
-          // oklch/oklab 컬러 전방위 세척 (Tailwind v4 에러 타격)
-          const styleTags = clonedDoc.getElementsByTagName('style');
-          for (let i = 0; i < styleTags.length; i++) {
-            styleTags[i].innerHTML = styleTags[i].innerHTML
-              .replace(/oklch\(\s*0\.596\s*0\.145\s*272\.61\s*\)/g, '#8B5CF6') // tech-purple
-              .replace(/oklch\(\s*0\.623\s*0\.214\s*259\.815\s*\)/g, '#3B82F6') // tech-blue
-              .replace(/oklch\([^)]+\)/g, '#eae1dd')
-              .replace(/oklab\([^)]+\)/g, '#eae1dd'); // oklab 긴급 추가
-          }
-
-          // 인라인 스타일도 저인망 그물로 싹 긁어버립니다.
-          const allElements = clonedDoc.querySelectorAll('*');
-          allElements.forEach(el => {
-            const styleAttr = el.getAttribute('style');
-            if (styleAttr && (styleAttr.includes('oklch') || styleAttr.includes('oklab'))) {
-              el.setAttribute('style', styleAttr
-                .replace(/oklch\([^)]+\)/g, '#8B5CF6') 
-                .replace(/oklab\([^)]+\)/g, '#8B5CF6'));
-            }
-          });
 
           const clonedElement = clonedDoc.getElementById('tarot-result-sheet');
           if (clonedElement) {
