@@ -52,13 +52,12 @@ Deno.serve(async (req) => {
     prompt += "2. [해설] 태그 뒤에 5개 문단으로 상세 해설을 작성하십시오. 문단 사이에는 반드시 줄바꿈 두 번(\\n\\n)을 사용하십시오.\n";
     prompt += "3. 마스터의 신비롭고 정중한 말투를 유지하십시오.";
 
-    const modelPool = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-3-flash-preview"];
-    const shuffledModels = [...modelPool].sort(() => Math.random() - 0.5);
+    const modelPool = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b"];
 
     let lastError = "";
     let rawText = "";
 
-    for (const modelId of shuffledModels) {
+    for (const modelId of modelPool) {
       try {
         const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/" + modelId + ":generateContent?key=" + GEMINI_API_KEY;
         const response = await fetch(apiUrl, {
