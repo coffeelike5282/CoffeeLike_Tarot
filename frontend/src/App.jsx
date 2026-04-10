@@ -163,8 +163,9 @@ function App() {
   const performDeepTarotRequest = async (c1, c2, ip = null, finalQuestion = null) => {
     if (!user || !c1 || !c2) return;
     
-    // finalQuestion이 없으면 상태값의 question 사용
-    const qText = finalQuestion || question;
+    // [v2.9.1] 질문이 비어 있으면 무조건 '오늘의 운세 알려줘'로 세팅함다!
+    const qText = (finalQuestion || question || '').trim() || '오늘의 운세 알려줘';
+    if (!question || question.trim() === '') setQuestion(qText); // 사용자에게도 보여줌다!
     
     try {
       const { data, error } = await supabase
@@ -173,7 +174,7 @@ function App() {
           p_tarot_card1_name: c1.name,
           p_tarot_card2_name: c2.name,
           p_ip_address: ip,
-          p_question: qText // 질문 파라미터 사용
+          p_question: qText // 정제된 질문 파라미터 사용
         });
 
       setIsCasting2(false);
@@ -187,6 +188,8 @@ function App() {
       if (data && data.req_id) {
         setRequestId(data.req_id);
         setWaitNumber(data.wait_number || '??');
+        // RPC에서 보정한 질문을 다시 상태에 반영하여 UI 일관성을 유지함다.
+        if (data.question) setQuestion(data.question);
         setRequestStatus('pending');
       } else {
         console.error('Unexpected RPC Result:', data);
@@ -225,14 +228,9 @@ function App() {
     
     setSelectedCard2(randomCard);
     
-    // [v2.9] 질문 자동 완성 로직 적용
-    const finalQuestion = question.trim() || '오늘의 운세 알려줘';
-    if (question.trim() === '') {
-      setQuestion(finalQuestion);
-    }
-    
-    // 즉시 서버 요청 수행 (IP 및 확정된 질문 포함)
-    performDeepTarotRequest(selectedCard, randomCard, clientIp, finalQuestion);
+    // [v3.0] DB RPC에서 빈 질문을 '오늘의 운세 알려줘'로 강제 치환하므로, 
+    // 여기서는 원본 질문만 깔끔하게 넘겨주면 끝임다!
+    performDeepTarotRequest(selectedCard, randomCard, clientIp, question);
   };
 
   const retryDeepProcess = async () => {

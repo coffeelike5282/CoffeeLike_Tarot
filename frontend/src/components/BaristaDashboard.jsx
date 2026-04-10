@@ -265,47 +265,43 @@ const BaristaDashboard = ({ onLogout }) => {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3 bg-white/[0.03] px-3 py-3 rounded-2xl border border-white/5 w-full sm:w-auto">
-            <div className="flex items-center gap-2.5">
+          <div className="w-full sm:w-auto grid grid-cols-2 sm:flex sm:flex-row items-center justify-between sm:justify-end gap-2 sm:gap-3 bg-white/[0.03] px-2 py-2 sm:px-3 sm:py-3 rounded-2xl border border-white/5">
+            {/* Server Status (Mobile Row 1) */}
+            <div className="flex items-center gap-2 px-2 py-1.5 bg-black/20 rounded-xl border border-white/5 sm:bg-transparent sm:border-0 sm:px-0">
               <div className="relative">
                 <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]" />
                 <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-60" />
               </div>
-              <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Server Online</span>
+              <span className="text-[8px] sm:text-[10px] text-white/40 font-bold uppercase tracking-widest whitespace-nowrap">Online</span>
             </div>
             
-            <div className="w-px h-3 bg-white/10" />
-            
-            <div className="flex items-center gap-2">
-              <span className="text-[9px] bg-amber-500/10 text-amber-500 px-2 py-1 rounded-lg font-black border border-amber-500/10 italic">V5.0.0_STABLE</span>
+            {/* Stable Version (Mobile Row 1) */}
+            <div className="flex items-center justify-end sm:justify-center gap-2 px-2 py-1.5 bg-black/20 rounded-xl border border-white/5 sm:bg-transparent sm:border-0 sm:px-0">
+              <span className="text-[8px] sm:text-[9px] text-amber-500 font-black italic">V5.0_STABLE</span>
             </div>
 
-            <div className="w-px h-3 bg-white/10" />
-
+            {/* AI Engine Toggle (Mobile Row 2) */}
             <button 
               onClick={toggleAiEngine}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-full border transition-all ${aiEngine === 'gemini' ? 'bg-tech-purple/20 border-tech-purple/40 text-tech-purple' : 'bg-tech-blue/20 border-tech-blue/40 text-tech-blue'}`}
+              className={`flex items-center justify-center gap-2 px-3 py-2 rounded-xl border transition-all ${aiEngine === 'gemini' ? 'bg-tech-purple/20 border-tech-purple/40 text-tech-purple shadow-[0_0_15px_-5px_rgba(168,85,247,0.4)]' : 'bg-tech-blue/20 border-tech-blue/40 text-tech-blue shadow-[0_0_15px_-5px_rgba(59,130,246,0.4)]'}`}
             >
-              <div className="relative">
-                <RefreshCcw size={10} className={aiEngine === 'gemini' ? "text-tech-purple" : "text-tech-blue"} />
-              </div>
+              <RefreshCcw size={10} className={aiEngine === 'gemini' ? "text-tech-purple" : "text-tech-blue"} />
               <span className="text-[9px] font-black uppercase tracking-tighter">
-                {aiEngine === 'gemini' ? 'Gemini 1.5' : 'Llama 3'}
+                {aiEngine === 'gemini' ? 'Gemini' : 'Llama'}
               </span>
             </button>
 
-            <div className="w-px h-3 bg-white/10" />
-
+            {/* Sound Toggle (Mobile Row 2 - Critical Visibility) */}
             <button 
               onClick={() => setIsSoundEnabled(!isSoundEnabled)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${isSoundEnabled ? 'bg-tech-blue/20 border-tech-blue/40 text-tech-blue' : 'bg-white/5 border-white/10 text-white/40'}`}
+              className={`flex items-center justify-center gap-2 px-3 py-2 rounded-xl border transition-all ${isSoundEnabled ? 'bg-tech-blue/30 border-tech-blue/60 text-tech-blue shadow-[0_0_20px_-3px_rgba(59,130,246,0.6)]' : 'bg-white/5 border-white/10 text-white/40'}`}
             >
               <div className="relative">
                 <Zap size={10} className={isSoundEnabled ? "animate-pulse" : ""} />
                 {isSoundEnabled && <div className="absolute inset-0 bg-tech-blue rounded-full animate-ping opacity-40" />}
               </div>
               <span className="text-[9px] font-black uppercase tracking-tighter">
-                {isSoundEnabled ? 'Sound ON' : 'Sound OFF'}
+                {isSoundEnabled ? 'Audio ON' : 'Audio OFF'}
               </span>
             </button>
           </div>
@@ -420,7 +416,7 @@ const BaristaDashboard = ({ onLogout }) => {
                             <span className="text-[9px] text-tech-blue/60 font-black uppercase tracking-widest">상담 요청 내용</span>
                           </div>
                           <p className="text-[11px] text-coffee-light/90 leading-relaxed font-medium line-clamp-3 md:line-clamp-none italic">
-                            "{order.question || "질문 없이 셔플된 패임다."}"
+                            "{(order.question && order.question.trim()) ? order.question : '오늘의 운세 알려줘'}"
                           </p>
                         </div>
                       </div>
@@ -520,9 +516,9 @@ const BaristaDashboard = ({ onLogout }) => {
 
                     {/* 💬 신청 시 상담 질문 */}
                     <div className="mt-2 text-left bg-black/20 p-2.5 rounded-lg border border-white/5">
-                      <p className="text-[11px] text-coffee-light/70 leading-relaxed italic">
-                        "{order.question || "질문 없음"}"
-                      </p>
+                      <p className="text-white/70 text-sm mt-1 line-clamp-2 italic">
+                      "{(order.question && order.question.trim()) ? order.question : '질문 미입력'}"
+                    </p>
                     </div>
                     
                     {/* ID 하단 배치로 가독성 확보 */}
