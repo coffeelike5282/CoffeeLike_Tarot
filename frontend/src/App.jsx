@@ -180,7 +180,6 @@ function App() {
     let countdownInterval;
     // 바리스타가 승인하여 'processing' 상태가 될 때부터 시계가 돌아감다!
     if (requestStatus === 'processing' && requestId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCountdown(prev => (prev === 60 ? prev : 60)); 
       setIsExtended(prev => (prev === false ? prev : false));
       
@@ -212,103 +211,118 @@ function App() {
     return () => clearInterval(countdownInterval);
   }, [requestStatus, requestId, isExtended]); // requestStatus 변화에 민감하게 반응함다!
 
-  // 📡 [v2.7] 데이터 리얼타임(WebSocket) 전용 로직
-  useEffect(() => {
-    let channel;
+  // 📡 [v2.8] 상태 업데이트 통합 핸들러 (Realtime & Polling 공용)
+  const handleStatusUpdate = React.useCallback((data) => {
+    if (!data) return;
     
-    // 상태 처리를 위한 공통 핸들러
-    const handleStatusUpdate = (data) => {
-      if (data.status === 1) {
-        if (!data.ai_tarot_result) {
-          if (requestStatus !== 'processing') {
-            setRequestStatus('processing');
-            if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
-          }
-        } else {
-          try {
-            const resObj = typeof data.ai_tarot_result === 'string' 
-              ? JSON.parse(data.ai_tarot_result) 
-              : data.ai_tarot_result;
-            
-            if (resObj.isError) {
-              setRequestStatus('error');
-            } else {
-              setDeepResult(resObj);
-              setRequestStatus('approved');
-            }
-          } catch (e) {
-            console.error('JSON Parsing Error:', e);
-          }
-        }
-      } else if (data.status === 2) {
-        setRequestStatus('rejected');
-      }
-    };
-
-    if ((requestStatus === 'pending' || requestStatus === 'processing') && requestId) {
-      // 1. 혹시 모를 레이스 컨디션 방지: 구독 시작과 동시에 현재 상태 한 번 더 체크!
-      const syncCurrentStatus = async () => {
-        try {
-          const { data, error } = await supabase
-            .from('tb_tarot_request')
-            .select('status, ai_tarot_result')
-            .eq('req_id', requestId)
-            .single();
-          
-          if (error) {
-             console.error('초기 상태 동기화 실패:', error.message);
-             return;
-          }
-          if (data) handleStatusUpdate(data);
-        } catch (err) {
-          console.warn('동기화 중 오류 발생:', err);
-        }
-      };
-
-      syncCurrentStatus();
-
-      // 2. 실시간 채널 구독 시작 (정밀 타겟팅 필터 적용)
-      channel = supabase
-        .channel(`tarot_req_${requestId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'tb_tarot_request',
-            filter: `req_id=eq.${requestId}`
-          },
-          (payload) => {
-            console.log('🔮 실시간 운명 감지:', payload.new);
-            handleStatusUpdate(payload.new);
-          }
-        )
-        .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            console.log('✅ 운명의 실시간 채널 연결 완료!');
-          }
-        });
+    // 1. 거절된 경우
+    if (data.status === 2) {
+      setRequestStatus(curr => curr !== 'rejected' ? 'rejected' : curr);
+      return;
     }
 
-    return () => {
-      // [Stabilization] 채널 해제 시 에러 방지용 안전 장치
-      if (channel) {
-        // [v2.7.1] 연결 시도 중 해제 시 콘솔 경고 방지 로직 추가
-        const channelId = requestId;
-        console.log('🚿 운명의 실시간 채널 해제 대기 중... req_id:', channelId);
-        
-        // 채널을 즉시 제거하지만, 에러 발생 시(연결 중 해제 등)를 대비해 완전히 가둡니다.
-        const cleanup = async () => {
-          try {
-            await supabase.removeChannel(channel);
-          } catch {
-            // 연결 전 해제 등 무시해도 좋은 에러는 조용히 넘어감다.
+    // 2. 승인(수락)된 경우
+    if (data.status === 1) {
+      // AI 결과가 아직 없는 경우 -> 해석 중 상태로 전환
+      if (!data.ai_tarot_result) {
+        setRequestStatus(current => {
+          if (current !== 'processing' && current !== 'approved') {
+             if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
+             return 'processing';
           }
-        };
-        cleanup();
+          return current;
+        });
+      } 
+      // AI 결과가 있는 경우 -> 결과 화면으로 전환
+      else {
+        try {
+          const resObj = typeof data.ai_tarot_result === 'string' 
+            ? JSON.parse(data.ai_tarot_result) 
+            : data.ai_tarot_result;
+          
+          if (resObj.isError) {
+            setRequestStatus(curr => curr !== 'error' ? 'error' : curr);
+          } else {
+            setDeepResult(resObj);
+            setRequestStatus(curr => curr !== 'approved' ? 'approved' : curr);
+          }
+        } catch (e) {
+          console.error('JSON Parsing Error:', e);
+        }
+      }
+    }
+  }, []);
+
+  // 📡 [v2.8.1] 5초 주기 폴링(Polling) 폴백 로직
+  useEffect(() => {
+    let pollingInterval;
+
+    const checkStatus = async () => {
+      if (!requestId) return;
+      console.log('🔄 [폴링] 데이터 동기화 체크 중...');
+      try {
+        const { data, error } = await supabase
+          .from('tb_tarot_request')
+          .select('status, ai_tarot_result')
+          .eq('req_id', requestId)
+          .single();
+        
+        if (error) throw error;
+        if (data) handleStatusUpdate(data);
+      } catch (err) {
+        console.warn('⚠️ 폴링 중 오류 발생 (무시하고 계속):', err.message);
       }
     };
-  }, [requestStatus, requestId]); // 연동성 강화를 위해 requestId와 requestStatus를 주시함다!
+
+    // 'pending' 또는 'processing' 상태일 때만 5초마다 체크함다!
+    if (requestId && (requestStatus === 'pending' || requestStatus === 'processing')) {
+      pollingInterval = setInterval(checkStatus, 5000);
+      // 첫 등록 시 즉시 한 번 수행
+      checkStatus();
+    }
+
+    return () => clearInterval(pollingInterval);
+  }, [requestId, requestStatus, handleStatusUpdate]);
+
+  // 📡 [v2.8.2] 리얼타임(WebSocket) 구독 로직
+  // requestId에 고정하여 잦은 재구독 방지
+  useEffect(() => {
+    if (!requestId) return;
+
+    console.log('🔗 [리얼타임] 운명 채널 구독 시도... ID:', requestId);
+    const channel = supabase
+      .channel(`tarot_req_v2_${requestId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'tb_tarot_request',
+          filter: `req_id=eq.${requestId}`
+        },
+        (payload) => {
+          console.log('🔮 [리얼타임] 운명의 파동 감지:', payload.new);
+          handleStatusUpdate(payload.new);
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ [리얼타임] 운명의 실시간 채널 연결 완료!');
+        }
+      });
+
+    return () => {
+      console.log('🚿 [리얼타임] 운명 채널 해제 중... ID:', requestId);
+      const cleanup = async () => {
+        try {
+          await supabase.removeChannel(channel);
+        } catch (err) {
+          // 조용히 넘어감다.
+        }
+      };
+      cleanup();
+    };
+  }, [requestId, handleStatusUpdate]);
 
   // Handle sequential flipping in approved state
   useEffect(() => {
