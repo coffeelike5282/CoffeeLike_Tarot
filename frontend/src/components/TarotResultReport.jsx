@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Download, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -21,7 +21,7 @@ const TarotResultReport = ({
 }) => {
   const [isSavingPDF, setIsSavingPDF] = useState(false);
 
-  // 📄 [v3.0.0] 신탁 결과 PDF 저장 기능 (황금비율 & 멀티페이지 정밀 타격)
+  // ?뱞 [v3.0.0] ?좏긽 寃곌낵 PDF ???湲곕뒫 (?⑷툑鍮꾩쑉 & 硫?고럹?댁? ?뺣? ?寃?
   const saveAsPDF = async () => {
     const element = document.getElementById('tarot-result-sheet');
     if (!element) return;
@@ -76,13 +76,13 @@ const TarotResultReport = ({
               width: ${TARGET_WIDTH}px !important; 
               max-width: ${TARGET_WIDTH}px !important;
               margin: 0 auto !important; 
-              padding: 60px 40px !important; 
+              padding: 30px 40px !important; 
               background: #161311 !important;
               color: #eae1dd !important;
               display: flex !important;
               flex-direction: column !important;
               align-items: center !important;
-              gap: 40px !important;
+              gap: 30px !important;
             }
             .text-left { text-align: left !important; width: 100% !important; }
             .flex-col { display: flex !important; flex-direction: column !important; align-items: center !important; }
@@ -113,6 +113,7 @@ const TarotResultReport = ({
             .break-keep { word-break: keep-all !important; }
             .bg-white\\/\\[0\\.02\\] { background-color: rgba(255, 255, 255, 0.02) !important; }
             .border-white\\/5 { border: 1px solid rgba(255, 255, 255, 0.05) !important; }
+            p, h4, div { break-inside: avoid !important; }
             
             .card-container-pdf { display: flex !important; justify-content: center !important; gap: 30px !important; margin-top: 40px !important; }
             .card-wrapper-pdf { width: 220px !important; height: 374px !important; border-radius: 20px !important; border: 3px solid rgba(139, 92, 246, 0.5) !important; overflow: hidden !important; position: relative !important; }
@@ -134,7 +135,7 @@ const TarotResultReport = ({
                const currentPage = Math.floor(relativeTop / pxPageHeight);
                const pageBoundary = (currentPage + 1) * pxPageHeight;
                
-               if (relativeBottom > pageBoundary - 50 && relativeTop < pageBoundary) {
+               if (relativeBottom > pageBoundary - 100 && relativeTop < pageBoundary) {
                  const spacerNeeded = pageBoundary - relativeTop;
                  const spacer = clonedDoc.createElement('div');
                  spacer.style.height = `${spacerNeeded}px`;
@@ -150,7 +151,7 @@ const TarotResultReport = ({
                cardContainer.style.display = 'flex';
                cardContainer.style.justifyContent = 'center';
                cardContainer.style.gap = '30px'; 
-               cardContainer.style.marginTop = '40px';
+               cardContainer.style.marginTop = '20px';
                
                const imageWrappers = cardContainer.querySelectorAll('div.relative');
                imageWrappers.forEach((w, idx) => {
@@ -247,8 +248,8 @@ const TarotResultReport = ({
       pdf.save(filename);
       
     } catch (error) {
-      console.error('❌ PDF 저장 실패:', error);
-      alert('영적 전송 실패: ' + (error.message || '알 수 없는 방해'));
+      console.error('??PDF ????ㅽ뙣:', error);
+      alert('?곸쟻 ?꾩넚 ?ㅽ뙣: ' + (error.message || '?????녿뒗 諛⑺빐'));
     } finally {
       setIsSavingPDF(false);
     }
@@ -268,21 +269,21 @@ const TarotResultReport = ({
     <main className="w-full flex-1 flex flex-col items-center justify-center gap-4 sm:gap-6 animate-in slide-in-from-bottom duration-1000 pb-10 mx-auto">
       <div className="flex flex-row gap-2 sm:gap-12 mb-12 sm:mb-20 scale-[0.8] sm:scale-105 items-start justify-center w-full max-w-full overflow-hidden">
         <div className="flex flex-col items-center gap-6">
-          <span className="text-xs sm:text-xl text-white/30 font-black uppercase tracking-[0.3em]">현재 실타래</span>
+          <span className="text-xs sm:text-xl text-white/30 font-black uppercase tracking-[0.3em]">?꾩옱 ?ㅽ???/span>
           <TarotCard card={selectedCard} backImage={backImage} size="medium" isFlipped={isResultCard1Flipped} />
         </div>
         <div className="hidden lg:flex flex-col items-center justify-center pt-32">
           <div className="w-16 h-px bg-tech-purple/20 animate-pulse" />
         </div>
         <div className="flex flex-col items-center gap-6">
-          <span className="text-xs sm:text-xl text-tech-purple/30 font-black uppercase tracking-[0.3em]">미래 향기</span>
+          <span className="text-xs sm:text-xl text-tech-purple/30 font-black uppercase tracking-[0.3em]">誘몃옒 ?κ린</span>
           <TarotCard card={selectedCard2} backImage={backImage} size="medium" isFlipped={isResultCard2Flipped} />
         </div>
       </div>
       <div className="glass-panel px-4 py-6 sm:px-6 sm:py-10 flex flex-col gap-8 shadow-2xl relative overflow-hidden text-center">
         <div id="tarot-result-sheet" className="flex flex-col gap-6 sm:gap-10 pb-6">
           <div className="flex flex-col items-center gap-2">
-            <div className="px-6 py-2 bg-tech-purple/20 border border-tech-purple/40 rounded-full text-lg text-tech-purple font-black tracking-[0.2em] uppercase">심층 조합 결과</div>
+            <div className="px-6 py-2 bg-tech-purple/20 border border-tech-purple/40 rounded-full text-lg text-tech-purple font-black tracking-[0.2em] uppercase">?ъ링 議고빀 寃곌낵</div>
             
             {(selectedCard || selectedCard2) && (
               <div className="flex justify-center gap-4 mt-6 mb-4 sm:gap-8 sm:mt-10 sm:mb-6 animate-in fade-in zoom-in duration-1000">
@@ -325,14 +326,14 @@ const TarotResultReport = ({
               </div>
             )}
 
-            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter mt-1 hover:text-tech-purple transition-colors italic">운명의 신탁</h2>
+            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter mt-1 hover:text-tech-purple transition-colors italic">?대챸???좏긽</h2>
             <div className="w-12 h-1 bg-tech-purple/40 rounded-full mt-2" />
           </div>
 
            <div className="text-left space-y-6 sm:space-y-8">
             {deepResult && (deepResult.mainFortune || deepResult.summary) && (
               <div className="p-5 bg-tech-purple/10 border-l-4 border-tech-purple rounded-r-2xl animate-in slide-in-from-left duration-1000">
-                <h4 className="text-xs font-black text-tech-purple uppercase tracking-widest mb-1">한 줄 요약 (Oracle Summary)</h4>
+                <h4 className="text-xs font-black text-tech-purple uppercase tracking-widest mb-1">??以??붿빟 (Oracle Summary)</h4>
                 <p className="text-xl sm:text-2xl text-white font-black leading-tight italic break-keep">
                   "{deepResult.mainFortune || deepResult.summary}"
                 </p>
@@ -348,7 +349,7 @@ const TarotResultReport = ({
                   content = deepResult.deepInsight || deepResult.interpretation || "";
                 }
                 
-                if (!content) return <p className="text-coffee-light/40 italic">신령님의 말씀이 구름에 가려졌슴다...</p>;
+                if (!content) return <p className="text-coffee-light/40 italic">?좊졊?섏쓽 留먯???援щ쫫??媛?ㅼ죱?대떎...</p>;
 
                 return content.split('\n\n').filter(p => p.trim()).map((paragraph, idx) => (
                   <p key={idx} className="text-lg sm:text-xl text-white/90 font-bold leading-relaxed break-keep tracking-tight bg-white/[0.02] p-4 rounded-2xl border border-white/5 hover:border-tech-purple/20 transition-all">
@@ -371,18 +372,18 @@ const TarotResultReport = ({
             ) : (
               <Download size={20} />
             )}
-            {isSavingPDF ? 'PDF 저장 중...' : '결과 PDF 저장'}
+            {isSavingPDF ? 'PDF ???以?..' : '寃곌낵 PDF ???}
           </button>
 
           <button 
             onClick={handleStartNew} 
             className="w-full bg-white/10 text-white font-black py-4 rounded-2xl text-lg uppercase tracking-[0.2em] hover:bg-white/20 transition-all shadow-2xl active:scale-[0.98]"
           >
-            새로운 상담 시작
+            ?덈줈???곷떞 ?쒖옉
           </button>
         </div>
         <footer className="mt-6 text-[8px] sm:text-[9px] text-coffee-light/10 font-medium uppercase tracking-[0.3em] text-center w-full">
-          © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
+          짤 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.
         </footer>
       </div>
     </main>
@@ -390,3 +391,4 @@ const TarotResultReport = ({
 };
 
 export default TarotResultReport;
+
