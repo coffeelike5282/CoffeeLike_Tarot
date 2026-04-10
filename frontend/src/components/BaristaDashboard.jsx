@@ -10,12 +10,16 @@ const BaristaDashboard = ({ onLogout }) => {
   const [history, setHistory] = useState([]);
   const [activeTab, setActiveTab] = useState('queue'); // 'queue', 'history'
   const [loading, setLoading] = useState(true);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [stats, setStats] = useState({ pending: 0, completed: 0, rejected: 0 });
   const [isGenerating, setIsGenerating] = useState({}); // 각 요청별 AI 생성 로딩 상태
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
   const [lastNotifiedReqId, setLastNotifiedReqId] = useState(null);
   const [showNewOrderToast, setShowNewOrderToast] = useState(false);
   const [aiEngine, setAiEngine] = useState('llama'); // 'llama' or 'gemini'
+  const [historyPage, setHistoryPage] = useState(0);
+  const [totalHistoryCount, setTotalHistoryCount] = useState(0);
+  const itemsPerPage = 20;
 
   const playNotification = useCallback(() => {
     if (!isSoundEnabled) return;
@@ -42,25 +46,18 @@ const BaristaDashboard = ({ onLogout }) => {
       .eq('status', 0)
       .order('created_at', { ascending: false });
 
-    const { data: historyData, error: historyError } = await supabase
-      .from('tb_tarot_request')
-      .select('*')
-      .in('status', [1, 2])
-      .order('approved_at', { ascending: false, nullsFirst: false })
-      .limit(30);
-
-    const { count: completedCount } = await supabase
+    // 전체 히스토리 카운트만 가져옴 (Stats용)
+    const { count: totalCompleted } = await supabase
       .from('tb_tarot_request')
       .select('*', { count: 'exact', head: true })
       .eq('status', 1);
 
-    const { count: rejectedCount } = await supabase
+    const { count: totalRejected } = await supabase
       .from('tb_tarot_request')
       .select('*', { count: 'exact', head: true })
       .eq('status', 2);
 
-    if (!pendingError && !historyError) {
-      // 새로운 주문이 있는지 확인 (알림용)
+    if (!pendingError) {
       if (pendingData && pendingData.length > 0) {
         const latestReq = pendingData[0];
         if (latestReq.req_id !== lastNotifiedReqId && isSoundEnabled) {
@@ -72,15 +69,35 @@ const BaristaDashboard = ({ onLogout }) => {
       }
 
       setRequests(pendingData || []);
-      setHistory(historyData || []);
       setStats({ 
         pending: pendingData?.length || 0, 
-        completed: completedCount || 0,
-        rejected: rejectedCount || 0
+        completed: totalCompleted || 0,
+        rejected: totalRejected || 0
       });
+      setTotalHistoryCount((totalCompleted || 0) + (totalRejected || 0));
     }
     setLoading(false);
   }, [isSoundEnabled, lastNotifiedReqId, playNotification]);
+
+  const fetchHistory = useCallback(async (page = 0) => {
+    setHistoryLoading(true);
+    const from = page * itemsPerPage;
+    const to = from + itemsPerPage - 1;
+
+    const { data: historyData, error: historyError, count } = await supabase
+      .from('tb_tarot_request')
+      .select('*', { count: 'exact' })
+      .in('status', [1, 2])
+      .order('approved_at', { ascending: false, nullsFirst: false })
+      .range(from, to);
+
+    if (!historyError) {
+      setHistory(historyData || []);
+      setHistoryPage(page);
+      if (count !== null) setTotalHistoryCount(count);
+    }
+    setHistoryLoading(false);
+  }, [itemsPerPage]);
 
   const toggleAiEngine = async () => {
     const newEngine = aiEngine === 'llama' ? 'gemini' : 'llama';
@@ -99,12 +116,17 @@ const BaristaDashboard = ({ onLogout }) => {
 
   useEffect(() => {
     fetchRequests();
+    fetchHistory(0);
     fetchSettings();
 
     // 🚀 10초 주기 폴링 (백업용)
     const pollInterval = setInterval(() => {
       console.log('🔄 10초 주기 폴링 중...');
       fetchRequests();
+      // 히스토리는 0페이지일 때만 최신화 (사용자 방해 방지)
+      if (activeTab === 'history' && historyPage === 0) {
+        fetchHistory(0);
+      }
     }, 10000);
 
     // ⚡ 수파베이스 리얼타임 구독
@@ -126,7 +148,7 @@ const BaristaDashboard = ({ onLogout }) => {
       clearInterval(pollInterval);
       supabase.removeChannel(subscription);
     };
-  }, [isSoundEnabled, lastNotifiedReqId, fetchRequests, fetchSettings, playNotification]);
+  }, [isSoundEnabled, lastNotifiedReqId, fetchRequests, fetchSettings, playNotification, activeTab, fetchHistory, historyPage]);
 
   const handleAction = async (id, newStatus, requestData = null) => {
     if (newStatus === 1 && requestData) {
@@ -175,6 +197,11 @@ const BaristaDashboard = ({ onLogout }) => {
         
         setRequests(prev => prev.filter(r => r.req_id !== id));
         setStats(prev => ({ ...prev, completed: prev.completed + 1 }));
+        
+        // 🚀 히스토리 탭의 0페이지를 보고 있다면 즉시 로드
+        if (activeTab === 'history' && historyPage === 0) {
+          fetchHistory(0);
+        }
 
       } catch (err) {
         console.error('AI Oracle Error:', err);
@@ -209,6 +236,11 @@ const BaristaDashboard = ({ onLogout }) => {
       } else {
         setRequests(prev => prev.filter(r => r.req_id !== id));
         if (newStatus === 2) setStats(prev => ({ ...prev, rejected: prev.rejected + 1 }));
+        
+        // 🚀 히스토리 탭의 0페이지를 보고 있다면 즉시 로드해서 '기분 째지게' 반영!
+        if (activeTab === 'history' && historyPage === 0) {
+          fetchHistory(0);
+        }
       }
     }
   };
@@ -353,7 +385,15 @@ const BaristaDashboard = ({ onLogout }) => {
           <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl">
             <button onClick={() => setActiveTab('queue')} className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'queue' ? 'bg-tech-blue text-white shadow-lg' : 'text-coffee-light/40 hover:text-white'}`}>대기열 ({requests.length})</button>
             <button onClick={() => setActiveTab('history')} className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'history' ? 'bg-tech-purple text-white shadow-lg' : 'text-coffee-light/40 hover:text-white'}`}>히스토리</button>
-            <button onClick={fetchRequests} className="p-2 hover:bg-white/5 rounded-lg transition-all text-coffee-light/40 hover:text-white"><RefreshCcw size={16} className={loading ? "animate-spin" : ""} /></button>
+            <button 
+              onClick={() => {
+                fetchRequests();
+                fetchHistory(historyPage);
+              }} 
+              className="p-2 hover:bg-white/5 rounded-lg transition-all text-coffee-light/40 hover:text-white"
+            >
+              <RefreshCcw size={16} className={loading ? "animate-spin" : ""} />
+            </button>
           </div>
         </div>
 
@@ -447,12 +487,25 @@ const BaristaDashboard = ({ onLogout }) => {
             ) : (
               history.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-coffee-light/20 gap-4">
-                  <Clock size={48} strokeWidth={1} />
-                  <p className="font-heading text-sm font-bold italic uppercase tracking-widest">이전 상담 기록이 없습니다</p>
+                  {historyLoading ? (
+                    <RefreshCcw size={48} className="animate-spin text-tech-purple opacity-40" />
+                  ) : (
+                    <>
+                      <Clock size={48} strokeWidth={1} />
+                      <p className="font-heading text-sm font-bold italic uppercase tracking-widest">이전 상담 기록이 없습니다</p>
+                    </>
+                  )}
                 </div>
               ) : (
-                history.map((order) => (
-                  <div key={order.req_id} className="flex flex-col px-4 py-5 bg-white/[0.02] border border-white/5 rounded-2xl gap-4 hover:bg-white/[0.04] transition-all group">
+                <div className={`flex flex-col gap-4 transition-all duration-300 ${historyLoading ? 'opacity-30 blur-sm pointer-events-none' : 'opacity-100'}`}>
+                  {history.map((order) => (
+                    <motion.div 
+                      key={order.req_id} 
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex flex-col px-4 py-5 bg-white/[0.02] border border-white/5 rounded-2xl gap-4 hover:bg-white/[0.04] transition-all group"
+                    >
+                      {/* ... history item content ... */}
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center gap-4 flex-1 min-w-0">
                         {/* 🏁 상태 아이콘: 원형 글로우 디자인 */}
@@ -534,11 +587,76 @@ const BaristaDashboard = ({ onLogout }) => {
                         <span className="text-[10px] text-coffee-light/40 font-black italic">{formatDate(order.created_at)}</span>
                       </div>
                     </div>
-                  </div>
-                ))
+                  </motion.div>
+                ))}
+                </div>
               )
             )}
           </AnimatePresence>
+
+          {/* 🎮 History Pagination Controls */}
+          {activeTab === 'history' && totalHistoryCount > itemsPerPage && (
+            <div className="flex flex-col items-center gap-6 mt-12 pb-6">
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => fetchHistory(historyPage - 1)}
+                  disabled={historyPage === 0 || historyLoading}
+                  className="w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white/40 hover:text-white disabled:opacity-20 transition-all group"
+                >
+                  <Clock size={14} className="group-hover:-rotate-45 transition-transform" />
+                </button>
+                
+                <div className="flex items-center gap-1.5 px-2">
+                  {Array.from({ length: Math.ceil(totalHistoryCount / itemsPerPage) }).map((_, idx) => {
+                    // 현재 페이지 주변 번호만 표시 (예: 5개)
+                    const totalPages = Math.ceil(totalHistoryCount / itemsPerPage);
+                    if (
+                      idx === 0 || 
+                      idx === totalPages - 1 || 
+                      (idx >= historyPage - 1 && idx <= historyPage + 1)
+                    ) {
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => fetchHistory(idx)}
+                          disabled={historyLoading}
+                          className={`w-10 h-10 rounded-xl text-[11px] font-black transition-all border ${
+                            historyPage === idx 
+                              ? 'bg-tech-purple border-tech-purple shadow-[0_0_15px_-3px_rgba(168,85,247,0.6)] text-white' 
+                              : 'bg-white/5 border-white/10 text-white/40 hover:text-white hover:bg-white/10'
+                          }`}
+                        >
+                          {idx + 1}
+                        </button>
+                      );
+                    } else if (
+                      (idx === historyPage - 2 && idx > 0) || 
+                      (idx === historyPage + 2 && idx < totalPages - 1)
+                    ) {
+                      return <span key={idx} className="text-white/20 text-[10px] font-black px-1">...</span>;
+                    }
+                    return null;
+                  })}
+                </div>
+
+                <button 
+                  onClick={() => fetchHistory(historyPage + 1)}
+                  disabled={(historyPage + 1) * itemsPerPage >= totalHistoryCount || historyLoading}
+                  className="w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white/40 hover:text-white disabled:opacity-20 transition-all group"
+                >
+                  <RefreshCcw size={14} className="group-hover:rotate-180 transition-transform" />
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3 px-4 py-2 bg-white/[0.03] rounded-full border border-white/5">
+                <span className="text-[9px] text-white/20 font-black uppercase tracking-widest">Total Results</span>
+                <span className="text-[10px] text-tech-purple font-black italic">{totalHistoryCount}</span>
+                <div className="w-1 h-1 rounded-full bg-white/10" />
+                <span className="text-[9px] text-white/20 font-black uppercase tracking-widest">Page</span>
+                <span className="text-[10px] text-white font-black italic">{historyPage + 1} / {Math.ceil(totalHistoryCount / itemsPerPage)}</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       {/* 🔔 New Order Toast Notification */}
