@@ -408,53 +408,6 @@ const BaristaDashboard = ({ onLogout }) => {
           </div>
         </div>
 
-        {/* 🎮 History Pagination (TOP) */}
-        {activeTab === 'history' && totalHistoryCount > itemsPerPage && (
-          <div className="flex flex-col items-center gap-4 mb-4 pt-2">
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={() => fetchHistory(historyPage - 1)}
-                disabled={historyPage === 0 || historyLoading}
-                className="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/40 hover:text-white disabled:opacity-20 transition-all group"
-              >
-                <Clock size={12} className="group-hover:-rotate-45 transition-transform" />
-              </button>
-              
-              <div className="flex items-center gap-1.5 px-2">
-                {Array.from({ length: Math.ceil(totalHistoryCount / itemsPerPage) }).map((_, idx) => {
-                  const totalPages = Math.ceil(totalHistoryCount / itemsPerPage);
-                  if (idx === 0 || idx === totalPages - 1 || (idx >= historyPage - 1 && idx <= historyPage + 1)) {
-                    return (
-                      <button
-                        key={idx}
-                        onClick={() => fetchHistory(idx)}
-                        disabled={historyLoading}
-                        className={`w-8 h-8 rounded-lg text-[10px] font-black transition-all border ${
-                          historyPage === idx 
-                            ? 'bg-tech-purple border-tech-purple text-white shadow-[0_0_10px_-2px_rgba(168,85,247,0.5)]' 
-                            : 'bg-white/5 border-white/10 text-white/40 hover:text-white hover:bg-white/10'
-                        }`}
-                      >
-                        {idx + 1}
-                      </button>
-                    );
-                  } else if ((idx === historyPage - 2 && idx > 0) || (idx === historyPage + 2 && idx < totalPages - 1)) {
-                    return <span key={idx} className="text-white/20 text-[9px] font-black px-0.5">...</span>;
-                  }
-                  return null;
-                })}
-              </div>
-
-              <button 
-                onClick={() => fetchHistory(historyPage + 1)}
-                disabled={(historyPage + 1) * itemsPerPage >= totalHistoryCount || historyLoading}
-                className="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/40 hover:text-white disabled:opacity-20 transition-all group"
-              >
-                <RefreshCcw size={12} className="group-hover:rotate-180 transition-transform" />
-              </button>
-            </div>
-          </div>
-        )}
 
         <div className="flex flex-col gap-4">
           <AnimatePresence mode="popLayout">
@@ -557,6 +510,61 @@ const BaristaDashboard = ({ onLogout }) => {
                 </div>
               ) : (
                 <div className={`flex flex-col gap-4 transition-all duration-300 ${historyLoading ? 'opacity-30 blur-sm pointer-events-none' : 'opacity-100'}`}>
+                  {/* 🎮 History Pagination (TOP) */}
+                  {totalHistoryCount > itemsPerPage && (
+                    <div className="flex items-center justify-between gap-4 mb-4 px-2 py-3 bg-white/[0.03] border border-white/5 rounded-2xl">
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => fetchHistory(historyPage - 1)}
+                          disabled={historyPage === 0 || historyLoading}
+                          className="w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white/40 hover:text-white disabled:opacity-20 transition-all group"
+                        >
+                          <Clock size={14} className="group-hover:-rotate-45 transition-transform" />
+                        </button>
+                        
+                        <div className="flex items-center gap-1.5 px-2">
+                          {Array.from({ length: Math.ceil(totalHistoryCount / itemsPerPage) }).map((_, idx) => {
+                            const totalPages = Math.ceil(totalHistoryCount / itemsPerPage);
+                            if (idx === 0 || idx === totalPages - 1 || (idx >= historyPage - 1 && idx <= historyPage + 1)) {
+                              return (
+                                <button
+                                  key={idx}
+                                  onClick={() => fetchHistory(idx)}
+                                  disabled={historyLoading}
+                                  className={`w-10 h-10 rounded-xl text-[11px] font-black transition-all border ${
+                                    historyPage === idx 
+                                      ? 'bg-tech-purple border-tech-purple shadow-[0_0_15px_-3px_rgba(168,85,247,0.6)] text-white' 
+                                      : 'bg-white/5 border-white/10 text-white/40 hover:text-white hover:bg-white/10'
+                                  }`}
+                                >
+                                  {idx + 1}
+                                </button>
+                              );
+                            } else if ((idx === historyPage - 2 && idx > 0) || (idx === historyPage + 2 && idx < totalPages - 1)) {
+                              return <span key={idx} className="text-white/20 text-[10px] font-black px-1">...</span>;
+                            }
+                            return null;
+                          })}
+                        </div>
+
+                        <button 
+                          onClick={() => fetchHistory(historyPage + 1)}
+                          disabled={(historyPage + 1) * itemsPerPage >= totalHistoryCount || historyLoading}
+                          className="w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white/40 hover:text-white disabled:opacity-20 transition-all group"
+                        >
+                          <RefreshCcw size={14} className="group-hover:rotate-180 transition-transform" />
+                        </button>
+                      </div>
+
+                      <div className="hidden sm:flex items-center gap-3 px-4 py-2 bg-white/[0.03] rounded-full border border-white/5">
+                        <span className="text-[9px] text-white/20 font-black uppercase tracking-widest">Total Results</span>
+                        <span className="text-[10px] text-tech-purple font-black italic">{totalHistoryCount}</span>
+                        <div className="w-1 h-1 rounded-full bg-white/10" />
+                        <span className="text-[9px] text-white/20 font-black uppercase tracking-widest">Page</span>
+                        <span className="text-[10px] text-white font-black italic">{historyPage + 1} / {Math.ceil(totalHistoryCount / itemsPerPage)}</span>
+                      </div>
+                    </div>
+                  )}
                   {history.map((order) => (
                     <motion.div 
                       key={order.req_id} 
