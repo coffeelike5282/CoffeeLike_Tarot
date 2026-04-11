@@ -267,7 +267,7 @@ const TarotResultReport = ({
 
   return (
     <main className="w-full flex-1 flex flex-col items-center justify-center gap-4 sm:gap-6 animate-in slide-in-from-bottom duration-1000 pb-10 mx-auto">
-      <div className="flex flex-row gap-2 sm:gap-12 mb-12 sm:mb-20 scale-[0.8] sm:scale-105 items-start justify-center w-full max-w-full overflow-hidden">
+      <div className="flex flex-row gap-4 sm:gap-12 mb-12 sm:mb-20 scale-[0.9] sm:scale-105 items-start justify-center w-full max-w-full px-4">
         <div className="flex flex-col items-center gap-6">
           <span className="text-xs sm:text-xl text-white/30 font-black uppercase tracking-[0.3em]">현재 실타래</span>
           <TarotCard card={selectedCard} backImage={backImage} size="medium" isFlipped={isResultCard1Flipped} />

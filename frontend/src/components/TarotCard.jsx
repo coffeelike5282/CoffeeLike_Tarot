@@ -32,7 +32,7 @@ const TarotCard = ({ card, backImage, onFlip, size = 'default', isFlipped = fals
   
   const sizeClasses = {
     small: 'w-32 sm:w-40',
-    medium: 'w-48 sm:w-56',
+    medium: 'w-40 sm:w-56',
     default: 'w-64 sm:w-72'
   };
 
