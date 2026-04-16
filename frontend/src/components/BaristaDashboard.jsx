@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, Coffee, Users, Clock, Zap, LogOut, RefreshCcw } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { generateAIInterpretation } from '../services/aiOracleService';
+import TarotResultReport from './TarotResultReport';
 
-const BaristaDashboard = ({ onLogout }) => {
+const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
   const [requests, setRequests] = useState([]);
   const [history, setHistory] = useState([]);
   const [activeTab, setActiveTab] = useState('queue'); // 'queue', 'history'
@@ -19,6 +20,7 @@ const BaristaDashboard = ({ onLogout }) => {
   const [aiEngine, setAiEngine] = useState('llama'); // 'llama' or 'gemini'
   const [historyPage, setHistoryPage] = useState(0);
   const [totalHistoryCount, setTotalHistoryCount] = useState(0);
+  const [selectedHistory, setSelectedHistory] = useState(null); // 히스토리 조회용
   const itemsPerPage = 20;
 
   const playNotification = useCallback(() => {
@@ -253,6 +255,27 @@ const BaristaDashboard = ({ onLogout }) => {
           fetchHistory(0);
         }
       }
+    }
+  };
+
+  const handleViewInterpretation = (order) => {
+    if (!order.ai_tarot_result) return;
+    
+    try {
+      const resultData = JSON.parse(order.ai_tarot_result);
+      
+      // 히스토리 항목의 카드 이름으로 전체 카드 객체 찾기
+      const card1 = cards.find(c => c.name === order.tarot_card_name);
+      const card2 = cards.find(c => c.name === order.tarot_card2_name);
+      
+      setSelectedHistory({
+        card1,
+        card2,
+        result: resultData
+      });
+    } catch (err) {
+      console.error('History parsing error:', err);
+      alert('해설 데이터를 불러오는 데 실패했슴다!');
     }
   };
 
@@ -572,7 +595,6 @@ const BaristaDashboard = ({ onLogout }) => {
                       animate={{ opacity: 1, x: 0 }}
                       className="flex flex-col px-4 py-5 bg-white/[0.02] border border-white/5 rounded-2xl gap-4 hover:bg-white/[0.04] transition-all group"
                     >
-                      {/* ... history item content ... */}
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center gap-4 flex-1 min-w-0">
                         {/* 🏁 상태 아이콘: 원형 글로우 디자인 */}
@@ -601,6 +623,14 @@ const BaristaDashboard = ({ onLogout }) => {
                         <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${order.status === 1 ? 'bg-tech-blue/20 text-tech-blue' : 'bg-red-500/20 text-red-500'}`}>
                           {order.status === 1 ? 'COMPLETED' : 'REJECTED'}
                         </span>
+                        {order.status === 1 && (
+                          <button 
+                            onClick={() => handleViewInterpretation(order)}
+                            className="mt-2 px-3 py-1.5 bg-tech-purple/20 hover:bg-tech-purple text-tech-purple hover:text-white border border-tech-purple/30 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
+                          >
+                            해설 보기
+                          </button>
+                        )}
                       </div>
                     </div>
                     
@@ -643,7 +673,7 @@ const BaristaDashboard = ({ onLogout }) => {
                     
                     {/* ID 하단 배치로 가독성 확보 */}
                     <div className="border-t border-white/[0.03] mt-3 pt-3 flex flex-wrap justify-between items-center gap-2">
-                      <div className="flex flex-col gap-1">
+                       <div className="flex flex-col gap-1">
                         <span className="text-[10px] text-white/40 font-mono tracking-tighter uppercase">ID: {order.req_id}</span>
                         {order.ip_address && (
                           <span className="text-[9px] text-tech-purple/50 font-mono italic">IP: {order.ip_address}</span>
@@ -675,7 +705,6 @@ const BaristaDashboard = ({ onLogout }) => {
                 
                 <div className="flex items-center gap-1.5 px-2">
                   {Array.from({ length: Math.ceil(totalHistoryCount / itemsPerPage) }).map((_, idx) => {
-                    // 현재 페이지 주변 번호만 표시 (예: 5개)
                     const totalPages = Math.ceil(totalHistoryCount / itemsPerPage);
                     if (
                       idx === 0 || 
@@ -743,6 +772,31 @@ const BaristaDashboard = ({ onLogout }) => {
                 <span className="text-xs font-black text-white/70 uppercase tracking-widest">New Oracle Request</span>
                 <span className="text-sm font-bold text-white">새로운 타로 신탁 요청이 들어왔슴다!</span>
               </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 🔮 히스토리 해설 보기 모달 */}
+      <AnimatePresence>
+        {selectedHistory && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl overflow-y-auto p-4 sm:p-8 flex flex-col items-center"
+          >
+            <div className="w-full max-w-[800px] animate-in zoom-in-95 duration-300">
+              <TarotResultReport 
+                selectedCard={selectedHistory.card1}
+                selectedCard2={selectedHistory.card2}
+                deepResult={selectedHistory.result}
+                isResultCard1Flipped={true}
+                isResultCard2Flipped={true}
+                backImage={backImage}
+                isReadOnly={true}
+                onClose={() => setSelectedHistory(null)}
+              />
             </div>
           </motion.div>
         )}

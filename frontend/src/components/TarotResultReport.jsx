@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Loader2, X as CloseIcon } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import TarotCard from './TarotCard';
@@ -17,7 +17,10 @@ const TarotResultReport = ({
   setFirstCardFlipped, 
   setIsResultCard1Flipped, 
   setIsResultCard2Flipped, 
-  backImage 
+  backImage,
+  handleStartNew,
+  isReadOnly = false,
+  onClose = null
 }) => {
   const [isSavingPDF, setIsSavingPDF] = useState(false);
 
@@ -255,18 +258,17 @@ const TarotResultReport = ({
     }
   };
 
-  const handleStartNew = () => {
-    setRequestStatus(null); 
-    setSelectedCard(null); 
-    setSelectedCard2(null); 
-    setDeepResult(null); 
-    setFirstCardFlipped(false);
-    setIsResultCard1Flipped(false);
-    setIsResultCard2Flipped(false);
-  };
-
   return (
-    <main className="w-full flex-1 flex flex-col items-center justify-center gap-4 sm:gap-6 animate-in slide-in-from-bottom duration-1000 pb-10 mx-auto">
+    <main className="w-full flex-1 flex flex-col items-center justify-center gap-4 sm:gap-6 animate-in slide-in-from-bottom duration-1000 pb-10 mx-auto relative">
+      {isReadOnly && onClose && (
+        <button 
+          onClick={onClose}
+          className="absolute top-0 right-0 sm:right-4 z-50 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all shadow-xl backdrop-blur-md border border-white/10"
+        >
+          <CloseIcon size={24} />
+        </button>
+      )}
+
       <div className="flex flex-row gap-4 sm:gap-12 mb-12 sm:mb-20 scale-[0.9] sm:scale-105 items-start justify-center w-full max-w-full px-4">
         <div className="flex flex-col items-center gap-6">
           <span className="text-xs sm:text-xl text-white/30 font-black uppercase tracking-[0.3em]">현재 실타래</span>
@@ -375,12 +377,21 @@ const TarotResultReport = ({
             {isSavingPDF ? 'PDF 저장 중...' : '결과 PDF 저장'}
           </button>
 
-          <button 
-            onClick={handleStartNew} 
-            className="w-full bg-white/10 text-white font-black py-4 rounded-2xl text-lg uppercase tracking-[0.2em] hover:bg-white/20 transition-all shadow-2xl active:scale-[0.98]"
-          >
-            새로운 상담 시작
-          </button>
+          {isReadOnly ? (
+            <button 
+              onClick={onClose} 
+              className="w-full bg-white/10 text-white font-black py-4 rounded-2xl text-lg uppercase tracking-[0.2em] hover:bg-white/20 transition-all shadow-2xl active:scale-[0.98]"
+            >
+              닫기 (Close)
+            </button>
+          ) : (
+            <button 
+              onClick={handleStartNew} 
+              className="w-full bg-white/10 text-white font-black py-4 rounded-2xl text-lg uppercase tracking-[0.2em] hover:bg-white/20 transition-all shadow-2xl active:scale-[0.98]"
+            >
+              새로운 상담 시작
+            </button>
+          )}
         </div>
         <footer className="mt-6 text-[8px] sm:text-[9px] text-coffee-light/10 font-medium uppercase tracking-[0.3em] text-center w-full">
           © 2026 COFFEELIKE. POWERED BY HOLOGRAPHIC BARISTA AI.

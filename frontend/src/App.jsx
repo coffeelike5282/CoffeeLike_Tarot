@@ -488,7 +488,11 @@ function App() {
 
         <div className="w-full z-10 transition-all duration-700 flex flex-col items-center mx-auto">
           {isAdmin ? (
-            <BaristaDashboard onLogout={handleLogout} />
+            <BaristaDashboard 
+              onLogout={handleLogout} 
+              cards={cards}
+              backImage={backImage}
+            />
           ) : !user ? (
             <PhoneInputForm 
               phonePart2={phonePart2} setPhonePart2={setPhonePart2}
