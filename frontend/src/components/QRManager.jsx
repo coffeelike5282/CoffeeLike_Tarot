@@ -14,7 +14,10 @@ const QRManager = () => {
     setLoading(true);
     let query = supabase
       .from('tb_delivery_qr')
-      .select('*')
+      .select(`
+        *,
+        customer:tb_customer(phone_number)
+      `)
       .order('created_at', { ascending: false })
       .limit(100);
 
@@ -59,19 +62,23 @@ const QRManager = () => {
   const downloadCSV = () => {
     if (coupons.length === 0) return;
 
-    const headers = ['Serial Number', 'Status', 'Generated At'];
+    // 엑셀 한글 깨짐 방지를 위한 BOM (Byte Order Mark) 추가
+    const BOM = '\uFEFF';
+    const headers = ['시리얼 번호', '상태', '사용자 휴대폰', '사용 일시', '생성 일시'];
     const rows = coupons.map(c => [
       c.qr_serial, 
-      c.status === 0 ? 'Unused' : 'Used', 
-      new Date(c.created_at).toLocaleString()
+      c.status === 0 ? '미사용' : '사용완료', 
+      c.customer?.phone_number || '-',
+      c.used_at ? new Date(c.used_at).toLocaleString('ko-KR') : '-',
+      new Date(c.created_at).toLocaleString('ko-KR')
     ]);
 
     const csvContent = [headers, ...rows].map(e => e.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `CFLK_Coupons_${new Date().getTime()}.csv`);
+    link.setAttribute('download', `CFLK_QR_List_${new Date().getTime()}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -164,6 +171,7 @@ const QRManager = () => {
               <tr>
                 <th className="px-6 py-4 whitespace-nowrap">Serial Number</th>
                 <th className="px-6 py-4 whitespace-nowrap">Status</th>
+                <th className="px-6 py-4 whitespace-nowrap">Used By (Phone)</th>
                 <th className="px-6 py-4 whitespace-nowrap">Used At</th>
                 <th className="px-6 py-4 whitespace-nowrap">Created At</th>
               </tr>
@@ -171,7 +179,7 @@ const QRManager = () => {
             <tbody className="divide-y divide-white/5">
               {coupons.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="px-6 py-20 text-center text-white/10 italic font-black uppercase tracking-[0.2em]">
+                  <td colSpan="5" className="px-6 py-20 text-center text-white/10 italic font-black uppercase tracking-[0.2em]">
                     {loading ? '데이터 동기화 중...' : '데이터가 없슴다'}
                   </td>
                 </tr>
@@ -181,7 +189,7 @@ const QRManager = () => {
                     {/* 🖼 QR Preview Inline (Appears ABOVE the row) */}
                     {selectedSerial === c.qr_serial && (
                       <tr className="bg-tech-blue/10 border-b border-tech-blue/20 animate-in slide-in-from-top-4 duration-500">
-                        <td colSpan="4" className="px-8 py-8 whitespace-nowrap">
+                        <td colSpan="5" className="px-8 py-8 whitespace-nowrap">
                           <div className="flex items-center justify-center gap-12">
                             <div className="relative p-2 bg-white rounded-xl shadow-[0_0_40px_rgba(33,150,243,0.3)]">
                               <img 
@@ -238,6 +246,13 @@ const QRManager = () => {
                             </>
                           )}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 font-mono whitespace-nowrap">
+                        {c.customer?.phone_number ? (
+                          <span className="text-white font-black">{c.customer.phone_number}</span>
+                        ) : (
+                          <span className="text-white/10 italic">-</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 font-mono whitespace-nowrap">
                         {c.used_at ? (
