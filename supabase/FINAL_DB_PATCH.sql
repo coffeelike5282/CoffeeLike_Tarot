@@ -19,6 +19,7 @@ CREATE TABLE public.tb_delivery_qr (
     qr_serial TEXT PRIMARY KEY,
     status INT DEFAULT 0, 
     used_by UUID REFERENCES public.tb_customer(cust_id),
+    used_at TIMESTAMP WITH TIME ZONE, -- QR 사용 시점 기록
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -84,7 +85,13 @@ BEGIN
     -- 2. 배달 QR 인식 및 코인 적립
     IF p_qr_serial IS NOT NULL THEN
         IF EXISTS (SELECT 1 FROM tb_delivery_qr WHERE qr_serial = p_qr_serial AND status = 0) THEN
-            UPDATE tb_delivery_qr SET status = 1, used_by = _cust_id, updated_at = NOW() WHERE qr_serial = p_qr_serial;
+            UPDATE tb_delivery_qr 
+            SET status = 1, 
+                used_by = _cust_id, 
+                used_at = NOW(), -- 사용 시각 기록 
+                updated_at = NOW() 
+            WHERE qr_serial = p_qr_serial;
+            
             UPDATE tb_customer SET tarot_coin_balance = tarot_coin_balance + 1000 WHERE cust_id = _cust_id;
             _coin_earned := 1000;
         END IF;

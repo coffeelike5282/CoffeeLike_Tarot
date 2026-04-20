@@ -164,49 +164,93 @@ const QRManager = () => {
               <tr>
                 <th className="px-6 py-4">Serial Number</th>
                 <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Used At</th>
                 <th className="px-6 py-4">Created At</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {coupons.length === 0 ? (
                 <tr>
-                  <td colSpan="3" className="px-6 py-20 text-center text-white/10 italic font-black uppercase tracking-[0.2em]">
+                  <td colSpan="4" className="px-6 py-20 text-center text-white/10 italic font-black uppercase tracking-[0.2em]">
                     {loading ? '데이터 동기화 중...' : '데이터가 없슴다'}
                   </td>
                 </tr>
               ) : (
                 coupons.map((c) => (
-                  <tr key={c.qr_serial} className="hover:bg-white/[0.02] transition-colors group">
-                    <td className="px-6 py-4">
-                      <button 
-                        onClick={() => setSelectedSerial(c.qr_serial)}
-                        className="flex items-center gap-2 group/btn"
-                      >
-                        <span className="font-mono font-black text-white group-hover:text-tech-blue transition-colors underline decoration-white/10 underline-offset-4 group-hover/btn:decoration-tech-blue/40">
-                          {c.qr_serial}
-                        </span>
-                        <ExternalLink size={12} className="opacity-0 group-hover/btn:opacity-100 text-tech-blue transition-all" />
-                      </button>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        {c.status === 0 ? (
-                          <>
-                            <div className="w-1.5 h-1.5 rounded-full bg-tech-blue animate-pulse" />
-                            <span className="text-tech-blue/60 font-black uppercase text-[9px]">Unused</span>
-                          </>
+                  <React.Fragment key={c.qr_serial}>
+                    {/* 🖼 QR Preview Inline (Appears ABOVE the row) */}
+                    {selectedSerial === c.qr_serial && (
+                      <tr className="bg-tech-blue/10 border-b border-tech-blue/20 animate-in slide-in-from-top-4 duration-500">
+                        <td colSpan="4" className="px-8 py-8">
+                          <div className="flex items-center justify-center gap-12">
+                            <div className="relative p-2 bg-white rounded-xl shadow-[0_0_40px_rgba(33,150,243,0.3)]">
+                              <img 
+                                src={getQRImageUrl(c.qr_serial)} 
+                                alt="QR" 
+                                className="w-32 h-32" 
+                              />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center gap-2">
+                                <QrCode size={14} className="text-tech-blue" />
+                                <span className="text-[10px] text-tech-blue font-black uppercase tracking-widest italic">Live QR Preview</span>
+                              </div>
+                              <h4 className="text-lg font-black text-white font-mono tracking-tighter">{c.qr_serial}</h4>
+                              <p className="text-[10px] text-coffee-light/40 font-bold uppercase tracking-tight leading-relaxed">
+                                스캔 시 자동으로 코인이 적립되는<br/>
+                                배달 봉투 전용 QR 코드임다!
+                              </p>
+                              <button 
+                                onClick={() => setSelectedSerial(null)}
+                                className="mt-2 text-[9px] text-white/20 hover:text-white uppercase tracking-widest font-black transition-colors"
+                              >
+                                [ Close Preview ]
+                              </button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+
+                    <tr className={`transition-colors group ${selectedSerial === c.qr_serial ? 'bg-tech-blue/5' : 'hover:bg-white/[0.02]'}`}>
+                      <td className="px-6 py-4">
+                        <button 
+                          onClick={() => setSelectedSerial(selectedSerial === c.qr_serial ? null : c.qr_serial)}
+                          className="flex items-center gap-2 group/btn"
+                        >
+                          <span className={`font-mono font-black transition-colors underline decoration-white/10 underline-offset-4 group-hover/btn:decoration-tech-blue/40 ${selectedSerial === c.qr_serial ? 'text-tech-blue' : 'text-white group-hover:text-tech-blue'}`}>
+                            {c.qr_serial}
+                          </span>
+                          <ExternalLink size={12} className={`transition-all ${selectedSerial === c.qr_serial ? 'opacity-100 text-tech-blue rotate-45' : 'opacity-0 group-hover/btn:opacity-100 text-tech-blue'}`} />
+                        </button>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          {c.status === 0 ? (
+                            <>
+                              <div className="w-1.5 h-1.5 rounded-full bg-tech-blue animate-pulse" />
+                              <span className="text-tech-blue/60 font-black uppercase text-[9px]">Unused</span>
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle2 size={12} className="text-white/20" />
+                              <span className="text-white/20 font-black uppercase text-[9px]">Used</span>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 font-mono">
+                        {c.used_at ? (
+                          <span className="text-tech-blue/80 font-black">{new Date(c.used_at).toLocaleString('ko-KR')}</span>
                         ) : (
-                          <>
-                            <CheckCircle2 size={12} className="text-white/20" />
-                            <span className="text-white/20 font-black uppercase text-[9px]">Used</span>
-                          </>
+                          <span className="text-white/10 italic">-</span>
                         )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-white/40 font-mono">
-                      {new Date(c.created_at).toLocaleString('ko-KR')}
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="px-6 py-4 text-white/20 font-mono italic">
+                        {new Date(c.created_at).toLocaleString('ko-KR')}
+                      </td>
+                    </tr>
+                  </React.Fragment>
                 ))
               )}
             </tbody>
@@ -214,46 +258,11 @@ const QRManager = () => {
         </div>
         
         <p className="text-[9px] text-white/10 text-right italic font-black uppercase tracking-widest">
-           * 시리얼 번호를 클릭하면 QR 코드를 미리 볼 수 있슴다.
+           * 시리얼 번호를 클릭하면 QR 코드가 해당 행 바로 위에 시원하게 노출됨다.
         </p>
       </div>
 
-      {/* 🖼 QR Preview Modal */}
-      {selectedSerial && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-coffee-dark/95 backdrop-blur-md" onClick={() => setSelectedSerial(null)} />
-          <div className="w-full max-w-[360px] glass-panel p-8 flex flex-col items-center gap-8 animate-in zoom-in duration-500 relative z-110 border-tech-blue/50">
-            <button onClick={() => setSelectedSerial(null)} className="absolute top-4 right-4 text-white/40 hover:text-white transition-colors">
-              <X size={24} />
-            </button>
-
-            <div className="text-center space-y-2">
-              <h3 className="text-xl font-black text-white uppercase tracking-tighter italic">배달 QR 프리뷰</h3>
-              <p className="text-[10px] text-tech-blue font-black tracking-widest uppercase">{selectedSerial}</p>
-            </div>
-
-            <div className="relative p-4 bg-white rounded-2xl shadow-2xl overflow-hidden group">
-               <img 
-                 src={getQRImageUrl(selectedSerial)} 
-                 alt="QR Code" 
-                 className="w-48 h-48 relative z-10"
-               />
-               <div className="absolute inset-0 border-[6px] border-tech-blue/20 rounded-2xl pointer-events-none" />
-            </div>
-
-            <div className="flex flex-col items-center gap-3 w-full">
-               <p className="text-[10px] text-coffee-light/40 text-center leading-relaxed">
-                 배달 봉투에 부착될 QR 코드 시뮬레이션임다.<br/>
-                 스캔 시 코인 적립 페이지로 즉시 연결됨다!
-               </p>
-               <div className="w-full pt-4 border-t border-white/5 flex flex-col items-center gap-2">
-                 <span className="text-[9px] text-white/20 uppercase tracking-[0.2em] font-mono italic">Target URL</span>
-                 <span className="text-[8px] text-white/10 font-mono break-all text-center">{window.location.origin}/?code={selectedSerial}</span>
-               </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 모달은 이제 안녕임다! 중앙 모달 제거 완료 */}
     </div>
   );
 };
