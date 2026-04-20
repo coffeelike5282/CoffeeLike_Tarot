@@ -61,7 +61,7 @@ function App() {
       const { data, error } = await supabase
         .from('tb_customer')
         .select('tarot_coin_balance')
-        .eq('phone_num', phoneNumber)
+        .eq('phone_number', phoneNumber)
         .single();
       
       if (!error && data) {

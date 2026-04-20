@@ -18,7 +18,7 @@ const WalletDashboard = ({ user, balance, onExchangeRequest }) => {
     setIsExchanging(true);
     try {
       const { data, error } = await supabase.rpc('generate_exchange_request', {
-        p_phone_num: user.phone_number,
+        p_phone_number: user.phone_number,
         p_req_points: exchangeAmount
       });
 
