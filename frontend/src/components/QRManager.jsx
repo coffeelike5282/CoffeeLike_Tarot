@@ -158,14 +158,14 @@ const QRManager = () => {
         </div>
 
         {/* 📜 Scrollable Table Area */}
-        <div className="relative overflow-x-auto rounded-xl border border-white/5">
-          <table className="w-full text-left text-[11px] border-collapse">
+        <div className="relative overflow-x-auto rounded-xl border border-white/5 bg-black/20">
+          <table className="w-full text-left text-[11px] border-collapse min-w-max">
             <thead className="bg-white/5 uppercase tracking-widest font-black text-white/30 text-[9px]">
               <tr>
-                <th className="px-6 py-4">Serial Number</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Used At</th>
-                <th className="px-6 py-4">Created At</th>
+                <th className="px-6 py-4 whitespace-nowrap">Serial Number</th>
+                <th className="px-6 py-4 whitespace-nowrap">Status</th>
+                <th className="px-6 py-4 whitespace-nowrap">Used At</th>
+                <th className="px-6 py-4 whitespace-nowrap">Created At</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -181,7 +181,7 @@ const QRManager = () => {
                     {/* 🖼 QR Preview Inline (Appears ABOVE the row) */}
                     {selectedSerial === c.qr_serial && (
                       <tr className="bg-tech-blue/10 border-b border-tech-blue/20 animate-in slide-in-from-top-4 duration-500">
-                        <td colSpan="4" className="px-8 py-8">
+                        <td colSpan="4" className="px-8 py-8 whitespace-nowrap">
                           <div className="flex items-center justify-center gap-12">
                             <div className="relative p-2 bg-white rounded-xl shadow-[0_0_40px_rgba(33,150,243,0.3)]">
                               <img 
@@ -202,7 +202,7 @@ const QRManager = () => {
                               </p>
                               <button 
                                 onClick={() => setSelectedSerial(null)}
-                                className="mt-2 text-[9px] text-white/20 hover:text-white uppercase tracking-widest font-black transition-colors"
+                                className="mt-1 text-[9px] text-white/20 hover:text-white uppercase tracking-widest font-black transition-colors w-fit underline decoration-white/10"
                               >
                                 [ Close Preview ]
                               </button>
@@ -213,7 +213,7 @@ const QRManager = () => {
                     )}
 
                     <tr className={`transition-colors group ${selectedSerial === c.qr_serial ? 'bg-tech-blue/5' : 'hover:bg-white/[0.02]'}`}>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <button 
                           onClick={() => setSelectedSerial(selectedSerial === c.qr_serial ? null : c.qr_serial)}
                           className="flex items-center gap-2 group/btn"
@@ -224,7 +224,7 @@ const QRManager = () => {
                           <ExternalLink size={12} className={`transition-all ${selectedSerial === c.qr_serial ? 'opacity-100 text-tech-blue rotate-45' : 'opacity-0 group-hover/btn:opacity-100 text-tech-blue'}`} />
                         </button>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           {c.status === 0 ? (
                             <>
@@ -239,14 +239,14 @@ const QRManager = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 font-mono">
+                      <td className="px-6 py-4 font-mono whitespace-nowrap">
                         {c.used_at ? (
                           <span className="text-tech-blue/80 font-black">{new Date(c.used_at).toLocaleString('ko-KR')}</span>
                         ) : (
                           <span className="text-white/10 italic">-</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-white/20 font-mono italic">
+                      <td className="px-6 py-4 text-white/20 font-mono italic whitespace-nowrap">
                         {new Date(c.created_at).toLocaleString('ko-KR')}
                       </td>
                     </tr>

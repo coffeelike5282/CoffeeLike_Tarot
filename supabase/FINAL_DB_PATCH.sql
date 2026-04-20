@@ -12,6 +12,8 @@ CREATE TABLE public.tb_customer (
     phone_number TEXT UNIQUE NOT NULL,
     tarot_coin_balance INT DEFAULT 0,
     point_balance INT DEFAULT 0,
+    visit_count INT DEFAULT 1, -- 방문 횟수 추적
+    last_visit_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(), -- 마지막 방문 일시
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -150,7 +152,7 @@ BEGIN
 END;
 $$;
 
--- 6. RPC: generate_bulk_qr_coupons (어드민용)
+-- 6. RPC: generate_bulk_qr_coupons (어드민용 - v8 고해상도 무결점 버전)
 CREATE OR REPLACE FUNCTION public.generate_bulk_qr_coupons(p_count int)
 RETURNS json
 LANGUAGE plpgsql
@@ -160,23 +162,30 @@ AS $$
 DECLARE
     _serial text;
     _generated_count int := 0;
-    _retry_count int := 0;
-    _max_retries int := 10;
+    _success boolean;
 BEGIN
     IF p_count > 500 THEN RAISE EXCEPTION '한 번에 최대 500개까지만 가능함다!'; END IF;
 
-    WHILE _generated_count < p_count LOOP
-        _serial := 'CFLK-' || upper(substr(md5(random()::text), 1, 4)) || '-' || upper(substr(md5(random()::text), 5, 4));
-        BEGIN
-            INSERT INTO tb_delivery_qr (qr_serial, status, created_at) VALUES (_serial, 0, NOW());
-            _generated_count := _generated_count + 1;
-        EXCEPTION WHEN unique_violation THEN
-            _retry_count := _retry_count + 1;
-            IF _retry_count >= _max_retries THEN EXIT; END IF;
-            CONTINUE;
-        END;
+    FOR i IN 1..p_count LOOP
+        _success := false;
+        -- 개별 시리얼 하나를 성공할 때까지 무한정(은 아니지만 충분히) 생성 시도
+        WHILE NOT _success LOOP
+            -- 보안 등급이 높은 gen_random_bytes 사용 (8자리 16진수)
+            _serial := 'CFLK-' || upper(encode(gen_random_bytes(4), 'hex'));
+            -- 가독성을 위해 중간에 더 하이픈 추가 (CFLK-XXXX-XXXX)
+            _serial := substr(_serial, 1, 9) || '-' || substr(_serial, 10, 4);
+            
+            BEGIN
+                INSERT INTO tb_delivery_qr (qr_serial, status, created_at) VALUES (_serial, 0, NOW());
+                _success := true;
+                _generated_count := _generated_count + 1;
+            EXCEPTION WHEN unique_violation THEN
+                -- 중복 발생 시 다음 루프에서 다시 생성
+                _success := false;
+            END;
+        END LOOP;
     END LOOP;
 
-    RETURN json_build_object('success', true, 'count', _generated_count, 'message', _generated_count || '개 생성 완료!');
+    RETURN json_build_object('success', true, 'count', _generated_count, 'message', _generated_count || '개 무결점 생성 완료!');
 END;
 $$;
