@@ -190,8 +190,8 @@ const QRManager = () => {
                     {selectedSerial === c.qr_serial && (
                       <tr className="bg-tech-blue/10 border-b border-tech-blue/20 animate-in slide-in-from-top-4 duration-500">
                         <td colSpan="5" className="px-6 py-10">
-                          <div className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-12 max-w-full overflow-hidden">
-                            <div className="relative p-2 bg-white rounded-xl shadow-[0_0_40px_rgba(33,150,243,0.3)] shrink-0">
+                          <div className="flex flex-col sm:flex-row items-center sm:items-start justify-start gap-8 sm:gap-12 max-w-full overflow-hidden">
+                            <div className="relative p-2 bg-white rounded-xl shadow-[0_0_40px_rgba(33,150,243,0.3)] shrink-0 sm:ml-4">
                               <img 
                                 src={getQRImageUrl(c.qr_serial)} 
                                 alt="QR" 
@@ -204,13 +204,13 @@ const QRManager = () => {
                                 <span className="text-[10px] text-tech-blue font-black uppercase tracking-widest italic">Live QR Preview</span>
                               </div>
                               <h4 className="text-lg font-black text-white font-mono tracking-tighter">{c.qr_serial}</h4>
-                              <p className="text-[10px] text-coffee-light/40 font-bold uppercase tracking-tight leading-relaxed max-w-[200px]">
+                              <p className="text-[10px] text-coffee-light/40 font-bold uppercase tracking-tight leading-relaxed max-w-[240px]">
                                 스캔 시 자동으로 코인이 적립되는<br/>
                                 배달 봉투 전용 QR 코드임다!
                               </p>
                               <button 
                                 onClick={() => setSelectedSerial(null)}
-                                className="mt-1 text-[9px] text-white/40 hover:text-white uppercase tracking-widest font-black transition-colors mx-auto sm:mx-0 w-fit underline decoration-white/10"
+                                className="mt-2 text-[9px] text-white/40 hover:text-white uppercase tracking-widest font-black transition-colors mx-auto sm:mx-0 w-fit underline decoration-white/10"
                               >
                                 [ Close Preview ]
                               </button>
