@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { QrCode, Download, Plus, Search, RefreshCcw, CheckCircle2, CircleChar, AlertCircle } from 'lucide-react';
+import { QrCode, Download, Plus, Search, RefreshCcw, CheckCircle2, CircleChar, AlertCircle, X, ExternalLink } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 const QRManager = () => {
@@ -8,6 +8,7 @@ const QRManager = () => {
   const [genCount, setGenCount] = useState(50);
   const [isGenerating, setIsGenerating] = useState(false);
   const [filter, setFilter] = useState('all'); // 'all', 'unused', 'used'
+  const [selectedSerial, setSelectedSerial] = useState(null); // QR 프리뷰용
 
   const fetchCoupons = useCallback(async () => {
     setLoading(true);
@@ -75,6 +76,13 @@ const QRManager = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  // QR 코드 URL 생성 (배달 QR 연동용)
+  const getQRImageUrl = (serial) => {
+    const baseUrl = window.location.origin;
+    const fullUrl = `${baseUrl}/?code=${serial}`;
+    return `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(fullUrl)}&size=300x300&bgcolor=ffffff`;
   };
 
   return (
@@ -170,7 +178,15 @@ const QRManager = () => {
                 coupons.map((c) => (
                   <tr key={c.qr_serial} className="hover:bg-white/[0.02] transition-colors group">
                     <td className="px-6 py-4">
-                      <span className="font-mono font-black text-white group-hover:text-tech-blue transition-colors">{c.qr_serial}</span>
+                      <button 
+                        onClick={() => setSelectedSerial(c.qr_serial)}
+                        className="flex items-center gap-2 group/btn"
+                      >
+                        <span className="font-mono font-black text-white group-hover:text-tech-blue transition-colors underline decoration-white/10 underline-offset-4 group-hover/btn:decoration-tech-blue/40">
+                          {c.qr_serial}
+                        </span>
+                        <ExternalLink size={12} className="opacity-0 group-hover/btn:opacity-100 text-tech-blue transition-all" />
+                      </button>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
@@ -198,9 +214,46 @@ const QRManager = () => {
         </div>
         
         <p className="text-[9px] text-white/10 text-right italic font-black uppercase tracking-widest">
-           * 최근 생성된 {coupons.length}개의 데이터가 노출됨다.
+           * 시리얼 번호를 클릭하면 QR 코드를 미리 볼 수 있슴다.
         </p>
       </div>
+
+      {/* 🖼 QR Preview Modal */}
+      {selectedSerial && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-coffee-dark/95 backdrop-blur-md" onClick={() => setSelectedSerial(null)} />
+          <div className="w-full max-w-[360px] glass-panel p-8 flex flex-col items-center gap-8 animate-in zoom-in duration-500 relative z-110 border-tech-blue/50">
+            <button onClick={() => setSelectedSerial(null)} className="absolute top-4 right-4 text-white/40 hover:text-white transition-colors">
+              <X size={24} />
+            </button>
+
+            <div className="text-center space-y-2">
+              <h3 className="text-xl font-black text-white uppercase tracking-tighter italic">배달 QR 프리뷰</h3>
+              <p className="text-[10px] text-tech-blue font-black tracking-widest uppercase">{selectedSerial}</p>
+            </div>
+
+            <div className="relative p-4 bg-white rounded-2xl shadow-2xl overflow-hidden group">
+               <img 
+                 src={getQRImageUrl(selectedSerial)} 
+                 alt="QR Code" 
+                 className="w-48 h-48 relative z-10"
+               />
+               <div className="absolute inset-0 border-[6px] border-tech-blue/20 rounded-2xl pointer-events-none" />
+            </div>
+
+            <div className="flex flex-col items-center gap-3 w-full">
+               <p className="text-[10px] text-coffee-light/40 text-center leading-relaxed">
+                 배달 봉투에 부착될 QR 코드 시뮬레이션임다.<br/>
+                 스캔 시 코인 적립 페이지로 즉시 연결됨다!
+               </p>
+               <div className="w-full pt-4 border-t border-white/5 flex flex-col items-center gap-2">
+                 <span className="text-[9px] text-white/20 uppercase tracking-[0.2em] font-mono italic">Target URL</span>
+                 <span className="text-[8px] text-white/10 font-mono break-all text-center">{window.location.origin}/?code={selectedSerial}</span>
+               </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
