@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X, Coffee, Users, Clock, Zap, LogOut, RefreshCcw } from 'lucide-react';
+import { Check, X, Coffee, Users, Clock, Zap, LogOut, RefreshCcw, QrCode } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { generateAIInterpretation } from '../services/aiOracleService';
 import TarotResultReport from './TarotResultReport';
+import QRManager from './QRManager';
 
 const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
   const [requests, setRequests] = useState([]);
   const [history, setHistory] = useState([]);
-  const [activeTab, setActiveTab] = useState('queue'); // 'queue', 'history'
+  const [activeTab, setActiveTab] = useState('queue'); // 'queue', 'history', 'qr-manager'
   const [loading, setLoading] = useState(true);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [stats, setStats] = useState({ pending: 0, completed: 0, rejected: 0 });
@@ -410,14 +411,15 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
       <div className="glass-panel px-4 py-8 sm:px-8 min-h-[500px] flex flex-col gap-6 bg-black/40 backdrop-blur-xl border-white/5">
         <div className="flex flex-col md:flex-row justify-between items-center border-b border-white/5 pb-6 gap-6">
           <div className="flex items-center gap-4">
-            <div className={`w-2 h-8 ${activeTab === 'queue' ? 'bg-tech-blue' : 'bg-tech-purple'} rounded-full transition-all`} />
+            <div className={`w-2 h-8 ${activeTab === 'queue' ? 'bg-tech-blue' : activeTab === 'qr-manager' ? 'bg-tech-blue' : 'bg-tech-purple'} rounded-full transition-all`} />
             <h2 className="text-2xl font-black text-white tracking-tight italic uppercase">
-              {activeTab === 'queue' ? '오라클 대기열' : '상담 이력 관리'}
+              {activeTab === 'queue' ? '오라클 대기열' : activeTab === 'qr-manager' ? 'QR 쿠폰 관리소' : '상담 이력 관리'}
             </h2>
           </div>
 
           <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl">
             <button onClick={() => setActiveTab('queue')} className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'queue' ? 'bg-tech-blue text-white shadow-lg' : 'text-coffee-light/40 hover:text-white'}`}>대기열 ({requests.length})</button>
+            <button onClick={() => setActiveTab('qr-manager')} className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'qr-manager' ? 'bg-tech-blue text-white shadow-lg' : 'text-coffee-light/40 hover:text-white'}`}>QR 관리</button>
             <button onClick={() => setActiveTab('history')} className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'history' ? 'bg-tech-purple text-white shadow-lg' : 'text-coffee-light/40 hover:text-white'}`}>히스토리</button>
             <button 
               onClick={() => {
@@ -434,7 +436,9 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
 
         <div className="flex flex-col gap-4">
           <AnimatePresence mode="popLayout">
-            {activeTab === 'queue' ? (
+            {activeTab === 'qr-manager' ? (
+              <QRManager />
+            ) : activeTab === 'queue' ? (
               requests.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-coffee-light/20 gap-4">
                   <Users size={48} strokeWidth={1} />

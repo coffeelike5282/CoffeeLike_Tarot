@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, Loader2, X as CloseIcon } from 'lucide-react';
+import { Download, Loader2, Volume2, Square, X as CloseIcon } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import TarotCard from './TarotCard';
@@ -23,6 +23,33 @@ const TarotResultReport = ({
   onClose = null
 }) => {
   const [isSavingPDF, setIsSavingPDF] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  // 🔊 [v3.1.0] 신탁 결과 음성 낭독 기능 (Voice Barista)
+  const toggleSpeech = () => {
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    const content = typeof deepResult === 'string' 
+      ? deepResult 
+      : (deepResult?.summary || "") + ". " + (deepResult?.deepInsight || deepResult?.interpretation || "");
+
+    if (!content) return;
+
+    const utterance = new SpeechSynthesisUtterance(content);
+    utterance.lang = 'ko-KR';
+    utterance.rate = 0.9; // 진중한 분위기를 위해 조금 천천히
+    utterance.pitch = 0.8; // 중후한 바리스타 느낌
+
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+
+    setIsSpeaking(true);
+    window.speechSynthesis.speak(utterance);
+  };
 
   // 📄 [v3.0.0] 신탁 결과 PDF 저장 기능 (황금비율 & 멀티페이지 정밀 타격)
   const saveAsPDF = async () => {
@@ -364,6 +391,18 @@ const TarotResultReport = ({
         </div>
 
         <div className="pt-6 flex flex-col gap-4">
+          <button 
+            onClick={toggleSpeech}
+            className={`w-full font-black py-4 rounded-2xl text-lg uppercase tracking-[0.2em] transition-all shadow-2xl active:scale-[0.98] flex items-center justify-center gap-3 border ${
+              isSpeaking 
+              ? 'bg-red-500/20 border-red-500/40 text-red-400' 
+              : 'bg-tech-blue/20 border-tech-blue/40 text-tech-blue hover:bg-tech-blue/30'
+            }`}
+          >
+            {isSpeaking ? <Square size={20} fill="currentColor" /> : <Volume2 size={20} />}
+            {isSpeaking ? '낭독 중단 (Stop)' : '바리스타 음성으로 듣기'}
+          </button>
+
           <button 
             onClick={saveAsPDF}
             disabled={isSavingPDF}

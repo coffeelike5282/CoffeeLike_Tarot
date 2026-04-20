@@ -28,7 +28,15 @@ const PhoneInputForm = ({
         <form onSubmit={handleLogin} className="space-y-8 w-full flex flex-col items-center">
           <div className="space-y-2 text-center w-full">
             <h2 className="font-heading text-xl sm:text-2xl font-bold text-white tracking-tight">시크릿 타로룸 접속</h2>
-            <p className="text-sm text-coffee-light/40 font-medium">휴대폰 번호를 입력하고 운명을 확인하세요.</p>
+            <div className="space-y-2">
+              <p className="text-sm text-coffee-light/60 font-medium">휴대폰 번호를 입력하고 운명을 확인하세요.</p>
+              <div className="bg-tech-blue/10 border border-tech-blue/20 rounded-lg p-3">
+                <p className="text-[10px] sm:text-xs text-tech-blue font-semibold leading-relaxed">
+                  ⚠️ 반드시 매장에서 사용하는 <span className="underline decoration-2 underline-offset-2">포인트 번호</span>를 입력해주세요.<br/>
+                  번호가 다를 경우 오프라인 매장 환전이 불가합니다.
+                </p>
+              </div>
+            </div>
           </div>
           <div className="flex items-center justify-center gap-1 sm:gap-3 w-full">
             <div className="bg-coffee-dark/50 border border-coffee-light/10 rounded-xl py-3 px-2 sm:py-4 sm:px-3 text-lg sm:text-xl font-heading text-white/50 w-16 sm:w-20 text-center">

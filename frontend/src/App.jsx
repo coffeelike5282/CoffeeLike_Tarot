@@ -10,6 +10,7 @@ import PhoneInputForm from './components/PhoneInputForm';
 import OracleDrawSection from './components/OracleDrawSection';
 import OracleWaitingRoom from './components/OracleWaitingRoom';
 import TarotResultReport from './components/TarotResultReport';
+import WalletDashboard from './components/WalletDashboard';
 
 import backImage from './assets/card_back.jpg';
 
@@ -34,7 +35,42 @@ function App() {
   const [question, setQuestion] = useState('');
   const [countdown, setCountdown] = useState(60);
   const [isExtended, setIsExtended] = useState(false);
+  const [coinBalance, setCoinBalance] = useState(0);
+  const [qrSerial, setQrSerial] = useState(null);
   const { login, user, loading, logout: authLogout } = useAuth();
+
+  // URL에서 QR 시리얼(?code=...) 추출 및 코인 잔액 동기화
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    if (code) {
+      console.log('🛵 [QR 인식] 배달 봉투 코드를 발견했슴다:', code);
+      setQrSerial(code);
+    }
+  }, []);
+
+  // 유저 정보가 있을 때 코인 잔액 가져오기
+  useEffect(() => {
+    if (user?.phone_number) {
+      fetchCoinBalance(user.phone_number);
+    }
+  }, [user]);
+
+  const fetchCoinBalance = async (phoneNumber) => {
+    try {
+      const { data, error } = await supabase
+        .from('tb_customer')
+        .select('tarot_coin_balance')
+        .eq('phone_num', phoneNumber)
+        .single();
+      
+      if (!error && data) {
+        setCoinBalance(data.tarot_coin_balance);
+      }
+    } catch (err) {
+      console.warn('Coin balance fetch failed:', err);
+    }
+  };
 
   // 타로 카드 데이터를 DB에서 가져옵니다.
   useEffect(() => {
@@ -203,12 +239,13 @@ function App() {
     
     try {
       const { data, error } = await supabase
-        .rpc('process_deep_tarot_request', {
+        .rpc('process_deep_tarot_request_v2', {
           p_phone_number: user.phone_number,
           p_tarot_card1_name: c1.name,
           p_tarot_card2_name: c2.name,
           p_ip_address: ip,
-          p_question: qText // 정제된 질문 파라미터 사용
+          p_question: qText, // 정제된 질문 파라미터 사용
+          p_qr_serial: qrSerial // [O2O] 배달 QR 연동 추가
         });
 
       setIsCasting2(false);
@@ -224,6 +261,11 @@ function App() {
         setWaitNumber(data.wait_number || '??');
         // RPC에서 보정한 질문을 다시 상태에 반영하여 UI 일관성을 유지함다.
         if (data.question) setQuestion(data.question);
+        
+        // [O2O] 코인 적립 가능성이 있으므로 잔액 최신화
+        fetchCoinBalance(user.phone_number);
+        setQrSerial(null); // 사용 완료 처리
+
         setRequestStatus('pending');
       } else {
         console.error('Unexpected RPC Result:', data);
@@ -534,6 +576,16 @@ function App() {
                isCasting={isCasting} shuffleAndDraw={shuffleAndDraw}
                isDataLoading={isDataLoading}
             />
+          )}
+
+          {/* 💳 [O2O] Wallet Dashboard (Only for logged-in users) */}
+          {user && (
+            <div className="mt-12 flex justify-center w-full px-4">
+              <WalletDashboard 
+                user={user} 
+                balance={coinBalance} 
+              />
+            </div>
           )}
         </div>
       </div>
