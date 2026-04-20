@@ -189,17 +189,17 @@ const QRManager = () => {
                     {/* 🖼 QR Preview Inline (Appears ABOVE the row) */}
                     {selectedSerial === c.qr_serial && (
                       <tr className="bg-tech-blue/10 border-b border-tech-blue/20 animate-in slide-in-from-top-4 duration-500">
-                        <td colSpan="5" className="px-6 py-10">
-                          <div className="flex flex-col sm:flex-row items-center sm:items-start justify-start gap-8 sm:gap-12 max-w-full overflow-hidden">
-                            <div className="relative p-2 bg-white rounded-xl shadow-[0_0_40px_rgba(33,150,243,0.3)] shrink-0 sm:ml-4">
+                        <td colSpan="5" className="px-6 py-10 text-left">
+                          <div className="flex flex-col sm:flex-row items-start justify-start gap-8 sm:gap-12 max-w-full overflow-hidden ml-4">
+                            <div className="relative p-2 bg-white rounded-xl shadow-[0_0_40px_rgba(33,150,243,0.3)] shrink-0">
                               <img 
                                 src={getQRImageUrl(c.qr_serial)} 
                                 alt="QR" 
                                 className="w-28 h-28 sm:w-32 sm:h-32" 
                               />
                             </div>
-                            <div className="flex flex-col gap-2 text-center sm:text-left">
-                              <div className="flex items-center justify-center sm:justify-start gap-2">
+                            <div className="flex flex-col gap-2 text-left">
+                              <div className="flex items-center justify-start gap-2">
                                 <QrCode size={14} className="text-tech-blue" />
                                 <span className="text-[10px] text-tech-blue font-black uppercase tracking-widest italic">Live QR Preview</span>
                               </div>
@@ -210,7 +210,7 @@ const QRManager = () => {
                               </p>
                               <button 
                                 onClick={() => setSelectedSerial(null)}
-                                className="mt-2 text-[9px] text-white/40 hover:text-white uppercase tracking-widest font-black transition-colors mx-auto sm:mx-0 w-fit underline decoration-white/10"
+                                className="mt-2 text-[9px] text-white/40 hover:text-white uppercase tracking-widest font-black transition-colors w-fit underline decoration-white/10"
                               >
                                 [ Close Preview ]
                               </button>
