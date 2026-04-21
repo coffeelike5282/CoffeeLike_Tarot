@@ -16,7 +16,7 @@ const MarketingBanner = () => {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center animate-in slide-in-from-bottom-2 duration-700 w-full min-h-[50px]">
+    <div className="flex flex-col items-center justify-center animate-in slide-in-from-bottom-2 duration-700 w-full min-h-[50px] select-none cursor-default">
       <span className={`text-[10px] font-black uppercase tracking-widest ${banners[currentSlide].color} mb-1`}>
         {banners[currentSlide].title}
       </span>
