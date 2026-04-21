@@ -183,16 +183,18 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
         const card1 = cards.find(c => c.name === requestData.tarot_card_name);
         const card2 = cards.find(c => c.name === requestData.tarot_card2_name);
 
-        // 1. 상태를 즉시 status=1(승인됨/처리 중)로 업데이트하여 손님 화면 전환 유도
-        const { error: startError } = await supabase
-          .from('tb_tarot_request')
-          .update({ 
-            status: 1,
-            approved_at: new Date().toISOString()
-          })
-          .eq('req_id', id);
+        // 🚀 [v9.3] 시간 덮어쓰기 방지: 이미 승인된 건(status:1)은 DB 업데이트 건너뜀
+        if (requestData.status !== 1) {
+          const { error: startError } = await supabase
+            .from('tb_tarot_request')
+            .update({ 
+              status: 1,
+              approved_at: new Date().toISOString()
+            })
+            .eq('req_id', id);
 
-        if (startError) throw startError;
+          if (startError) throw startError;
+        }
 
         // 2. AI 해석 생성 시작 (약 20초 소요)
         console.log(`☕ AI ${aiEngine === 'gemini' ? '제미나이' : '라마'} 신탁 생성을 시작함다... (요청 ID: ${id})`);

@@ -1,5 +1,5 @@
--- ☕ 커피라이크 AI 타로: [마스터] 모든 권한 및 구문 오류 최종 해결 스크립트 v6
-CREATE EXTENSION IF NOT EXISTS pgcrypto; 
+-- ☕ 커피라이크 AI 타로: [마스터] 모든 권한 및 구문 오류 최종 해결 스크립트 v6.1 (v9.3)
+CREATE EXTENSION IF NOT EXISTS pgcrypto SCHEMA extensions; 
 
 -- 1. 기존 테이블/기능 초기화 (O2O 관련)
 DROP TABLE IF EXISTS public.tb_exchange_request CASCADE;
@@ -148,7 +148,7 @@ BEGIN
         RAISE EXCEPTION '잔액이 부족함다, 큰형님!';
     END IF;
 
-    _token := encode(gen_random_bytes(16), 'hex');
+    _token := encode(extensions.gen_random_bytes(16), 'hex');
 
     INSERT INTO tb_exchange_request (cust_id, req_points, dynamic_token, expires_at)
     VALUES (_target_cust_id, p_req_points, _token, NOW() + INTERVAL '3 minutes');
@@ -176,7 +176,7 @@ BEGIN
         -- 개별 시리얼 하나를 성공할 때까지 무한정(은 아니지만 충분히) 생성 시도
         WHILE NOT _success LOOP
             -- 보안 등급이 높은 gen_random_bytes 사용 (8자리 16진수)
-            _serial := 'CFLK-' || upper(encode(gen_random_bytes(4), 'hex'));
+            _serial := 'CFLK-' || upper(encode(extensions.gen_random_bytes(4), 'hex'));
             -- 가독성을 위해 중간에 더 하이픈 추가 (CFLK-XXXX-XXXX)
             _serial := substr(_serial, 1, 9) || '-' || substr(_serial, 10, 4);
             
