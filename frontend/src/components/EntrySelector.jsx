@@ -19,8 +19,8 @@ const EntrySelector = ({ setEntryMode }) => {
           <h1 className="text-2xl sm:text-4xl font-black text-white tracking-widest uppercase italic bg-clip-text text-transparent bg-gradient-to-r from-coffee-light to-white">
             CHOOSE YOUR PATH
           </h1>
-          <p className="text-sm sm:text-base text-coffee-light/60 font-medium tracking-tight">
-            운명을 확인하기 위한 입장 방식을 선택해주십쇼.
+          <p className="text-sm sm:text-base text-coffee-light/60 font-medium tracking-tight break-keep">
+            운명을 확인하기 위한 입장 방식을 선택해 주십시오.
           </p>
         </div>
 
@@ -28,7 +28,7 @@ const EntrySelector = ({ setEntryMode }) => {
           {/* 배달 고객 선택지 */}
           <button 
             onClick={() => {
-              alert('배달 봉투의 QR 코드를 스캔하거나, 발송된 링크로 접속해주십쇼, 큰형님!');
+              alert('QR 코드를 스캔하거나 발송된 링크로 접속해 주십시오');
             }}
             className="group relative overflow-hidden bg-coffee-dark/40 border border-white/10 p-6 rounded-3xl transition-all duration-300 hover:border-tech-blue/50 hover:bg-tech-blue/5 flex items-center justify-between"
           >
@@ -37,7 +37,7 @@ const EntrySelector = ({ setEntryMode }) => {
                 <Package className="text-tech-blue w-7 h-7" />
               </div>
               <div className="text-left">
-                <h3 className="text-lg font-bold text-white group-hover:text-tech-blue transition-colors">배달 쿠폰 입장</h3>
+                <h3 className="text-lg font-bold text-white group-hover:text-tech-blue transition-colors whitespace-nowrap">QR 쿠폰 입장</h3>
                 <p className="text-xs text-white/40">배달 봉투 QR 또는 링크 필요</p>
               </div>
             </div>
@@ -54,7 +54,7 @@ const EntrySelector = ({ setEntryMode }) => {
                 <Coffee className="text-coffee-light w-7 h-7" />
               </div>
               <div className="text-left">
-                <h3 className="text-lg font-bold text-white group-hover:text-coffee-light transition-colors">매장 테이블 입장</h3>
+                <h3 className="text-lg font-bold text-white group-hover:text-coffee-light transition-colors whitespace-nowrap">매장 테이블 입장</h3>
                 <p className="text-xs text-white/40">매장 내 테이블 QR 스캔 고객 전용</p>
               </div>
             </div>

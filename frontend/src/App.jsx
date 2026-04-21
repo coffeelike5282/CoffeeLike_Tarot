@@ -191,15 +191,15 @@ function App() {
             .single();
 
           if (error || !data) {
-            alert('유효하지 않은 QR 코드임다! 정상적인 경로로 접속해 주십쇼.');
+            alert('유효하지 않은 QR 코드입니다! 정상적인 경로로 접속해 주십시오.');
             // 여기서 setQrSerial(null)을 하지 않음으로써 다음 클릭 시에도 계속 검증에 걸리게 함!
             setIsDataLoading(false);
             return;
           }
 
           if (data.status === 1) {
-            alert('이미 사용된 QR 코드임다! 다른 쿠폰을 이용하시거나 URL의 코드를 확인해 주십쇼.');
-            // 시리얼 정보를 유지하여 우회를 차단함다!
+            alert('이미 사용된 QR 코드입니다! 다른 쿠폰을 이용하시거나 URL의 코드를 확인해 주십시오.');
+            // 시리얼 정보를 유지하여 우회를 차단합니다!
             setIsDataLoading(false);
             return;
           }
@@ -470,7 +470,7 @@ function App() {
       if (data) handleStatusUpdate(data);
     } catch (err) {
       console.error('❌ 수동 동기화 실패:', err.message);
-      alert('동기화 실패했슴다, 큰형님! 서버 상태를 확인해주세요.');
+      alert('동기화 실패했습니다! 서버 상태를 확인해 주십시오.');
     }
   };
 

@@ -25,11 +25,11 @@ const callLlamaEngine = async (question, card1, card2) => {
   if (!response.ok) {
     const errorText = await response.text().catch(() => "알 수 없는 오류");
     console.error('❌ 라마 응답 오류 상세:', errorText);
-    throw new Error(`라마 마스터와의 통신에 실패했슴다! (상태: ${response.status})`);
+    throw new Error(`라마 마스터와의 통신에 실패했습니다! (상태: ${response.status})`);
   }
   
   const data = await response.json();
-  if (!data || !data.response) throw new Error('라마 마스터의 응답에 문제가 있슴다! 응답 본문을 확인해 보십쇼.');
+  if (!data || !data.response) throw new Error('라마 마스터의 응답에 문제가 있습니다! 응답 본문을 확인해 보십시오.');
   
   return data.response;
 };
@@ -68,11 +68,11 @@ const callGeminiEngine = async (question, card1, card2) => {
     }
     
     console.error(`🔍 최종 추출된 에러 사유: ${detailMsg}`);
-    throw new Error(`제미나이 마스터와의 통신에 실패했슴다! (사유: ${detailMsg})`);
+    throw new Error(`제미나이 마스터와의 통신에 실패했습니다! (사유: ${detailMsg})`);
   }
   
   if (!data || !data.interpretation) {
-    throw new Error('제미나이 마스터가 신탁을 내리지 않았슴다! 응답 형식을 확인해 보십쇼.');
+    throw new Error('제미나이 마스터가 신탁을 내리지 않았습니다! 응답 형식을 확인해 보십시오.');
   }
   
   return {
@@ -109,7 +109,7 @@ export const generateAIInterpretation = async (question, card1, card2, engine = 
       mainFortune: summary,
       deepInsight: interpretation,
       caution: "신탁의 조언을 가슴 깊이 새기십시오.",
-      coffeePairing: "마스터의 기운과 어울리는 '오라클 블렌드'를 추천함다.",
+      coffeePairing: "마스터의 기운과 어울리는 '오라클 블렌드'를 추천합니다.",
       generatedAt: new Date().toISOString(),
       engineVersion: engine === 'gemini' ? "Gemini-3.0-Flash (Server)" : "Llama-3-Master"
     };
@@ -120,10 +120,10 @@ export const generateAIInterpretation = async (question, card1, card2, engine = 
     
     // 과부하 에러 시 사용자 친화적인 안내 추가
     if (userMsg.includes('high demand') || userMsg.includes('과부하')) {
-      userMsg = "구글 서버가 지금 너무 바쁩니다! 1분 정도만 숨 고르고 다시 시도해 주십쇼, 사장님!";
+      userMsg = "구글 서버가 지금 너무 바쁩니다! 1분 정도만 숨 고르고 다시 시도해 주십시오!";
     }
 
-    throw new Error("사장님, " + userMsg);
+    throw new Error(userMsg);
   }
 };
 

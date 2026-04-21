@@ -62,14 +62,14 @@ const OracleWaitingRoom = ({
               <div className="w-16 h-16 bg-red-500/20 border border-red-500/40 rounded-full flex items-center justify-center">
                 <RefreshCcw className="text-red-400 w-8 h-8" />
               </div>
-              <h2 className="text-xl font-black text-white uppercase tracking-tighter italic">운명의 연결이 잠시 끊겼슴다</h2>
+              <h2 className="text-xl font-black text-white uppercase tracking-tighter italic">운명의 연결이 잠시 끊겼습니다</h2>
             </div>
             
             <p className="text-coffee-light/80 text-sm sm:text-base leading-relaxed font-bold max-w-[320px] text-center">
-              영적 주파수 정렬 중에 약간의 정체가 발생했슴다.<br/>
-              걱정 마십쇼, 큰형님! 카드는 그대로 있으니<br/>
+              영적 주파수 정렬 중에 약간의 정체가 발생했습니다.<br/>
+              걱정 마십시오. 카드는 그대로 있으니<br/>
               <span className="text-tech-blue font-black underline underline-offset-4 decoration-2">아래 지팡이를 다시 휘둘러서</span><br/>
-              마스터를 재촉해 보겠슴다!
+              마스터를 재촉해 보겠습니다!
             </p>
 
             <button 
@@ -225,16 +225,16 @@ const OracleWaitingRoom = ({
             </h2>
             <p className="text-coffee-light/80 text-sm sm:text-base leading-relaxed font-bold max-w-[320px]">
               {isExtended 
-                ? '영적 주파수를 정밀하게 조정하고 있슴다. 조금만 더 인내심을 갖고 기다려주십쇼.' 
-                : '운명의 실타래가 정교하게 엮어지고 있슴다.'}
+                ? '영적 주파수를 정밀하게 조정하고 있습니다. 조금만 더 인내심을 갖고 기다려 주십시오.' 
+                : '운명의 실타래가 정교하게 엮어지고 있습니다.'}
               <br/>
               <span className="text-tech-purple decoration-2">{selectedCard?.name} & {selectedCard2?.name}</span> 의<br/>
-              깊은 진실을 위해 정성을 다하는 중임다.
+              깊은 진실을 위해 정성을 다하는 중입니다.
             </p>
             {isExtended && (
               <p className="text-tech-blue font-black text-[11px] animate-bounce uppercase tracking-widest">⚠️ 영적 통로 개방 시간 연장됨</p>
             )}
-            <p className="text-coffee-light/40 text-[10px] animate-pulse">마스터가 카드 한 장 한 장에 온 마음을 다해 통찰을 불어넣는 중임다...</p>
+            <p className="text-coffee-light/40 text-[10px] animate-pulse">마스터가 카드 한 장 한 장에 온 마음을 다해 통찰을 불어넣는 중입니다...</p>
           </div>
 
           <footer className="mt-4 text-[8px] sm:text-[9px] text-coffee-light/10 font-medium uppercase tracking-[0.3em] text-center w-full">
