@@ -57,7 +57,7 @@ const OracleDrawSection = ({
                   질문을 입력하고 바리스타에게 말씀해 보세요.
                 </p>
                 
-                <div className="mb-6">
+                <div className="mb-4">
                   <textarea 
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
@@ -66,7 +66,7 @@ const OracleDrawSection = ({
                   />
                 </div>
 
-                <div className="py-4 mb-2 border-t border-white/5 mt-4">
+                <div className="py-2 mb-2 border-t border-white/5 mt-2">
                   <MarketingBanner />
                 </div>
               <button onClick={startDeepProcess} className="w-full bg-tech-purple/20 hover:bg-tech-purple text-tech-purple hover:text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-3 group border border-tech-purple/30 shadow-lg shadow-tech-purple/10">
