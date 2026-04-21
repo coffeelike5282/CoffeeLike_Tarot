@@ -29,12 +29,12 @@ const PhoneInputForm = ({
         <form onSubmit={handleLogin} className="space-y-8 w-full flex flex-col items-center">
           <div className="space-y-2 text-center w-full">
             <h2 className="font-heading text-xl sm:text-2xl font-bold text-white tracking-tight">
-              {mode === 'delivery' ? '🎁 배달 쿠폰 인증 완료' : '☕ 매장 테이블 접속 완료'}
+              {mode === 'delivery' ? '🎫 쿠폰 인증 모드입니다.' : '☕ 매장 테이블 접속 완료'}
             </h2>
             <div className="space-y-2">
               <p className="text-sm text-coffee-light/60 font-medium">
                 {mode === 'delivery' 
-                  ? '쿠폰 혜택이 정상적으로 적용되었슴다. 운명을 확인해보십쇼!' 
+                  ? '운명을 확인해 보십시오' 
                   : '매장 고객님을 위한 비밀스러운 타로룸임다. 폰번호를 입력해주십쇼.'}
               </p>
               <div className="bg-tech-blue/10 border border-tech-blue/20 rounded-lg p-3">
