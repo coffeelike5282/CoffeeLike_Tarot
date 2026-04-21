@@ -11,6 +11,7 @@ import OracleDrawSection from './components/OracleDrawSection';
 import OracleWaitingRoom from './components/OracleWaitingRoom';
 import TarotResultReport from './components/TarotResultReport';
 import WalletDashboard from './components/WalletDashboard';
+import EntrySelector from './components/EntrySelector';
 
 import backImage from './assets/card_back.jpg';
 
@@ -37,15 +38,22 @@ function App() {
   const [isExtended, setIsExtended] = useState(false);
   const [coinBalance, setCoinBalance] = useState(0);
   const [qrSerial, setQrSerial] = useState(null);
+  const [entryMode, setEntryMode] = useState(null); // 'delivery', 'instore'
   const { login, user, loading, logout: authLogout } = useAuth();
 
-  // URL에서 QR 시리얼(?code=...) 추출 및 코인 잔액 동기화
+  // URL에서 QR 시리얼(?code=...) 및 입장 모드(?mode=...) 추출
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
+    const mode = params.get('mode');
+
     if (code) {
-      console.log('🛵 [QR 인식] 배달 봉투 코드를 발견했슴다:', code);
+      console.log('🛵 [진입 감지] 배송 쿠폰 모드로 진입하셨슴다:', code);
       setQrSerial(code);
+      setEntryMode('delivery');
+    } else if (mode === 'store') {
+      console.log('☕ [진입 감지] 매장 테이블 모드로 진입하셨슴다!');
+      setEntryMode('instore');
     }
   }, []);
 
@@ -570,12 +578,15 @@ function App() {
               cards={cards}
               backImage={backImage}
             />
+          ) : (!entryMode && !user) ? (
+            <EntrySelector setEntryMode={setEntryMode} />
           ) : !user ? (
             <PhoneInputForm 
               phonePart2={phonePart2} setPhonePart2={setPhonePart2}
               phonePart3={phonePart3} setPhonePart3={setPhonePart3}
               handleLogin={handleLogin}
               loading={loading}
+              mode={entryMode}
             />
           ) : (requestStatus === 'pending' || isCasting2 || requestStatus === 'processing_init' || requestStatus === 'error' || requestStatus === 'processing') ? (
             <OracleWaitingRoom 

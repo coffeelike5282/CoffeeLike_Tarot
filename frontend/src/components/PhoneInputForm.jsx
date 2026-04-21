@@ -7,7 +7,8 @@ const PhoneInputForm = ({
   phonePart3, 
   setPhonePart3, 
   handleLogin, 
-  loading 
+  loading,
+  mode // 'delivery' or 'instore'
 }) => {
   return (
     <main className="w-full flex-1 flex flex-col items-center justify-center p-2 sm:p-6 relative">
@@ -27,9 +28,15 @@ const PhoneInputForm = ({
 
         <form onSubmit={handleLogin} className="space-y-8 w-full flex flex-col items-center">
           <div className="space-y-2 text-center w-full">
-            <h2 className="font-heading text-xl sm:text-2xl font-bold text-white tracking-tight">시크릿 타로룸 접속</h2>
+            <h2 className="font-heading text-xl sm:text-2xl font-bold text-white tracking-tight">
+              {mode === 'delivery' ? '🎁 배달 쿠폰 인증 완료' : '☕ 매장 테이블 접속 완료'}
+            </h2>
             <div className="space-y-2">
-              <p className="text-sm text-coffee-light/60 font-medium">휴대폰 번호를 입력하고 운명을 확인하세요.</p>
+              <p className="text-sm text-coffee-light/60 font-medium">
+                {mode === 'delivery' 
+                  ? '쿠폰 혜택이 정상적으로 적용되었슴다. 운명을 확인해보십쇼!' 
+                  : '매장 고객님을 위한 비밀스러운 타로룸임다. 폰번호를 입력해주십쇼.'}
+              </p>
               <div className="bg-tech-blue/10 border border-tech-blue/20 rounded-lg p-3">
                 <p className="text-[10px] sm:text-xs text-tech-blue font-semibold leading-relaxed">
                   ⚠️ 반드시 매장에서 사용하는 <span className="underline decoration-2 underline-offset-2">포인트 번호</span>를 입력해주세요.<br/>
