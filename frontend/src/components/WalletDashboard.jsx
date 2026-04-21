@@ -7,7 +7,6 @@ const WalletDashboard = ({ user, balance, onExchangeRequest }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [exchangeToken, setExchangeToken] = useState(null);
   const [expiryTimer, setExpiryTimer] = useState(180); // 3 minutes
-  const [exchangeAmount, setExchangeAmount] = useState(3000);
   const [isExchanging, setIsExchanging] = useState(false);
 
   const startExchange = async () => {
@@ -20,7 +19,7 @@ const WalletDashboard = ({ user, balance, onExchangeRequest }) => {
     try {
       const { data, error } = await supabase.rpc('generate_exchange_request', {
         p_phone_number: user.phone_number,
-        p_req_points: exchangeAmount
+        p_req_points: balance // [v9.6] 전액 환전 로직 도입
       });
 
       if (error) throw error;
@@ -70,13 +69,13 @@ const WalletDashboard = ({ user, balance, onExchangeRequest }) => {
             <div className="p-2 bg-tech-blue/20 rounded-lg border border-tech-blue/30">
               <Wallet className="text-tech-blue w-5 h-5" />
             </div>
-            <span className="text-[10px] font-black text-tech-blue uppercase tracking-widest">Tarot Coin Wallet</span>
+            <span className="text-[10px] font-black text-tech-blue uppercase tracking-widest">타로 코인 지갑</span>
           </div>
           <Info className="text-white/20 w-4 h-4 cursor-help" />
         </div>
 
         <div className="space-y-1 mb-8">
-          <span className="text-[12px] font-bold text-coffee-light/60 uppercase">Current Balance</span>
+          <span className="text-[12px] font-bold text-coffee-light/60">현재 포인트 잔액</span>
           <div className="flex items-baseline gap-2">
             <span className="text-4xl font-black text-white tracking-tight">{balance?.toLocaleString()}</span>
             <span className="text-xl font-bold text-tech-blue uppercase">P</span>
@@ -92,7 +91,7 @@ const WalletDashboard = ({ user, balance, onExchangeRequest }) => {
             : 'bg-white/5 text-white/20 border border-white/5 cursor-not-allowed'
           }`}
         >
-          {isExchanging ? <Loader2 className="animate-spin" /> : <><ArrowUpRight size={18} /> Exchange for Store P</>}
+          {isExchanging ? <Loader2 className="animate-spin" /> : <><ArrowUpRight size={18} /> 전액 환전하기</>}
         </button>
         
         <p className="mt-4 text-[9px] text-coffee-light/30 text-center font-medium">
@@ -141,7 +140,7 @@ const WalletDashboard = ({ user, balance, onExchangeRequest }) => {
             </div>
 
             <div className="w-full pt-4 border-t border-white/5 flex flex-col items-center gap-2">
-               <span className="text-[10px] text-white/20 uppercase tracking-[0.2em] font-mono">Token Hash</span>
+               <span className="text-[10px] text-white/20 uppercase tracking-[0.2em] font-mono">고유 토큰 해시</span>
                <span className="text-[8px] text-white/10 font-mono break-all text-center">{exchangeToken}</span>
             </div>
           </div>

@@ -33,6 +33,7 @@ CREATE TABLE public.tb_exchange_request (
     dynamic_token TEXT NOT NULL,
     status INT DEFAULT 0,
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    processed_at TIMESTAMP WITH TIME ZONE, -- [v9.6] 환전 처리 완료 시각 기록
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -192,5 +193,56 @@ BEGIN
     END LOOP;
 
     RETURN json_build_object('success', true, 'count', _generated_count, 'message', _generated_count || '개 무결점 생성 완료!');
+END;
+$$;
+
+-- 7. RPC: complete_exchange_request (환전 최종 완료 처리 - v9.5)
+CREATE OR REPLACE FUNCTION public.complete_exchange_request(p_token text)
+RETURNS json
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    _req_id uuid;
+    _cust_id uuid;
+    _points int;
+    _status int;
+    _expires_at timestamptz;
+BEGIN
+    -- 1. 요청 찾기
+    SELECT req_id, cust_id, req_points, status, expires_at 
+    INTO _req_id, _cust_id, _points, _status, _expires_at
+    FROM tb_exchange_request 
+    WHERE dynamic_token = p_token;
+
+    -- 2. 검증 (존재 여부, 상태, 만료)
+    IF _req_id IS NULL THEN
+        RAISE EXCEPTION '유효하지 않은 토큰임다, 큰형님!';
+    END IF;
+    
+    IF _status != 0 THEN
+        RAISE EXCEPTION '이미 처리되었거나 만료된 요청임다!';
+    END IF;
+
+    IF _expires_at < NOW() THEN
+        UPDATE tb_exchange_request SET status = 2 WHERE req_id = _req_id; -- 만료 처리
+        RAISE EXCEPTION '시간이 초과되어 만료되었슴다! 다시 생성해 주십쇼.';
+    END IF;
+
+    -- 3. 포인트 실제 차감 및 요청 완료
+    UPDATE tb_customer 
+    SET tarot_coin_balance = tarot_coin_balance - _points 
+    WHERE cust_id = _cust_id;
+
+    UPDATE tb_exchange_request 
+    SET status = 1, processed_at = NOW() 
+    WHERE req_id = _req_id;
+
+    RETURN json_build_object(
+        'success', true, 
+        'points', _points,
+        'processed_at', NOW()
+    );
 END;
 $$;
