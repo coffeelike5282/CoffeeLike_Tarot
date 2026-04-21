@@ -79,9 +79,7 @@ const OracleDrawSection = ({
             </footer>
           </div>
 
-          <button onClick={() => { setSelectedCard(null); setFirstCardFlipped(false); }} className="text-[10px] text-coffee-light/30 font-bold uppercase tracking-widest hover:text-white transition-colors">
-            카드 다시 섞기
-          </button>
+
         </div>
       </main>
     );
