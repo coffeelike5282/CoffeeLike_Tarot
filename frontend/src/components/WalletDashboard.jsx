@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Wallet, ArrowUpRight, QrCode, Timer, X, CheckCircle2, Info, Loader2 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { supabase } from '../lib/supabaseClient';
 
 const WalletDashboard = ({ user, balance, onExchangeRequest }) => {
@@ -113,13 +114,19 @@ const WalletDashboard = ({ user, balance, onExchangeRequest }) => {
               <p className="text-xs text-coffee-light/60 font-bold">카운터 사장님께 아래 QR을 보여주세요.</p>
             </div>
 
-            {/* 🔳 Dynamic QR Placeholder (In real app, use QR library like qrcode.react) */}
-            <div className="relative p-4 bg-white rounded-2xl shadow-2xl">
-              <div className="w-48 h-48 bg-gray-200 border-4 border-tech-blue/20 flex flex-col items-center justify-center gap-3">
-                 <QrCode size={80} className="text-coffee-dark" />
-                 <span className="text-[10px] font-mono text-coffee-dark/60">{exchangeToken?.slice(0, 12)}</span>
+            {/* 🔳 Real Dynamic QR Code */}
+            <div className="relative p-5 bg-white rounded-2xl shadow-2xl overflow-hidden">
+              <div className="w-48 h-48 flex items-center justify-center">
+                 <QRCodeSVG 
+                   value={exchangeToken || "error"} 
+                   size={180}
+                   level="H"
+                   includeMargin={false}
+                   className="text-coffee-dark"
+                 />
               </div>
               <div className="absolute inset-0 border-[6px] border-tech-blue/40 rounded-2xl pointer-events-none" />
+              <div className="absolute -bottom-1 -right-1 w-10 h-10 bg-tech-blue/20 blur-xl rounded-full" />
             </div>
 
             <div className="flex flex-col items-center gap-4 w-full">
