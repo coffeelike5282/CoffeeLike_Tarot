@@ -163,8 +163,12 @@ function App() {
     }
     
     if (phonePart2.length === 4 && phonePart3.length === 4) {
-      // [v8.1] 배달 QR 시리얼이 있다면 선제적 검증 (중복 사용 및 유효성 체크)
+      // [v8.2] 배달 QR 시리얼 검증 강화 (우회 완전 차단)
       if (qrSerial) {
+        // [v8.2.1] 이미 로링 중이면 중복 클릭 방지
+        if (isDataLoading) return;
+        
+        setIsDataLoading(true); // 검증 시작 표시
         try {
           const { data, error } = await supabase
             .from('tb_delivery_qr')
@@ -174,19 +178,23 @@ function App() {
 
           if (error || !data) {
             alert('유효하지 않은 QR 코드임다! 정상적인 경로로 접속해 주십쇼.');
-            setQrSerial(null);
+            // 여기서 setQrSerial(null)을 하지 않음으로써 다음 클릭 시에도 계속 검증에 걸리게 함!
+            setIsDataLoading(false);
             return;
           }
 
           if (data.status === 1) {
-            alert('이미 사용된 QR 코드임다! 기한이 만료되었거나 이미 혜택을 받으신 것 같슴다.');
-            setQrSerial(null);
+            alert('이미 사용된 QR 코드임다! 다른 쿠폰을 이용하시거나 URL의 코드를 확인해 주십쇼.');
+            // 시리얼 정보를 유지하여 우회를 차단함다!
+            setIsDataLoading(false);
             return;
           }
           
-          console.log('✅ [QR 검증 통과] 따끈따끈한 새 쿠폰 확인 완료!');
+          console.log('✅ [QR 검증 최종 통과] 무결점 쿠폰임다!');
         } catch (err) {
-          console.warn('QR 검증 중 기술적 결함 발생 (무시하고 진행):', err);
+          console.warn('QR 검증 중 기술적 결함 발생:', err);
+        } finally {
+          setIsDataLoading(false);
         }
       }
 
