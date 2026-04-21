@@ -1,6 +1,7 @@
 import React from 'react';
 import { Loader2, RefreshCcw, Coffee, Sparkles, ChevronRight } from 'lucide-react';
 import TarotCard from './TarotCard';
+import MarketingBanner from './MarketingBanner';
 
 const OracleDrawSection = ({ 
   selectedCard, 
@@ -65,18 +66,9 @@ const OracleDrawSection = ({
                   />
                 </div>
 
-                <div className="flex items-center justify-center gap-3 py-2 animate-in slide-in-from-bottom-2 duration-700">
-                  <span className="px-3 py-1 bg-tech-purple/5 border border-tech-purple/20 rounded-full text-[10px] font-black text-tech-purple/70 uppercase tracking-widest">
-                    1,000P 차감
-                  </span>
-                  <div className="w-1 h-1 rounded-full bg-tech-purple/20" />
-                  <span className="px-3 py-1 bg-tech-purple/5 border border-tech-purple/20 rounded-full text-[10px] font-black text-tech-purple/70 uppercase tracking-widest">
-                    결제 시 1,000원
-                  </span>
+                <div className="py-4 mb-2 border-t border-white/5 mt-4">
+                  <MarketingBanner />
                 </div>
-                <p className="text-[10px] text-coffee-light/40 font-bold tracking-tight mb-2">
-                  ※ 포인트 차감 신청은 <span className="text-tech-purple">3,000P 이상</span> 보유 시에만 가능합니다.
-                </p>
               <button onClick={startDeepProcess} className="w-full bg-tech-purple/20 hover:bg-tech-purple text-tech-purple hover:text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-3 group border border-tech-purple/30 shadow-lg shadow-tech-purple/10">
                 심층 타로 신청
                 <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />

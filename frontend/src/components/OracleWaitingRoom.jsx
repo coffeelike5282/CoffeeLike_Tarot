@@ -2,32 +2,7 @@ import React from 'react';
 import { Coffee, RefreshCcw, Zap, Loader2, Sparkles, CheckCircle2 } from 'lucide-react';
 import TarotCard from './TarotCard';
 
-const MarketingBanner = () => {
-  const [currentSlide, setCurrentSlide] = React.useState(0);
-  const banners = [
-    { title: "🎁 타로 코인 적립", text: "타로를 볼 때마다 1,000포인트를 적립해 드립니다.", color: "text-tech-blue" },
-    { title: "🎉 포인트 환전", text: "3,000포인트부터 매장에서 사용 가능한 포인트로 환전하세요.", color: "text-tech-purple" },
-    { title: "🛵 배달 QR 혜택", text: "배달 봉투의 1회용 QR로 매일 행운을 적립하세요.", color: "text-white" }
-  ];
-
-  React.useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % banners.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, []);
-
-  return (
-    <div className="flex flex-col items-center justify-center animate-in slide-in-from-bottom-2 duration-700">
-      <span className={`text-[10px] font-black uppercase tracking-widest ${banners[currentSlide].color}`}>
-        {banners[currentSlide].title}
-      </span>
-      <span className="text-[12px] font-bold text-white/90">
-        {banners[currentSlide].text}
-      </span>
-    </div>
-  );
-};
+import MarketingBanner from './MarketingBanner';
 
 const OracleWaitingRoom = ({ 
   requestStatus, 
