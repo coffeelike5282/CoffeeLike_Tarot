@@ -164,6 +164,25 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
     };
   }, [fetchRequests, fetchHistory, playNotification, historyPage]);
 
+  // ⚡ [v9.2] 자동 승인 건(배달 쿠폰)을 위한 AI 자동 해석 Watcher
+  // 바리스타가 버튼을 누르지 않아도, 승인된 상태로 들어온 요청은 자동으로 해석을 시작함다!
+  useEffect(() => {
+    if (activeTab !== 'history' && activeTab !== 'queue') return; // 대시보드 활성 시에만 작동
+
+    const orphanRequests = history.filter(h => 
+      h.status === 1 && 
+      !h.ai_tarot_result && 
+      !isGenerating[h.req_id]
+    );
+
+    if (orphanRequests.length > 0) {
+      orphanRequests.forEach(req => {
+        console.log('🤖 [AI Watcher] 자동 승인된 요청 발견! AI 해석을 엔진이 자동으로 돌림다. ID:', req.req_id);
+        handleAction(req.req_id, 1, req);
+      });
+    }
+  }, [history, isGenerating, handleAction, activeTab]);
+
   const handleAction = async (id, newStatus, requestData = null) => {
     if (newStatus === 1 && requestData) {
       setIsGenerating(prev => ({ ...prev, [id]: true }));

@@ -101,13 +101,15 @@ BEGIN
         END IF;
     END IF;
 
-    -- 3. 기존 타로 요청 테이블에 데이터 삽입
+    -- 3. 기존 타로 요청 테이블에 데이터 삽입 (자동 승인 시 승인 시각도 함께 기록!)
     INSERT INTO tb_tarot_request (
         req_id, phone_number, tarot_card_name, tarot_card2_name, 
-        ip_address, question, wait_number, status, created_at
+        ip_address, question, wait_number, status, approved_at, created_at
     ) VALUES (
         _req_id, p_phone_number, p_tarot_card1_name, p_tarot_card2_name, 
-        p_ip_address, _final_question, _wait_number, _status, NOW()
+        p_ip_address, _final_question, _wait_number, _status, 
+        (CASE WHEN _status = 1 THEN NOW() ELSE NULL END), 
+        NOW()
     );
 
     -- 4. 현재 코인 잔액 조회
