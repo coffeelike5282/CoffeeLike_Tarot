@@ -118,7 +118,7 @@ const WalletDashboard = ({ user, balance, onExchangeRequest }) => {
             <div className="relative p-5 bg-white rounded-2xl shadow-2xl overflow-hidden">
               <div className="w-48 h-48 flex items-center justify-center">
                  <QRCodeSVG 
-                   value={exchangeToken || "error"} 
+                   value={`${window.location.origin}/?token=${exchangeToken}`} 
                    size={180}
                    level="H"
                    includeMargin={false}

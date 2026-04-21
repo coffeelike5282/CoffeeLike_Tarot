@@ -12,6 +12,7 @@ import OracleWaitingRoom from './components/OracleWaitingRoom';
 import TarotResultReport from './components/TarotResultReport';
 import WalletDashboard from './components/WalletDashboard';
 import EntrySelector from './components/EntrySelector';
+import ExchangeVerifier from './components/ExchangeVerifier';
 
 import backImage from './assets/card_back.jpg';
 
@@ -39,6 +40,7 @@ function App() {
   const [coinBalance, setCoinBalance] = useState(0);
   const [qrSerial, setQrSerial] = useState(null);
   const [entryMode, setEntryMode] = useState(null); // 'delivery', 'instore'
+  const [exchangeToken, setExchangeToken] = useState(null); // [v9.5] 환전 검증 토큰
   const { login, user, loading, logout: authLogout } = useAuth();
 
   // URL에서 QR 시리얼(?code=...) 및 입장 모드(?mode=...) 추출
@@ -46,6 +48,7 @@ function App() {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
     const mode = params.get('mode');
+    const token = params.get('token'); // [v9.5] 환전 검증 토큰 추출
 
     if (code) {
       console.log('🛵 [진입 감지] 배송 쿠폰 모드로 진입하셨슴다:', code);
@@ -54,6 +57,9 @@ function App() {
     } else if (mode === 'store') {
       console.log('☕ [진입 감지] 매장 테이블 모드로 진입하셨슴다!');
       setEntryMode('instore');
+    } else if (token) {
+      console.log('💳 [진입 감지] 환전 검증 모드로 진입하셨슴다!', token);
+      setExchangeToken(token);
     }
   }, []);
 
@@ -578,7 +584,12 @@ function App() {
         )}
 
         <div className="w-full z-10 transition-all duration-700 flex flex-col items-center mx-auto">
-          {isAdmin ? (
+          {exchangeToken ? (
+            <ExchangeVerifier 
+              token={exchangeToken} 
+              onComplete={() => setExchangeToken(null)} 
+            />
+          ) : isAdmin ? (
             <BaristaDashboard 
               onLogout={handleLogout} 
               cards={cards}
