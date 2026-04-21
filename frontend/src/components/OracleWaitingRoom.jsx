@@ -5,8 +5,8 @@ import TarotCard from './TarotCard';
 const MarketingBanner = () => {
   const [currentSlide, setCurrentSlide] = React.useState(0);
   const banners = [
-    { title: "🎁 타로 코인 적립", text: "타로 볼 때마다 1,000P! 매장에서 현금처럼 쓰세요.", color: "text-tech-blue" },
-    { title: "🎉 오픈 이벤트", text: "지금 3,000P 이상 모으면 첫 환전 1,000P 추가 보너스!", color: "text-tech-purple" },
+    { title: "🎁 타로 코인 적립", text: "타로를 볼 때마다 1,000포인트를 적립해 드립니다.", color: "text-tech-blue" },
+    { title: "🎉 포인트 환전", text: "3,000포인트부터 매장에서 사용 가능한 포인트로 환전하세요.", color: "text-tech-purple" },
     { title: "🛵 배달 QR 혜택", text: "배달 봉투의 1회용 QR로 매일 행운을 적립하세요.", color: "text-white" }
   ];
 

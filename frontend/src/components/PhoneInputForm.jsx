@@ -35,7 +35,12 @@ const PhoneInputForm = ({
               <p className="text-sm text-coffee-light/60 font-medium">
                 {mode === 'delivery' 
                   ? '운명을 확인해 보십시오.' 
-                  : '매장 고객님을 위한 비밀스러운 타로룸입니다. 폰번호를 입력해 주십시오.'}
+                  : (
+                    <>
+                      매장 고객님을 위한 비밀스러운 타로룸입니다.<br />
+                      폰번호를 입력해 주십시오.
+                    </>
+                  )}
               </p>
               <div className="bg-tech-blue/10 border border-tech-blue/20 rounded-lg p-3">
                 <p className="text-[10px] sm:text-xs text-tech-blue font-semibold leading-relaxed">
