@@ -73,6 +73,7 @@ DECLARE
     _final_question text;
     _coin_earned int := 0;
     _current_balance int;
+    _status int := 0; -- 기본값: 대기(0)
 BEGIN
     _final_question := COALESCE(NULLIF(TRIM(p_question), ''), '오늘의 운세 알려줘');
     _req_id := gen_random_uuid();
@@ -84,7 +85,7 @@ BEGIN
     ON CONFLICT (phone_number) DO UPDATE SET phone_number = EXCLUDED.phone_number
     RETURNING cust_id INTO _cust_id;
 
-    -- 2. 배달 QR 인식 및 코인 적립
+    -- 2. 배달 QR 인식 및 코인 적립 + 자동 승인 설정
     IF p_qr_serial IS NOT NULL THEN
         IF EXISTS (SELECT 1 FROM tb_delivery_qr WHERE qr_serial = p_qr_serial AND status = 0) THEN
             UPDATE tb_delivery_qr 
@@ -96,6 +97,7 @@ BEGIN
             
             UPDATE tb_customer SET tarot_coin_balance = tarot_coin_balance + 1000 WHERE cust_id = _cust_id;
             _coin_earned := 1000;
+            _status := 1; -- 배달 큐폰 사용 시 즉시 '승인(1)' 상태로 설정!
         END IF;
     END IF;
 
@@ -105,7 +107,7 @@ BEGIN
         ip_address, question, wait_number, status, created_at
     ) VALUES (
         _req_id, p_phone_number, p_tarot_card1_name, p_tarot_card2_name, 
-        p_ip_address, _final_question, _wait_number, 0, NOW()
+        p_ip_address, _final_question, _wait_number, _status, NOW()
     );
 
     -- 4. 현재 코인 잔액 조회
@@ -116,7 +118,8 @@ BEGIN
         'wait_number', _wait_number,
         'question', _final_question,
         'coin_earned', _coin_earned,
-        'current_balance', _current_balance
+        'current_balance', _current_balance,
+        'status', _status
     );
 END;
 $$;

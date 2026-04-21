@@ -309,7 +309,13 @@ function App() {
         fetchCoinBalance(user.phone_number);
         setQrSerial(null); // 사용 완료 처리
 
-        setRequestStatus('pending');
+        // [v9.1] 자동 승인 상태(status=1)인 경우 즉시 'processing'(해석 중)으로 전환함다!
+        if (Number(data.status) === 1) {
+          console.log('🚀 [자동 승인] 배달 고객 프리패스! 바로 AI 해석 들어감다.');
+          setRequestStatus('processing');
+        } else {
+          setRequestStatus('pending');
+        }
       } else {
         console.error('Unexpected RPC Result:', data);
         setRequestStatus('error');
