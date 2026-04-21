@@ -22,6 +22,13 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
   const [historyPage, setHistoryPage] = useState(0);
   const [totalHistoryCount, setTotalHistoryCount] = useState(0);
   const [selectedHistory, setSelectedHistory] = useState(null); // 히스토리 조회용
+
+  // [v9.7] 환전 장부 관련 상태
+  const [exchangeHistory, setExchangeHistory] = useState([]);
+  const [exchangeHistoryPage, setExchangeHistoryPage] = useState(0);
+  const [totalExchangeHistoryCount, setTotalExchangeHistoryCount] = useState(0);
+  const [exchangeHistoryLoading, setExchangeHistoryLoading] = useState(false);
+
   const itemsPerPage = 20;
 
   const playNotification = useCallback(() => {
@@ -102,6 +109,29 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
     setHistoryLoading(false);
   }, [itemsPerPage]);
 
+  // [v9.7] 환전 장부 데이터 로드
+  const fetchExchangeHistory = useCallback(async (page = 0) => {
+    setExchangeHistoryLoading(true);
+    const from = page * itemsPerPage;
+    const to = from + itemsPerPage - 1;
+
+    const { data: exchangeData, error: exchangeError, count } = await supabase
+      .from('tb_exchange_request')
+      .select('*, tb_customer(phone_number)', { count: 'exact' })
+      .eq('status', 1)
+      .order('processed_at', { ascending: false, nullsFirst: false })
+      .range(from, to);
+
+    if (!exchangeError) {
+      setExchangeHistory(exchangeData || []);
+      setExchangeHistoryPage(page);
+      if (count !== null) setTotalExchangeHistoryCount(count);
+    } else {
+      console.error('Exchange History Fetch Error:', exchangeError);
+    }
+    setExchangeHistoryLoading(false);
+  }, [itemsPerPage]);
+
   const toggleAiEngine = async () => {
     const newEngine = aiEngine === 'llama' ? 'gemini' : 'llama';
     setAiEngine(newEngine);
@@ -121,15 +151,18 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
   useEffect(() => {
     fetchRequests();
     fetchHistory(0);
+    fetchExchangeHistory(0);
     fetchSettings();
-  }, [fetchRequests, fetchHistory, fetchSettings]);
+  }, [fetchRequests, fetchHistory, fetchExchangeHistory, fetchSettings]);
 
-  // 🔄 탭 전환 시 히스토리 최신화 (0페이지일 때만)
+  // 🔄 탭 전환 시 카테고리별 히스토리 최신화
   useEffect(() => {
     if (activeTab === 'history' && historyPage === 0) {
       fetchHistory(0);
+    } else if (activeTab === 'exchange-history' && exchangeHistoryPage === 0) {
+      fetchExchangeHistory(0);
     }
-  }, [activeTab, historyPage, fetchHistory]);
+  }, [activeTab, historyPage, exchangeHistoryPage, fetchHistory, fetchExchangeHistory]);
 
   // ⚡ 실시간 전용 및 폴링 관리
   useEffect(() => {
@@ -434,20 +467,22 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
       <div className="glass-panel px-4 py-8 sm:px-8 min-h-[500px] flex flex-col gap-6 bg-black/40 backdrop-blur-xl border-white/5">
         <div className="flex flex-col md:flex-row justify-between items-center border-b border-white/5 pb-6 gap-6">
           <div className="flex items-center gap-4">
-            <div className={`w-2 h-8 ${activeTab === 'queue' ? 'bg-tech-blue' : activeTab === 'qr-manager' ? 'bg-tech-blue' : 'bg-tech-purple'} rounded-full transition-all`} />
+            <div className={`w-2 h-8 ${activeTab === 'queue' ? 'bg-tech-blue' : activeTab === 'qr-manager' ? 'bg-tech-blue' : activeTab === 'exchange-history' ? 'bg-amber-500' : 'bg-tech-purple'} rounded-full transition-all`} />
             <h2 className="text-2xl font-black text-white tracking-tight italic uppercase">
-              {activeTab === 'queue' ? '오라클 대기열' : activeTab === 'qr-manager' ? 'QR 쿠폰 관리소' : '상담 이력 관리'}
+              {activeTab === 'queue' ? '오라클 대기열' : activeTab === 'qr-manager' ? 'QR 쿠폰 관리소' : activeTab === 'exchange-history' ? '환전 장부 관리' : '상담 이력 관리'}
             </h2>
           </div>
 
-          <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl">
-            <button onClick={() => setActiveTab('queue')} className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'queue' ? 'bg-tech-blue text-white shadow-lg' : 'text-coffee-light/40 hover:text-white'}`}>대기열 ({requests.length})</button>
-            <button onClick={() => setActiveTab('qr-manager')} className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'qr-manager' ? 'bg-tech-blue text-white shadow-lg' : 'text-coffee-light/40 hover:text-white'}`}>QR 관리</button>
-            <button onClick={() => setActiveTab('history')} className={`px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'history' ? 'bg-tech-purple text-white shadow-lg' : 'text-coffee-light/40 hover:text-white'}`}>히스토리</button>
+          <div className="flex flex-wrap items-center gap-2 bg-white/5 p-1 rounded-xl">
+            <button onClick={() => setActiveTab('queue')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'queue' ? 'bg-tech-blue text-white shadow-lg' : 'text-coffee-light/40 hover:text-white'}`}>대기열 ({requests.length})</button>
+            <button onClick={() => setActiveTab('qr-manager')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'qr-manager' ? 'bg-tech-blue text-white shadow-lg' : 'text-coffee-light/40 hover:text-white'}`}>QR 관리</button>
+            <button onClick={() => setActiveTab('history')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'history' ? 'bg-tech-purple text-white shadow-lg' : 'text-coffee-light/40 hover:text-white'}`}>검증 기록</button>
+            <button onClick={() => setActiveTab('exchange-history')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'exchange-history' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'text-coffee-light/40 hover:text-white'}`}>환전 장부</button>
             <button 
               onClick={() => {
                 fetchRequests();
                 fetchHistory(historyPage);
+                fetchExchangeHistory(exchangeHistoryPage);
               }} 
               className="p-2 hover:bg-white/5 rounded-lg transition-all text-coffee-light/40 hover:text-white"
             >
@@ -545,6 +580,76 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
                     </div>
                   </motion.div>
                 ))
+              )
+            ) : activeTab === 'exchange-history' ? (
+              exchangeHistory.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-coffee-light/20 gap-4">
+                  {exchangeHistoryLoading ? (
+                    <RefreshCcw size={48} className="animate-spin text-amber-500 opacity-40" />
+                  ) : (
+                    <>
+                      <Zap size={48} strokeWidth={1} />
+                      <p className="font-heading text-sm font-bold italic uppercase tracking-widest text-center">환전 기록이 없습니다</p>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className={`flex flex-col gap-4 transition-all duration-300 ${exchangeHistoryLoading ? 'opacity-30 blur-sm pointer-events-none' : 'opacity-100'}`}>
+                  {/* 환전 장부 페이징 로직 (간소화) */}
+                  <div className="flex flex-col gap-3">
+                    {exchangeHistory.map((ex) => (
+                      <motion.div 
+                        key={ex.req_id} 
+                        initial={{ opacity: 0, y: 10 }} 
+                        animate={{ opacity: 1, y: 0 }} 
+                        className="flex flex-row items-center justify-between px-5 py-5 bg-gradient-to-r from-amber-500/[0.05] to-transparent border border-amber-500/10 rounded-2xl gap-4 hover:border-amber-500/30 transition-all"
+                      >
+                        <div className="flex flex-col items-start gap-1">
+                          <span className="text-white font-black text-lg sm:text-xl tracking-tight">
+                            {formatPhone(ex.tb_customer?.phone_number)}
+                          </span>
+                          <div className="flex items-center gap-1.5 opacity-60 mt-1">
+                            <Clock size={12} className="text-amber-500" />
+                            <span className="text-[10px] sm:text-xs font-mono tracking-tighter text-amber-500/80">
+                              {formatDate(ex.processed_at || ex.created_at)}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="flex items-baseline gap-1 px-4 py-2 bg-amber-500/10 rounded-xl border border-amber-500/20 shadow-inner">
+                            <span className="text-xl sm:text-2xl font-black text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]">
+                              -{ex.req_points?.toLocaleString()}
+                            </span>
+                            <span className="text-[10px] font-black text-amber-500/60 uppercase">P</span>
+                          </div>
+                          <span className="text-[8px] font-black text-white/20 uppercase tracking-widest mt-1 mr-2 px-2 py-0.5 rounded-full bg-white/5 border border-white/5">
+                            Status: <span className="text-green-500 ml-1">COMPLETED</span>
+                          </span>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                  
+                  {/* 하단 페이징 (간이 구현) */}
+                  {totalExchangeHistoryCount > itemsPerPage && (
+                    <div className="flex justify-center mt-4">
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => fetchExchangeHistory(exchangeHistoryPage - 1)}
+                          disabled={exchangeHistoryPage === 0}
+                          className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-xs font-bold text-white/50 hover:text-white hover:bg-white/10 disabled:opacity-30 transition-all"
+                        >Prev</button>
+                        <span className="px-4 py-2 text-xs font-bold text-amber-500">{exchangeHistoryPage + 1}</span>
+                        <button 
+                          onClick={() => fetchExchangeHistory(exchangeHistoryPage + 1)}
+                          disabled={(exchangeHistoryPage + 1) * itemsPerPage >= totalExchangeHistoryCount}
+                          className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-xs font-bold text-white/50 hover:text-white hover:bg-white/10 disabled:opacity-30 transition-all"
+                        >Next</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )
             ) : (
               history.length === 0 ? (
