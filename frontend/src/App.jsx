@@ -152,7 +152,7 @@ function App() {
     }
   }, [requestId, requestStatus, waitNumber, deepResult, selectedCard, selectedCard2, question]);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     const fullPhone = `010${phonePart2}${phonePart3}`;
     
@@ -163,6 +163,33 @@ function App() {
     }
     
     if (phonePart2.length === 4 && phonePart3.length === 4) {
+      // [v8.1] 배달 QR 시리얼이 있다면 선제적 검증 (중복 사용 및 유효성 체크)
+      if (qrSerial) {
+        try {
+          const { data, error } = await supabase
+            .from('tb_delivery_qr')
+            .select('*')
+            .eq('qr_serial', qrSerial)
+            .single();
+
+          if (error || !data) {
+            alert('유효하지 않은 QR 코드임다! 정상적인 경로로 접속해 주십쇼.');
+            setQrSerial(null);
+            return;
+          }
+
+          if (data.status === 1) {
+            alert('이미 사용된 QR 코드임다! 기한이 만료되었거나 이미 혜택을 받으신 것 같슴다.');
+            setQrSerial(null);
+            return;
+          }
+          
+          console.log('✅ [QR 검증 통과] 따끈따끈한 새 쿠폰 확인 완료!');
+        } catch (err) {
+          console.warn('QR 검증 중 기술적 결함 발생 (무시하고 진행):', err);
+        }
+      }
+
       // 새로운 번호로 로그인 시 이전 세션 오염 방지를 위해 선제적 정화!
       handleStartNewConsultation();
       login(fullPhone);
