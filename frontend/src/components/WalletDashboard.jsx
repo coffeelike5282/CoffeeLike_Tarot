@@ -69,14 +69,14 @@ const WalletDashboard = ({ user, balance, onExchangeRequest }) => {
             <div className="p-2 bg-tech-blue/20 rounded-lg border border-tech-blue/30">
               <Wallet className="text-tech-blue w-5 h-5" />
             </div>
-            <span className="text-[10px] font-black text-tech-blue uppercase tracking-widest">타로 코인 지갑</span>
+            <span className="text-sm font-black text-tech-blue uppercase tracking-widest">타로 코인 지갑</span>
           </div>
           <Info className="text-white/20 w-4 h-4 cursor-help" />
         </div>
 
-        <div className="space-y-1 mb-8">
+        <div className="flex flex-col items-center space-y-1 mb-8">
           <span className="text-[12px] font-bold text-coffee-light/60">현재 포인트 잔액</span>
-          <div className="flex items-baseline gap-2">
+          <div className="flex items-baseline justify-center gap-2">
             <span className="text-4xl font-black text-white tracking-tight">{balance?.toLocaleString()}</span>
             <span className="text-xl font-bold text-tech-blue uppercase">P</span>
           </div>
