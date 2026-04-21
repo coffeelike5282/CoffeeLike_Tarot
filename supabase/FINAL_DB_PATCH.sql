@@ -1,5 +1,5 @@
--- ☕ 커피라이크 AI 타로: [마스터] 모든 권한 및 구문 오류 최종 해결 스크립트 v5
--- 406 오류(조회 권한 없음)와 404/42P01(구문/함수 오류)을 모두 담가버리는 마스터 패치임다!
+-- ☕ 커피라이크 AI 타로: [마스터] 모든 권한 및 구문 오류 최종 해결 스크립트 v6
+CREATE EXTENSION IF NOT EXISTS pgcrypto; 
 
 -- 1. 기존 테이블/기능 초기화 (O2O 관련)
 DROP TABLE IF EXISTS public.tb_exchange_request CASCADE;

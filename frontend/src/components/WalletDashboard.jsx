@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Wallet, ArrowUpRight, QrCode, Timer, X, CheckCircle2, Info } from 'lucide-react';
+import { Wallet, ArrowUpRight, QrCode, Timer, X, CheckCircle2, Info, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 const WalletDashboard = ({ user, balance, onExchangeRequest }) => {
