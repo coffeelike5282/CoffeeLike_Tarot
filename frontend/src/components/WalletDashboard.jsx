@@ -59,7 +59,7 @@ const WalletDashboard = ({ user, balance, onExchangeRequest }) => {
   };
 
   return (
-    <div className="w-full max-w-[400px] mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="w-full max-w-[440px] mt-0 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* 💳 Wallet Card (Holographic UI) */}
       <div className="glass-panel p-6 border-tech-blue/30 relative overflow-hidden group shadow-2xl shadow-tech-blue/10">
         <div className="absolute top-0 right-0 w-32 h-32 bg-tech-blue/10 blur-3xl -z-10 group-hover:bg-tech-blue/20 transition-all" />

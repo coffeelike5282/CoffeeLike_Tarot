@@ -643,7 +643,7 @@ function App() {
 
           {/* 💳 [O2O] Wallet Dashboard (Only for logged-in users) */}
           {user && (
-            <div className="mt-12 flex justify-center w-full px-4">
+            <div className="mt-6 flex justify-center w-full px-4">
               <WalletDashboard 
                 user={user} 
                 balance={coinBalance} 
