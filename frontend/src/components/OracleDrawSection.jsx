@@ -29,7 +29,7 @@ const OracleDrawSection = ({
             />
           </div>
           
-          <div className="w-full glass-panel px-4 py-6 sm:px-6 sm:py-8 space-y-6">
+          <div className="w-full max-w-[440px] glass-panel px-4 py-6 sm:px-6 sm:py-8 space-y-6 mx-auto">
             <div className="space-y-4">
               <div className="flex flex-col items-center gap-2 mb-2">
                 <span className="text-tech-blue font-black text-2xl tracking-[0.1em] uppercase">

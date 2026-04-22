@@ -24,7 +24,7 @@ const OracleWaitingRoom = ({
   if (requestStatus === 'error') {
     return (
       <main className="w-full flex-1 flex flex-col items-center justify-center gap-6 sm:gap-10 animate-in fade-in zoom-in duration-500 mx-auto">
-        <div className="glass-panel px-4 py-6 sm:px-6 sm:py-10 flex flex-col items-center justify-center gap-10 shadow-2xl relative overflow-hidden min-h-[500px]">
+        <div className="w-full max-w-[440px] glass-panel px-4 py-6 sm:px-6 sm:py-10 flex flex-col items-center justify-center gap-10 shadow-2xl relative overflow-hidden min-h-[500px]">
           <div className="flex flex-col items-center gap-4 mb-2 w-full text-center">
             <div className="p-3 bg-coffee-dark/50 rounded-full border border-coffee-light/10 shadow-lg glow-coffee scale-90">
               <Coffee className="text-coffee-light w-8 h-8" />
@@ -73,7 +73,7 @@ const OracleWaitingRoom = ({
   if (isCasting2 || requestStatus === 'processing_init') {
     return (
       <main className="w-full flex-1 flex flex-col items-center justify-center gap-6 sm:gap-10 animate-in fade-in zoom-in duration-500 mx-auto">
-        <div className="glass-panel px-4 py-6 sm:px-6 sm:py-10 flex flex-col items-center justify-center gap-10 shadow-2xl relative overflow-hidden min-h-[500px]">
+        <div className="w-full max-w-[440px] glass-panel px-4 py-6 sm:px-6 sm:py-10 flex flex-col items-center justify-center gap-10 shadow-2xl relative overflow-hidden min-h-[500px]">
           <div className="flex flex-col items-center gap-4 mb-2 w-full text-center">
             <div className="p-3 bg-coffee-dark/50 rounded-full border border-coffee-light/10 shadow-lg glow-coffee scale-90">
               <Coffee className="text-coffee-light w-8 h-8" />
@@ -99,7 +99,7 @@ const OracleWaitingRoom = ({
   if (requestStatus === 'pending') {
     return (
       <main className="w-full flex-1 flex flex-col items-center justify-center gap-6 sm:gap-10 animate-in fade-in zoom-in duration-500 mx-auto">
-        <div className="glass-panel px-4 py-6 sm:px-6 sm:py-10 flex flex-col items-center justify-center gap-10 shadow-2xl relative overflow-hidden min-h-[500px]">
+        <div className="w-full max-w-[440px] glass-panel px-4 py-6 sm:px-6 sm:py-10 flex flex-col items-center justify-center gap-10 shadow-2xl relative overflow-hidden min-h-[500px]">
           <div className="flex flex-col items-center gap-4 mb-2 w-full text-center">
             <div className="p-3 bg-coffee-dark/50 rounded-full border border-coffee-light/10 shadow-lg glow-coffee scale-90">
               <Coffee className="text-coffee-light w-8 h-8" />
