@@ -42,6 +42,20 @@ function App() {
   const [exchangeToken, setExchangeToken] = useState(null); // [v9.5] 환전 검증 토큰
   const { login, user, loading, logout: authLogout } = useAuth();
 
+  // ⏳ [프리패스 쿨다운] 전화번호와 쿠키 교차 검증 헬퍼 함수
+  const checkFreePassCooldown = (phoneNumber) => {
+    const match = document.cookie.match(new RegExp('(^| )' + `freePassTime_${phoneNumber}` + '=([^;]+)'));
+    if (match) {
+      const elapsed = Date.now() - parseInt(match[2], 10);
+      if (elapsed < 60 * 60 * 1000) {
+        const remain = Math.ceil((60 * 60 * 1000 - elapsed) / 60000);
+        alert(`무분별한 사용을 방지하기 위해 1시간이 지나야 다시 타로를 볼 수 있습니다.\n${remain}분 뒤에 다시 시도해 주세요.`);
+        return false;
+      }
+    }
+    return true;
+  };
+
   // URL에서 QR 시리얼(?code=...) 및 입장 모드(?mode=...) 추출
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -53,6 +67,9 @@ function App() {
       console.log('🛵 [진입 감지] 배송 쿠폰 모드로 진입하셨슴다:', code);
       setQrSerial(code);
       setEntryMode('delivery');
+      if (code === 'CFLK-FREE-PASS') {
+        sessionStorage.setItem('isFreePassSession', 'true');
+      }
     } else if (mode === 'store') {
       console.log('☕ [진입 감지] 매장 테이블 모드로 진입하셨슴다!');
       setEntryMode('instore');
@@ -178,7 +195,12 @@ function App() {
     if (phonePart2.length === 4 && phonePart3.length === 4) {
       // [v8.2] 배달 QR 시리얼 검증 강화 (우회 완전 차단)
       if (qrSerial) {
-        // [v8.2.1] 이미 로링 중이면 중복 클릭 방지
+        // 프리패스의 경우 쿨다운 교차 검증 (로그인 전 선제 차단)
+        if (qrSerial === 'CFLK-FREE-PASS') {
+          if (!checkFreePassCooldown(fullPhone)) return;
+        }
+
+        // [v8.2.1] 이미 로딩 중이면 중복 클릭 방지
         if (isDataLoading) return;
         
         setIsDataLoading(true); // 검증 시작 표시
@@ -246,7 +268,14 @@ function App() {
     clearTarotSession();
   };
 
-  const handleStartNewConsultation = () => {
+  const handleStartNewConsultation = (isFromButton = false) => {
+    // 다시보기 버튼을 눌렀고, 프리패스 세션이면 쿨다운 검증 수행
+    if (isFromButton === true && sessionStorage.getItem('isFreePassSession') === 'true') {
+      if (user?.phone_number && !checkFreePassCooldown(user.phone_number)) {
+        return; // 쿨다운 걸리면 얄짤없이 컷!
+      }
+    }
+
     console.log('🔄 [세션 정화] 새로운 상담을 위해 이전의 묵은 정보를 모두 삭제함다!');
     setSelectedCard(null);
     setSelectedCard2(null);
@@ -450,6 +479,12 @@ function App() {
             // [v9.7] AI 결과 수신 시점에 코인 잔액 동기화 (트리거 완료 대응)
             if (user?.phone_number) {
               fetchCoinBalance(user.phone_number);
+              
+              // [프리패스] AI 결과 수신 완료 시점에 1시간짜리 쿨다운 쿠키 굽기
+              if (sessionStorage.getItem('isFreePassSession') === 'true') {
+                document.cookie = `freePassTime_${user.phone_number}=${Date.now()}; path=/; max-age=3600`;
+                console.log('🍪 [프리패스] 1시간 쿨다운 쿠키가 구워졌슴다!');
+              }
             }
           }
         } catch (e) {
@@ -632,7 +667,7 @@ function App() {
               setIsResultCard1Flipped={setIsResultCard1Flipped}
               setIsResultCard2Flipped={setIsResultCard2Flipped}
               backImage={backImage}
-              handleStartNew={handleStartNewConsultation}
+              handleStartNew={() => handleStartNewConsultation(true)}
             />
           ) : (
             <OracleDrawSection 
