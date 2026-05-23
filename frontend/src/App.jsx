@@ -42,9 +42,9 @@ function App() {
   const [exchangeToken, setExchangeToken] = useState(null); // [v9.5] 환전 검증 토큰
   const { login, user, loading, logout: authLogout } = useAuth();
 
-  // ⏳ [프리패스 쿨다운] 전화번호와 쿠키 교차 검증 헬퍼 함수
-  const checkFreePassCooldown = (phoneNumber) => {
-    const match = document.cookie.match(new RegExp('(^| )' + `freePassTime_${phoneNumber}` + '=([^;]+)'));
+  // ⏳ [프리패스 쿨다운] 전화번호와 무관하게 브라우저 세션 기준으로 검증하는 헬퍼 함수
+  const checkFreePassCooldown = () => {
+    const match = document.cookie.match(new RegExp('(^| )freePassSessionTime=([^;]+)'));
     if (match) {
       const elapsed = Date.now() - parseInt(match[2], 10);
       if (elapsed < 60 * 60 * 1000) {
@@ -197,7 +197,7 @@ function App() {
       if (qrSerial) {
         // 프리패스의 경우 쿨다운 교차 검증 (로그인 전 선제 차단)
         if (qrSerial === 'CFLK-FREE-PASS') {
-          if (!checkFreePassCooldown(fullPhone)) return;
+          if (!checkFreePassCooldown()) return;
         }
 
         // [v8.2.1] 이미 로딩 중이면 중복 클릭 방지
@@ -271,7 +271,7 @@ function App() {
   const handleStartNewConsultation = (isFromButton = false) => {
     // 다시보기 버튼을 눌렀고, 프리패스 세션이면 쿨다운 검증 수행
     if (isFromButton === true && sessionStorage.getItem('isFreePassSession') === 'true') {
-      if (user?.phone_number && !checkFreePassCooldown(user.phone_number)) {
+      if (!checkFreePassCooldown()) {
         return; // 쿨다운 걸리면 얄짤없이 컷!
       }
     }
@@ -480,9 +480,9 @@ function App() {
             if (user?.phone_number) {
               fetchCoinBalance(user.phone_number);
               
-              // [프리패스] AI 결과 수신 완료 시점에 1시간짜리 쿨다운 쿠키 굽기
+              // [프리패스] AI 결과 수신 완료 시점에 1시간짜리 브라우저 쿨다운 쿠키 굽기
               if (sessionStorage.getItem('isFreePassSession') === 'true') {
-                document.cookie = `freePassTime_${user.phone_number}=${Date.now()}; path=/; max-age=3600`;
+                document.cookie = `freePassSessionTime=${Date.now()}; path=/; max-age=3600`;
                 console.log('🍪 [프리패스] 1시간 쿨다운 쿠키가 구워졌슴다!');
               }
             }
