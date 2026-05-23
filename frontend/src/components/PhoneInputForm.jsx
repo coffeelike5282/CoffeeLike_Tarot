@@ -42,12 +42,7 @@ const PhoneInputForm = ({
                     </>
                   )}
               </p>
-              <div className="bg-tech-blue/10 border border-tech-blue/20 rounded-lg p-3">
-                <p className="text-[10px] sm:text-xs text-tech-blue font-semibold leading-relaxed">
-                  ⚠️ 반드시 매장에서 사용하는 <span className="underline decoration-2 underline-offset-2">포인트 번호</span>를 입력해 주십시오.<br/>
-                  번호가 다를 경우 오프라인 매장 포인트 환전이 불가합니다.
-                </p>
-              </div>
+
             </div>
           </div>
           <div className="flex items-center justify-center gap-1 sm:gap-3 w-full">

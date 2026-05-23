@@ -10,7 +10,6 @@ import PhoneInputForm from './components/PhoneInputForm';
 import OracleDrawSection from './components/OracleDrawSection';
 import OracleWaitingRoom from './components/OracleWaitingRoom';
 import TarotResultReport from './components/TarotResultReport';
-import WalletDashboard from './components/WalletDashboard';
 import EntrySelector from './components/EntrySelector';
 import ExchangeVerifier from './components/ExchangeVerifier';
 
@@ -70,7 +69,7 @@ function App() {
     }
   }, [user]);
 
-  const fetchCoinBalance = async (phoneNumber) => {
+  const fetchCoinBalance = React.useCallback(async (phoneNumber) => {
     try {
       const { data, error } = await supabase
         .from('tb_customer')
@@ -84,7 +83,7 @@ function App() {
     } catch (err) {
       console.warn('Coin balance fetch failed:', err);
     }
-  };
+  }, []);
 
   // 타로 카드 데이터를 DB에서 가져옵니다.
   useEffect(() => {
@@ -447,13 +446,18 @@ function App() {
             console.log('✅ 결과 수신 완료! 결과 리포트 전환함다.');
             setDeepResult(resObj);
             setRequestStatus(curr => curr !== 'approved' ? 'approved' : curr);
+            
+            // [v9.7] AI 결과 수신 시점에 코인 잔액 동기화 (트리거 완료 대응)
+            if (user?.phone_number) {
+              fetchCoinBalance(user.phone_number);
+            }
           }
         } catch (e) {
           console.error('❌ 결과 파싱 오류:', e);
         }
       }
     }
-  }, [requestId]);
+  }, [requestId, user, fetchCoinBalance]);
 
   // 수동 동기화 체크 함수
   const manualCheckStatus = async () => {
@@ -641,15 +645,7 @@ function App() {
             />
           )}
 
-          {/* 💳 [O2O] Wallet Dashboard (Only for logged-in users) */}
-          {user && (
-            <div className="mt-6 flex justify-center w-full px-4">
-              <WalletDashboard 
-                user={user} 
-                balance={coinBalance} 
-              />
-            </div>
-          )}
+
         </div>
       </div>
 

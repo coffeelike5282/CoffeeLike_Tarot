@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { QrCode, Download, Plus, Search, RefreshCcw, CheckCircle2, CircleChar, AlertCircle, X, ExternalLink } from 'lucide-react';
+import { QrCode, Download, Plus, Search, RefreshCcw, CheckCircle2, AlertCircle, X, ExternalLink } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 const QRManager = () => {

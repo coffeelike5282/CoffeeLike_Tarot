@@ -47,11 +47,12 @@ CREATE POLICY "Allow public all" ON public.tb_customer FOR ALL USING (true);
 CREATE POLICY "Allow public all" ON public.tb_delivery_qr FOR ALL USING (true);
 CREATE POLICY "Allow public all" ON public.tb_exchange_request FOR ALL USING (true);
 
--- ★ [대중요] 기존 타로 요청 테이블(tb_tarot_request) 권한 해제!
+-- ★ [대중요] 기존 타로 요청 테이블(tb_tarot_request) 권한 해제 및 컬럼 추가
 -- 406 (Not Acceptable) 오류는 대부분 조회 권한이 없을 때 발생함다.
-ALTER TABLE IF EXISTS public.tb_tarot_request ENABLE ROW LEVEL SECURITY; -- 일단 활성화
-DROP POLICY IF EXISTS "Public access policy" ON public.tb_tarot_request; -- 기존 정책 있을 수 있으니 제거
-CREATE POLICY "Public access policy" ON public.tb_tarot_request FOR ALL USING (true); -- 전체 공개 (개발단계)
+ALTER TABLE IF EXISTS public.tb_tarot_request ADD COLUMN IF NOT EXISTS qr_serial TEXT;
+ALTER TABLE IF EXISTS public.tb_tarot_request ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public access policy" ON public.tb_tarot_request;
+CREATE POLICY "Public access policy" ON public.tb_tarot_request FOR ALL USING (true);
 
 -- 4. RPC: process_deep_tarot_request_v2 (완성형)
 CREATE OR REPLACE FUNCTION public.process_deep_tarot_request_v2(
@@ -86,30 +87,42 @@ BEGIN
     ON CONFLICT (phone_number) DO UPDATE SET phone_number = EXCLUDED.phone_number
     RETURNING cust_id INTO _cust_id;
 
-    -- 2. 배달 QR 인식 및 코인 적립 + 자동 승인 설정
+    -- 2. 배달 QR 인식 체크 (검증만 수행, 실제 처리는 트리거에서!)
     IF p_qr_serial IS NOT NULL THEN
-        IF EXISTS (SELECT 1 FROM tb_delivery_qr WHERE qr_serial = p_qr_serial AND status = 0) THEN
-            UPDATE tb_delivery_qr 
-            SET status = 1, 
-                used_by = _cust_id, 
-                used_at = NOW(), -- 사용 시각 기록 
-                updated_at = NOW() 
-            WHERE qr_serial = p_qr_serial;
-            
-            UPDATE tb_customer SET tarot_coin_balance = tarot_coin_balance + 1000 WHERE cust_id = _cust_id;
-            _coin_earned := 1000;
-            _status := 1; -- 배달 큐폰 사용 시 즉시 '승인(1)' 상태로 설정!
+        -- 2-1. 이미 진행 중인 요청이 있는지 체크 (중복 사용 방지)
+        -- [프리패스 예외 처리]: 'CFLK-FREE-PASS'는 중복 대기 검증을 패스함다!
+        IF p_qr_serial != 'CFLK-FREE-PASS' AND EXISTS (
+            SELECT 1 FROM tb_tarot_request 
+            WHERE qr_serial = p_qr_serial 
+            AND status = 1 -- 승인됨
+            AND ai_tarot_result IS NULL -- 아직 결과 안 나옴
+        ) THEN
+            RAISE EXCEPTION '이미 이 쿠폰으로 상담이 진행 중임다! 결과가 나올 때까지 기다려 주십쇼.';
+        END IF;
+
+        -- [프리패스 예외 처리]: 'CFLK-FREE-PASS'는 코인 적립을 하지 않고 바로 승인으로 통과함다!
+        IF p_qr_serial = 'CFLK-FREE-PASS' THEN
+            _coin_earned := 0; -- 무제한 무료 프리패스는 포인트 복제 어뷰징 방지를 위해 적립 0원!
+            _status := 1; 
+        ELSIF EXISTS (SELECT 1 FROM tb_delivery_qr WHERE qr_serial = p_qr_serial AND status = 0) THEN
+            -- [중요] 여기서 직접 업데이트하지 않고, 상태만 승인(1)으로 바꿈다.
+            -- 실제 쿠폰 소모와 포인트 적립은 ai_tarot_result가 들어올 때 트리거가 처리함다!
+            _coin_earned := 1000; 
+            _status := 1; 
+        ELSE
+            RAISE EXCEPTION '유효하지 않거나 이미 사용된 쿠폰임다, 큰형님!';
         END IF;
     END IF;
 
-    -- 3. 기존 타로 요청 테이블에 데이터 삽입 (자동 승인 시 승인 시각도 함께 기록!)
+    -- 3. 기존 타로 요청 테이블에 데이터 삽입 (qr_serial 포함!)
     INSERT INTO tb_tarot_request (
         req_id, phone_number, tarot_card_name, tarot_card2_name, 
-        ip_address, question, wait_number, status, approved_at, created_at
+        ip_address, question, wait_number, status, approved_at, qr_serial, created_at
     ) VALUES (
         _req_id, p_phone_number, p_tarot_card1_name, p_tarot_card2_name, 
         p_ip_address, _final_question, _wait_number, _status, 
         (CASE WHEN _status = 1 THEN NOW() ELSE NULL END), 
+        p_qr_serial,
         NOW()
     );
 
@@ -246,3 +259,51 @@ BEGIN
     );
 END;
 $$;
+
+-- 8. TRIGGER: AI 해설 완료 시 쿠폰/포인트 최종 처리 (트랜잭션 안전 장치)
+CREATE OR REPLACE FUNCTION public.fn_finalize_tarot_transaction()
+RETURNS TRIGGER AS $$
+DECLARE
+    _cust_id uuid;
+BEGIN
+    -- ai_tarot_result가 NULL에서 내용이 있는 상태로 업데이트될 때만 실행
+    IF (OLD.ai_tarot_result IS NULL AND NEW.ai_tarot_result IS NOT NULL) THEN
+        
+        -- 쿠폰 정보가 있는 경우 처리
+        IF NEW.qr_serial IS NOT NULL THEN
+            -- 1. 고객 ID 조회
+            SELECT cust_id INTO _cust_id FROM tb_customer WHERE phone_number = NEW.phone_number LIMIT 1;
+
+            -- 2. 프리패스 QR인 경우 상태 변경 및 코인 적립 우회
+            IF NEW.qr_serial = 'CFLK-FREE-PASS' THEN
+                -- 아무것도 하지 않고 스킵 (무제한 사용 유지)
+                RAISE NOTICE '프리패스 쿠폰(%)은 무제한 상태를 유지하며 코인 적립을 하지 않슴다.', NEW.qr_serial;
+            -- 3. 일반 쿠폰인 경우 유효성 재확인 (상태 0)
+            ELSIF EXISTS (SELECT 1 FROM tb_delivery_qr WHERE qr_serial = NEW.qr_serial AND status = 0) THEN
+                
+                -- 4. 쿠폰 사용 완료 처리
+                UPDATE tb_delivery_qr 
+                SET status = 1, 
+                    used_by = _cust_id, 
+                    used_at = NOW(),
+                    updated_at = NOW()
+                WHERE qr_serial = NEW.qr_serial;
+
+                -- 5. 포인트 실제 적립 (1000P)
+                UPDATE tb_customer 
+                SET tarot_coin_balance = tarot_coin_balance + 1000 
+                WHERE cust_id = _cust_id;
+                
+                RAISE NOTICE '쿠폰(%) 사용 및 포인트 적립 완료! (고객: %)', NEW.qr_serial, NEW.phone_number;
+            END IF;
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_finalize_tarot_transaction ON public.tb_tarot_request;
+CREATE TRIGGER trg_finalize_tarot_transaction
+AFTER UPDATE ON public.tb_tarot_request
+FOR EACH ROW
+EXECUTE FUNCTION public.fn_finalize_tarot_transaction();

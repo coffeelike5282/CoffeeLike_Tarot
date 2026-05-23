@@ -1,7 +1,6 @@
 import React from 'react';
 import { Loader2, RefreshCcw, Coffee, Sparkles, ChevronRight } from 'lucide-react';
 import TarotCard from './TarotCard';
-import MarketingBanner from './MarketingBanner';
 
 const OracleDrawSection = ({ 
   selectedCard, 
@@ -66,9 +65,7 @@ const OracleDrawSection = ({
                   />
                 </div>
 
-                <div className="py-2 mb-2 border-t border-white/5 mt-2">
-                  <MarketingBanner />
-                </div>
+
               <button onClick={startDeepProcess} className="w-full bg-tech-purple/20 hover:bg-tech-purple text-tech-purple hover:text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-3 group border border-tech-purple/30 shadow-lg shadow-tech-purple/10">
                 심층 타로 신청
                 <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />

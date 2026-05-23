@@ -2,8 +2,6 @@ import React from 'react';
 import { Coffee, RefreshCcw, Zap, Loader2, Sparkles, CheckCircle2 } from 'lucide-react';
 import TarotCard from './TarotCard';
 
-import MarketingBanner from './MarketingBanner';
-
 const OracleWaitingRoom = ({ 
   requestStatus, 
   isCasting2, 
@@ -116,13 +114,7 @@ const OracleWaitingRoom = ({
           <div className="space-y-4 text-center">
             <h2 className="font-heading text-xl sm:text-2xl font-black text-white uppercase tracking-tighter italic">바리스타 승인 대기 중</h2>
             
-            {/* 🎡 Marketing Hub Banner Slider */}
-            <div className="w-full h-16 bg-white/5 rounded-xl border border-white/5 overflow-hidden relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer" />
-              <div className="flex flex-col h-full items-center justify-center space-y-1 relative z-10">
-                <MarketingBanner />
-              </div>
-            </div>
+
 
             <p className="text-coffee-light/60 text-sm sm:text-base leading-relaxed mx-auto font-bold max-w-[280px]">
               카운터 바리스타에게 <span className="text-tech-blue font-black underline underline-offset-4 decoration-2">"{waitNumber}번 대기 중"</span>이라고 말씀해주세요. 
