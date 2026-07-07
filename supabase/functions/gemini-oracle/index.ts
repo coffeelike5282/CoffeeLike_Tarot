@@ -7,41 +7,31 @@ export const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
-  // CORS 탐색기(OPTIONS) 요청 처리
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // 요청 본문 파싱
     const rawBody = await req.text()
-    if (!rawBody) {
-      throw new Error("클라이언트가 빈 박스(Body 없음)를 보냈슴다, 큰형님!")
-    }
+    if (!rawBody) throw new Error("Body missing")
 
     let body;
     try {
       const parsed = JSON.parse(rawBody)
       body = parsed.body && typeof parsed.body === 'object' ? parsed.body : parsed
     } catch (e) {
-      throw new Error("JSON 파싱 실패!")
+      throw new Error("JSON parse failure")
     }
 
-    // 필드 추출
     const question = body.question || body.prompt || "오늘의 운세 알려줘"
     const card1 = body.card1
     const card2 = body.card2
 
-    if (!card1 || !card2) {
-      throw new Error("타로 카드가 안 보임다!")
-    }
+    if (!card1 || !card2) throw new Error("Cards missing")
 
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY")
-    if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY가 서버 설정에 없슴다.")
-    }
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY missing")
 
-    // [v2.7.2] 템플릿 리터럴 번들링 사고 방지를 위한 안전한 문자열 구성
     let prompt = "당신은 20년 경력의 베테랑 타로 마스터 '커피라이크 오라클'입니다.\n\n";
     prompt += "[전달 사항]\n";
     prompt += "질문: " + question + "\n";
@@ -52,12 +42,13 @@ Deno.serve(async (req) => {
     prompt += "2. [해설] 태그 뒤에 5개 문단으로 상세 해설을 작성하십시오. 문단 사이에는 반드시 줄바꿈 두 번(\\n\\n)을 사용하십시오.\n";
     prompt += "3. 마스터의 신비롭고 정중한 말투를 유지하십시오.";
 
-    const modelPool = ["gemini-flash-latest"];
+    const modelPool = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-3-flash-preview"];
+    const shuffledModels = [...modelPool].sort(() => Math.random() - 0.5);
 
     let lastError = "";
     let rawText = "";
 
-    for (const modelId of modelPool) {
+    for (const modelId of shuffledModels) {
       try {
         const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/" + modelId + ":generateContent?key=" + GEMINI_API_KEY;
         const response = await fetch(apiUrl, {
@@ -81,11 +72,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (!rawText) {
-      throw new Error("모든 마스터가 부재중임다: " + lastError);
-    }
+    if (!rawText) throw new Error("모든 마스터가 부재중임다: " + lastError);
 
-    // 태그 추출 (안전한 방식)
     const extractTag = (text, tag) => {
       const tagStr = "[" + tag + "]";
       const idx = text.indexOf(tagStr);
@@ -111,10 +99,9 @@ Deno.serve(async (req) => {
     )
 
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-    )
+    return new Response(JSON.stringify({ error: error.message }), { 
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+      status: 400 
+    })
   }
 })
-
