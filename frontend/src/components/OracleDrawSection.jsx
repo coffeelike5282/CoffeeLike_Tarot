@@ -10,7 +10,6 @@ const OracleDrawSection = ({
   question, 
   setQuestion, 
   startDeepProcess, 
-  setSelectedCard, 
   isCasting, 
   shuffleAndDraw, 
   isDataLoading 

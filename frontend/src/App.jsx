@@ -36,11 +36,28 @@ function App() {
   const [question, setQuestion] = useState('');
   const [countdown, setCountdown] = useState(60);
   const [isExtended, setIsExtended] = useState(false);
-  const [coinBalance, setCoinBalance] = useState(0);
   const [qrSerial, setQrSerial] = useState(null);
   const [entryMode, setEntryMode] = useState(null); // 'delivery', 'instore'
   const [exchangeToken, setExchangeToken] = useState(null); // [v9.5] 환전 검증 토큰
   const { login, user, loading, logout: authLogout } = useAuth();
+
+  // 유저 정보가 있을 때 코인 잔액 가져오기
+  const fetchCoinBalance = React.useCallback(async (phoneNumber) => {
+    try {
+      const { data, error } = await supabase
+        .from('tb_customer')
+        .select('tarot_coin_balance')
+        .eq('phone_number', phoneNumber)
+        .single();
+      
+      if (!error && data) {
+        // 코인 잔액 조회 성공 로그 또는 필요시 활용
+        console.log('Coin balance fetched:', data.tarot_coin_balance);
+      }
+    } catch (err) {
+      console.warn('Coin balance fetch failed:', err);
+    }
+  }, []);
 
   // ⏳ [프리패스 쿨다운] 전화번호와 무관하게 브라우저 세션 기준으로 검증하는 헬퍼 함수
   const checkFreePassCooldown = () => {
@@ -84,23 +101,7 @@ function App() {
     if (user?.phone_number) {
       fetchCoinBalance(user.phone_number);
     }
-  }, [user]);
-
-  const fetchCoinBalance = React.useCallback(async (phoneNumber) => {
-    try {
-      const { data, error } = await supabase
-        .from('tb_customer')
-        .select('tarot_coin_balance')
-        .eq('phone_number', phoneNumber)
-        .single();
-      
-      if (!error && data) {
-        setCoinBalance(data.tarot_coin_balance);
-      }
-    } catch (err) {
-      console.warn('Coin balance fetch failed:', err);
-    }
-  }, []);
+  }, [user, fetchCoinBalance]);
 
   // 타로 카드 데이터를 DB에서 가져옵니다.
   useEffect(() => {
@@ -576,7 +577,7 @@ function App() {
       const cleanup = async () => {
         try {
           await supabase.removeChannel(channel);
-        } catch (err) {
+        } catch {
           // 조용히 넘어감다.
         }
       };

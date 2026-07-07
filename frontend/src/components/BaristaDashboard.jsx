@@ -199,7 +199,7 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
 
 
 
-  const handleAction = async (id, newStatus, requestData = null) => {
+  const handleAction = useCallback(async (id, newStatus, requestData = null) => {
     if (newStatus === 1 && requestData) {
       setIsGenerating(prev => ({ ...prev, [id]: true }));
       
@@ -294,7 +294,7 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
         }
       }
     }
-  };
+  }, [aiEngine, activeTab, historyPage, fetchHistory]);
 
   // ⚡ [v9.2] 자동 승인 건(배달 쿠폰)을 위한 AI 자동 해석 Watcher
   // 바리스타가 버튼을 누르지 않아도, 승인된 상태로 들어온 요청은 자동으로 해석을 시작함다!

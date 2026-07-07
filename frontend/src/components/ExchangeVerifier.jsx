@@ -1,21 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ShieldCheck, User, Coins, ArrowRight, Loader2, CheckCircle, AlertCircle, Home } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
-const ExchangeVerifier = ({ token, onComplete }) => {
+const ExchangeVerifier = ({ token }) => {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState(null);
   const [requestInfo, setRequestInfo] = useState(null);
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    if (token) {
-      fetchRequestInfo();
-    }
-  }, [token]);
-
-  const fetchRequestInfo = async () => {
+  const fetchRequestInfo = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -45,12 +39,18 @@ const ExchangeVerifier = ({ token, onComplete }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (token) {
+      fetchRequestInfo();
+    }
+  }, [token, fetchRequestInfo]);
 
   const handleFinalizeExchange = async () => {
     try {
       setProcessing(true);
-      const { data, error: rpcError } = await supabase.rpc('complete_exchange_request', {
+      const { error: rpcError } = await supabase.rpc('complete_exchange_request', {
         p_token: token
       });
 

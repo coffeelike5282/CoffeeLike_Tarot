@@ -3,7 +3,7 @@ import { Wallet, ArrowUpRight, QrCode, Timer, X, CheckCircle2, Info, Loader2 } f
 import { QRCodeSVG } from 'qrcode.react';
 import { supabase } from '../lib/supabaseClient';
 
-const WalletDashboard = ({ user, balance, onExchangeRequest }) => {
+const WalletDashboard = ({ user, balance }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [exchangeToken, setExchangeToken] = useState(null);
   const [expiryTimer, setExpiryTimer] = useState(180); // 3 minutes
