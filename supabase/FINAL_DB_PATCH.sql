@@ -115,16 +115,24 @@ BEGIN
     END IF;
 
     -- 3. 기존 타로 요청 테이블에 데이터 삽입 (qr_serial 포함!)
+    -- [버그 수정] Webhook은 UPDATE(status 0->1)에서만 트리거되므로 
+    -- 무조건 status=0으로 INSERT 후 UPDATE를 해야 AI 에이전트가 호출됨다!
     INSERT INTO tb_tarot_request (
         req_id, phone_number, tarot_card_name, tarot_card2_name, 
         ip_address, question, wait_number, status, approved_at, qr_serial, created_at
     ) VALUES (
-        _req_id, p_phone_number, p_tarot_card1_name, p_tarot_card2_name, 
-        p_ip_address, _final_question, _wait_number, _status, 
-        (CASE WHEN _status = 1 THEN NOW() ELSE NULL END), 
+        _req_id::text, p_phone_number, p_tarot_card1_name, p_tarot_card2_name, 
+        p_ip_address, _final_question, _wait_number, 0, 
+        NULL, 
         p_qr_serial,
         NOW()
     );
+
+    IF _status = 1 THEN
+        UPDATE tb_tarot_request 
+        SET status = 1, approved_at = NOW() 
+        WHERE req_id::text = _req_id::text;
+    END IF;
 
     -- 4. 현재 코인 잔액 조회
     _current_balance := (SELECT tarot_coin_balance FROM tb_customer WHERE cust_id = _cust_id LIMIT 1);

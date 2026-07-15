@@ -12,6 +12,7 @@ import OracleWaitingRoom from './components/OracleWaitingRoom';
 import TarotResultReport from './components/TarotResultReport';
 import EntrySelector from './components/EntrySelector';
 import ExchangeVerifier from './components/ExchangeVerifier';
+import { generateAIInterpretation } from './services/aiOracleService';
 
 import backImage from './assets/card_back.jpg';
 
@@ -348,6 +349,26 @@ function App() {
         if (Number(data.status) === 1) {
           console.log('🚀 [자동 승인] 배달 고객 프리패스! 바로 AI 해석 들어감다.');
           setRequestStatus('processing');
+          
+          // [해결책] 바리스타 대시보드(어드민)가 꺼져 있어서 AI를 대신 돌려줄 기기가 없는 상황을 대비하여,
+          // 프리패스 사용자의 기기에서 직접 제미나이 엔진을 호출해 DB를 갱신합니다!
+          generateAIInterpretation(qText, c1, c2, 'gemini').then(async (aiResult) => {
+            if (aiResult) {
+              await supabase.from('tb_tarot_request').update({
+                ai_tarot_result: JSON.stringify(aiResult)
+              }).eq('req_id', data.req_id);
+            }
+          }).catch(async (err) => {
+             console.error('QR 쿠폰 자동 AI 해석 에러:', err);
+             await supabase.from('tb_tarot_request').update({
+                ai_tarot_result: JSON.stringify({
+                  isError: true,
+                  interpretation: "죄송함다! 영적 주파수가 불안정해 신탁을 불러오지 못했슴다. 다시 시도해 주십시오!",
+                  message: err.message
+                })
+             }).eq('req_id', data.req_id);
+          });
+          
         } else {
           setRequestStatus('pending');
         }
