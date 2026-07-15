@@ -92,18 +92,29 @@ export const generateAIInterpretation = async (question, card1, card2, engine = 
     let interpretation = "";
 
     if (engine === 'gemini') {
-      const result = await callGeminiEngine(finalQuestion, card1, card2);
-      summary = result.summary;
-      interpretation = result.interpretation;
+      try {
+        const result = await callGeminiEngine(finalQuestion, card1, card2);
+        summary = result.summary;
+        interpretation = result.interpretation;
+        console.log("✅ 제미나이 해석 수신 완료");
+      } catch (geminiErr) {
+        console.warn("⚠️ 제미나이 마스터 호출 실패. 라마 마스터로 긴급 우회함다!", geminiErr);
+        // 제미나이 실패 시 라마로 자동 우회
+        interpretation = await callLlamaEngine(finalQuestion, card1, card2);
+        if (interpretation.includes('.')) {
+          summary = interpretation.split('.')[0].substring(0, 50);
+        }
+        engine = 'llama'; // 결과 기록용 엔진 이름 변경
+        console.log("✅ 라마(우회) 해석 수신 완료");
+      }
     } else {
       interpretation = await callLlamaEngine(finalQuestion, card1, card2);
       // 라마는 평문이므로 첫 문장을 요약으로 활용
       if (interpretation.includes('.')) {
         summary = interpretation.split('.')[0].substring(0, 50);
       }
+      console.log("✅ 라마 해석 수신 완료");
     }
-
-    console.log("✅ " + (engine === 'gemini' ? '제미나이' : '라마') + " 해석 수신 완료");
 
     return {
       mainFortune: summary,
@@ -111,16 +122,15 @@ export const generateAIInterpretation = async (question, card1, card2, engine = 
       caution: "신탁의 조언을 가슴 깊이 새기십시오.",
       coffeePairing: "마스터의 기운과 어울리는 '오라클 블렌드'를 추천합니다.",
       generatedAt: new Date().toISOString(),
-      engineVersion: engine === 'gemini' ? "Gemini-3.0-Flash (Server)" : "Llama-3-Master"
+      engineVersion: engine === 'gemini' ? "Gemini-3.0-Flash (Server)" : "Llama-3-Master (Fallback)"
     };
 
   } catch (err) {
     console.error('AI Oracle Service Error:', err);
     let userMsg = err.message || 'AI 통신 중에 사고가 났습니다. 잠시 후 다시 시도해 주세요!';
     
-    // 과부하 에러 시 사용자 친화적인 안내 추가
     if (userMsg.includes('high demand') || userMsg.includes('과부하')) {
-      userMsg = "구글 서버가 지금 너무 바쁩니다! 1분 정도만 숨 고르고 다시 시도해 주십시오!";
+      userMsg = "모든 AI 서버가 너무 바쁩니다! 1분 정도만 숨 고르고 다시 시도해 주십시오!";
     }
 
     throw new Error(userMsg);
