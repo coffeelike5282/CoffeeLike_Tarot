@@ -249,7 +249,11 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
         setRequests(prev => prev.filter(r => r.req_id !== id));
         setStats(prev => ({ ...prev, completed: prev.completed + 1 }));
         
-        // 🚀 히스토리 탭의 0페이지를 보고 있다면 즉시 로드
+        // 🚀 즉시 로컬 상태 갱신을 통해 무한 루프 차단!
+        setHistory(prev => prev.map(h => 
+          h.req_id === id ? { ...h, ai_tarot_result: JSON.stringify(aiResult) } : h
+        ));
+
         if (activeTab === 'history' && historyPage === 0) {
           fetchHistory(0);
         }
@@ -257,17 +261,22 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
       } catch (err) {
         console.error('AI Oracle Error:', err);
         
+        const errorResult = { 
+          isError: true, 
+          interpretation: "죄송함다, 큰형님! 지금 영적 주파수가 일시적으로 불안정해서 신탁을 불러오는 데 실패했슴다. 1분만 숨 고르고 다시 시도해 주시면 화끈하게 모시겠슴다!",
+          message: err.message 
+        };
+
         // AI 실패 시 DB에 에러 기록 (고객 화면 무한 대기 방지)
         await supabase
           .from('tb_tarot_request')
-          .update({ 
-            ai_tarot_result: JSON.stringify({ 
-              isError: true, 
-              interpretation: "죄송함다, 큰형님! 지금 영적 주파수가 일시적으로 불안정해서 신탁을 불러오는 데 실패했슴다. 1분만 숨 고르고 다시 시도해 주시면 화끈하게 모시겠슴다!",
-              message: err.message 
-            })
-          })
+          .update({ ai_tarot_result: JSON.stringify(errorResult) })
           .eq('req_id', id);
+
+        // 🚀 즉시 로컬 상태 갱신을 통해 무한 루프 차단!
+        setHistory(prev => prev.map(h => 
+          h.req_id === id ? { ...h, ai_tarot_result: JSON.stringify(errorResult) } : h
+        ));
 
         alert(err.message || 'AI 해설 생성 중 사고가 났슴다!');
       } finally {
