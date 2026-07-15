@@ -304,7 +304,8 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
     const orphanRequests = history.filter(h => 
       h.status === 1 && 
       !h.ai_tarot_result && 
-      !isGenerating[h.req_id]
+      !isGenerating[h.req_id] &&
+      !h.qr_serial // QR 쿠폰은 고객 앱에서 직접 처리하므로 바리스타는 건너뜀
     );
 
     if (orphanRequests.length > 0) {

@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
     prompt += "2. [해설] 태그 뒤에 5개 문단으로 상세 해설을 작성하십시오. 문단 사이에는 반드시 줄바꿈 두 번(\\n\\n)을 사용하십시오.\n";
     prompt += "3. 마스터의 신비롭고 정중한 말투를 유지하십시오.";
 
-    const modelPool = ["gemini-flash-latest"];
+    const modelPool = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-flash-latest"];
 
     let lastError = "";
     let rawText = "";
@@ -75,6 +75,7 @@ Deno.serve(async (req) => {
           if (rawText) break;
         } else {
           lastError = modelId + " (HTTP " + response.status + ")";
+          // 만약 429 에러(Rate Limit)라면 잠시 후 다른 모델 시도하거나 실패 처리
         }
       } catch (e) {
         lastError = modelId + " (Error: " + e.message + ")";
@@ -82,7 +83,11 @@ Deno.serve(async (req) => {
     }
 
     if (!rawText) {
-      throw new Error("모든 마스터가 부재중임다: " + lastError);
+      let failReason = lastError;
+      if (lastError.includes("429")) {
+        failReason = "과부하(HTTP 429) - 1분 뒤에 다시 시도해 주십시오!";
+      }
+      throw new Error("모든 마스터가 부재중임다: " + failReason);
     }
 
     // 태그 추출 (안전한 방식)
