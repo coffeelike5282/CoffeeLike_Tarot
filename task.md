@@ -35,3 +35,9 @@
     - [x] SQL 스크립트 실행 (트리거 제거 및 RPC 재정의)
     - [x] 프론트엔드 연동 최종 점검 (App.jsx, BaristaDashboard.jsx)
     - [x] 통합 테스트 및 결과 확인 (V5.0 마스터 해석 확인 - 큰형님 대만족!)
+- [x] 6단계: 제미나이 2.5/3.5 최신 모델 복구 및 3중 방어선 구축
+    - [x] Supabase Edge Function (`gemini-oracle`) 모델 풀 최신화 (gemini-2.5-flash, gemini-3.5-flash) 및 v33 배포 완료
+    - [x] 클라이언트 직접 호출(Direct API) 2차 백업 및 비상용 라마 3차 방어선 구축 (`aiOracleService.js`)
+    - [x] 바리스타 대시보드 및 서비스 기본 AI 엔진을 `gemini`로 표준화 (`BaristaDashboard.jsx`)
+    - [x] 실시간 통신 테스트 및 빌드 검증 완료
+

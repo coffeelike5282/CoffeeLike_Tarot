@@ -18,7 +18,7 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
   const [lastNotifiedReqId, setLastNotifiedReqId] = useState(null);
   const [showNewOrderToast, setShowNewOrderToast] = useState(false);
-  const [aiEngine, setAiEngine] = useState('llama'); // 'llama' or 'gemini'
+  const [aiEngine, setAiEngine] = useState('gemini'); // 'gemini' or 'llama'
   const [historyPage, setHistoryPage] = useState(0);
   const [totalHistoryCount, setTotalHistoryCount] = useState(0);
   const [selectedHistory, setSelectedHistory] = useState(null); // 히스토리 조회용
@@ -44,7 +44,7 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
       .single();
     
     if (!error && data) {
-      setAiEngine(data.ai_engine || 'llama');
+      setAiEngine(data.ai_engine || 'gemini');
     }
   }, []);
 
