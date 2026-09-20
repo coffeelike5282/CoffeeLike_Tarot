@@ -13,6 +13,7 @@ const OracleWaitingRoom = ({
   setSelectedCard2,
   countdown,
   isExtended,
+  pendingCountdown = 10,
   selectedCard,
   selectedCard2,
   backImage,
@@ -111,13 +112,42 @@ const OracleWaitingRoom = ({
               <span className="text-4xl font-black text-tech-blue animate-pulse">{waitNumber}</span>
             </div>
           </div>
-          <div className="space-y-4 text-center">
+          <div className="space-y-4 text-center w-full">
             <h2 className="font-heading text-xl sm:text-2xl font-black text-white uppercase tracking-tighter italic">바리스타 승인 대기 중</h2>
             
+            {/* ⏱️ 10초 자동 승인 카운트다운 뱃지 & 게이지 바 */}
+            <div className="w-full max-w-[320px] mx-auto bg-black/40 border border-amber-500/30 rounded-2xl p-4 shadow-[0_0_20px_-5px_rgba(245,158,11,0.2)] flex flex-col items-center gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                <span className="text-[10px] sm:text-xs font-mono font-black text-amber-400 tracking-wide uppercase">
+                  {pendingCountdown > 0 ? `10초 자동 승인 카운트다운` : `자동 승인 완료! 시작합니다`}
+                </span>
+              </div>
+              
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl font-black text-white font-mono drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]">
+                  {pendingCountdown}
+                </span>
+                <span className="text-xs font-bold text-amber-400 uppercase">SEC</span>
+              </div>
 
+              {/* 10초 프로그레스 게이지 */}
+              <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+                <div 
+                  className="bg-gradient-to-r from-tech-blue via-amber-400 to-green-400 h-full transition-all duration-1000 ease-linear rounded-full"
+                  style={{ width: `${Math.max(0, Math.min(100, (pendingCountdown / 10) * 100))}%` }}
+                />
+              </div>
 
-            <p className="text-coffee-light/60 text-sm sm:text-base leading-relaxed mx-auto font-bold max-w-[280px]">
-              카운터 바리스타에게 <span className="text-tech-blue font-black underline underline-offset-4 decoration-2">"{waitNumber}번 대기 중"</span>이라고 말씀해주세요. 
+              <p className="text-[11px] text-coffee-light/70 font-medium leading-relaxed">
+                {pendingCountdown > 0 
+                  ? '바리스타가 확인 중입니다. 10초 후 AI 마스터가 자동으로 신탁을 시작합니다.' 
+                  : '지금 AI 신탁 엔진으로 연결 중입니다...'}
+              </p>
+            </div>
+
+            <p className="text-coffee-light/40 text-xs sm:text-sm leading-relaxed mx-auto font-medium max-w-[280px]">
+              카운터 바리스타에게 <span className="text-tech-blue font-bold">"{waitNumber}번 대기 중"</span>이라고 말씀해 주셔도 됩니다. 
             </p>
           </div>
           <div className="flex flex-col gap-3 w-full">

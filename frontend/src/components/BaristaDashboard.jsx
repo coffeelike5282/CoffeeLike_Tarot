@@ -350,39 +350,43 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
     const timer = setInterval(() => {
       const now = Date.now();
       const updatedTimes = {};
-      const currentReqIds = new Set(requests.map(r => r.req_id));
+      const currentReqIds = new Set(requests.map(r => String(r.req_id)));
 
       // 1. 대기열에서 사라진 요청 클린업
       Object.keys(detectedAtRef.current).forEach(id => {
-        if (!currentReqIds.has(id)) {
+        if (!currentReqIds.has(String(id))) {
           delete detectedAtRef.current[id];
           autoApprovedIdsRef.current.delete(id);
+          autoApprovedIdsRef.current.delete(String(id));
         }
       });
 
       // 2. 대기 중인 각 요청별 카운트다운 계산 및 자동 승인 체크
       requests.forEach(order => {
-        const id = order.req_id;
+        const idStr = String(order.req_id);
 
         // 아직 감지되지 않은 신규 요청이면 현재 시각 기록
-        if (!detectedAtRef.current[id]) {
-          detectedAtRef.current[id] = now;
+        if (!detectedAtRef.current[idStr]) {
+          detectedAtRef.current[idStr] = now;
         }
 
-        const elapsedSec = (now - detectedAtRef.current[id]) / 1000;
+        const elapsedSec = (now - detectedAtRef.current[idStr]) / 1000;
         const remainSec = Math.max(0, Math.ceil(AUTO_APPROVE_DELAY - elapsedSec));
-        updatedTimes[id] = remainSec;
+        updatedTimes[idStr] = remainSec;
+        updatedTimes[order.req_id] = remainSec; // number와 string 모두 지원
 
         // 10초 경과 & 자동 승인 기능 켜짐 & 아직 자동 승인 트리거 안 됨 & 현재 생성 중 아님
         if (
           isAutoApproveEnabled &&
           remainSec <= 0 &&
-          !autoApprovedIdsRef.current.has(id) &&
-          !isGenerating[id]
+          !autoApprovedIdsRef.current.has(idStr) &&
+          !autoApprovedIdsRef.current.has(order.req_id) &&
+          !isGenerating[order.req_id]
         ) {
-          console.log(`⚡ [10초 자동 승인 실행] 바리스타 부재 대비 자동 승인 시작! ID: ${id} (대기번호: ${order.wait_number})`);
-          autoApprovedIdsRef.current.add(id);
-          handleAction(id, 1, order);
+          console.log(`⚡ [10초 자동 승인 실행] 바리스타 부재 대비 자동 승인 시작! ID: ${idStr} (대기번호: ${order.wait_number})`);
+          autoApprovedIdsRef.current.add(idStr);
+          autoApprovedIdsRef.current.add(order.req_id);
+          handleAction(order.req_id, 1, order);
         }
       });
 

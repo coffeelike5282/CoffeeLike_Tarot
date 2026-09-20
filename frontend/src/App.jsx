@@ -37,6 +37,7 @@ function App() {
   const [question, setQuestion] = useState('');
   const [countdown, setCountdown] = useState(60);
   const [isExtended, setIsExtended] = useState(false);
+  const [pendingCountdown, setPendingCountdown] = useState(10); // ⏱️ 바리스타 승인 대기 10초 카운트다운
   const [qrSerial, setQrSerial] = useState(null);
   const [entryMode, setEntryMode] = useState(null); // 'delivery', 'instore'
   const [exchangeToken, setExchangeToken] = useState(null); // [v9.5] 환전 검증 토큰
@@ -457,6 +458,64 @@ function App() {
     return () => clearInterval(countdownInterval);
   }, [requestStatus, requestId, isExtended]); // requestStatus 변화에 민감하게 반응함다!
 
+  // ⏱️ [10초 자동 승인 시스템 - 테이블 모드]
+  // 고객이 카드를 뽑고 바리스타 승인 대기(pending) 중일 때, 10초 카운트다운을 가동하고
+  // 10초 만료 시 바리스타 확인 여부와 관계없이 AI 마스터가 즉시 신탁 해석을 자동 승인합니다!
+  useEffect(() => {
+    let pendingInterval;
+
+    if (requestStatus === 'pending' && requestId && selectedCard && selectedCard2) {
+      setPendingCountdown(10);
+
+      pendingInterval = setInterval(() => {
+        setPendingCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(pendingInterval);
+            console.log('⚡ [10초 자동 승인 개시] 고객 대기 10초 만료! AI 마스터가 직접 승인 및 신탁을 개시합니다. ID:', requestId);
+            
+            // 즉시 화면을 해석 중(processing)으로 전환
+            setRequestStatus('processing');
+
+            // DB 승인 상태 업데이트
+            supabase.from('tb_tarot_request').update({
+              status: 1,
+              approved_at: new Date().toISOString()
+            }).eq('req_id', requestId).then(() => {
+              console.log('✅ [자동 승인 DB 갱신 완료]');
+            }).catch(err => console.warn('자동 승인 DB 업데이트 실패:', err));
+
+            // AI 해석 직접 생성 및 DB 저장 (바리스타 대시보드 부재 시 대비 완벽 자율 처리)
+            const qText = (question || '').trim() || '오늘의 운세 알려줘';
+            generateAIInterpretation(qText, selectedCard, selectedCard2, 'gemini')
+              .then(async (aiResult) => {
+                if (aiResult) {
+                  await supabase.from('tb_tarot_request').update({
+                    ai_tarot_result: JSON.stringify(aiResult)
+                  }).eq('req_id', requestId);
+                  console.log('✅ [AI 신탁 자동 저장 완료]');
+                }
+              })
+              .catch(async (err) => {
+                console.error('자동 승인 AI 해석 생성 에러:', err);
+                await supabase.from('tb_tarot_request').update({
+                  ai_tarot_result: JSON.stringify({
+                    isError: true,
+                    interpretation: "죄송함다! 영적 주파수가 일시적으로 불안정해 신탁을 불러오지 못했슴다. 다시 시도해 주십시오!",
+                    message: err.message
+                  })
+                }).eq('req_id', requestId);
+              });
+
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => clearInterval(pendingInterval);
+  }, [requestStatus, requestId, selectedCard, selectedCard2, question]);
+
   // 📡 [v2.8] 상태 업데이트 통합 핸들러 (Realtime & Polling 공용)
   const handleStatusUpdate = React.useCallback((data) => {
     if (!data) return;
@@ -673,6 +732,7 @@ function App() {
                retryDeepProcess={retryDeepProcess} setRequestStatus={setRequestStatus}
                setSelectedCard={setSelectedCard} setSelectedCard2={setSelectedCard2}
                countdown={countdown} isExtended={isExtended}
+               pendingCountdown={pendingCountdown}
                selectedCard={selectedCard} selectedCard2={selectedCard2}
                backImage={backImage}
                manualCheckStatus={manualCheckStatus}
