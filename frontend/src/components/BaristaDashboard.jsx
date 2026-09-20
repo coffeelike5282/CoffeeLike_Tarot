@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, Coffee, Users, Clock, Zap, LogOut, RefreshCcw, QrCode } from 'lucide-react';
@@ -22,6 +22,12 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
   const [historyPage, setHistoryPage] = useState(0);
   const [totalHistoryCount, setTotalHistoryCount] = useState(0);
   const [selectedHistory, setSelectedHistory] = useState(null); // 히스토리 조회용
+
+  // ⏱️ [10초 자동 승인 시스템 상태]
+  const [isAutoApproveEnabled, setIsAutoApproveEnabled] = useState(true);
+  const [remainingTimes, setRemainingTimes] = useState({});
+  const detectedAtRef = useRef({});
+  const autoApprovedIdsRef = useRef(new Set());
 
   // [v9.7] 환전 장부 관련 상태
   const [exchangeHistory, setExchangeHistory] = useState([]);
@@ -200,6 +206,15 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
 
 
   const handleAction = useCallback(async (id, newStatus, requestData = null) => {
+    // 🛑 [10초 자동 승인] 수동/자동 처리 시 타이머 정리 및 중복 실행 방지
+    autoApprovedIdsRef.current.add(id);
+    delete detectedAtRef.current[id];
+    setRemainingTimes(prev => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+
     if (newStatus === 1 && requestData) {
       setIsGenerating(prev => ({ ...prev, [id]: true }));
       
@@ -325,6 +340,58 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
     }
   }, [history, isGenerating, handleAction, activeTab]);
 
+  // ⏱️ [10초 자동 승인 시스템]
+  // 관리자 대시보드가 대기열(queue)에 들어온 요청을 인지하고 10초가 지나면 자동 승인 및 AI 신탁 생성을 실행합니다!
+  useEffect(() => {
+    if (activeTab !== 'queue') return;
+
+    const AUTO_APPROVE_DELAY = 10; // 10초
+
+    const timer = setInterval(() => {
+      const now = Date.now();
+      const updatedTimes = {};
+      const currentReqIds = new Set(requests.map(r => r.req_id));
+
+      // 1. 대기열에서 사라진 요청 클린업
+      Object.keys(detectedAtRef.current).forEach(id => {
+        if (!currentReqIds.has(id)) {
+          delete detectedAtRef.current[id];
+          autoApprovedIdsRef.current.delete(id);
+        }
+      });
+
+      // 2. 대기 중인 각 요청별 카운트다운 계산 및 자동 승인 체크
+      requests.forEach(order => {
+        const id = order.req_id;
+
+        // 아직 감지되지 않은 신규 요청이면 현재 시각 기록
+        if (!detectedAtRef.current[id]) {
+          detectedAtRef.current[id] = now;
+        }
+
+        const elapsedSec = (now - detectedAtRef.current[id]) / 1000;
+        const remainSec = Math.max(0, Math.ceil(AUTO_APPROVE_DELAY - elapsedSec));
+        updatedTimes[id] = remainSec;
+
+        // 10초 경과 & 자동 승인 기능 켜짐 & 아직 자동 승인 트리거 안 됨 & 현재 생성 중 아님
+        if (
+          isAutoApproveEnabled &&
+          remainSec <= 0 &&
+          !autoApprovedIdsRef.current.has(id) &&
+          !isGenerating[id]
+        ) {
+          console.log(`⚡ [10초 자동 승인 실행] 바리스타 부재 대비 자동 승인 시작! ID: ${id} (대기번호: ${order.wait_number})`);
+          autoApprovedIdsRef.current.add(id);
+          handleAction(id, 1, order);
+        }
+      });
+
+      setRemainingTimes(updatedTimes);
+    }, 500);
+
+    return () => clearInterval(timer);
+  }, [requests, isAutoApproveEnabled, isGenerating, handleAction, activeTab]);
+
   const handleViewInterpretation = (order) => {
     if (!order.ai_tarot_result) return;
     
@@ -437,6 +504,18 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
                 {isSoundEnabled ? 'Audio ON' : 'Audio OFF'}
               </span>
             </button>
+
+            {/* ⏱️ Auto-Approve 10s Toggle */}
+            <button 
+              onClick={() => setIsAutoApproveEnabled(!isAutoApproveEnabled)}
+              title="10초 경과 시 자동 승인 활성화"
+              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border transition-all ${isAutoApproveEnabled ? 'bg-amber-500/20 border-amber-500/50 text-amber-400 shadow-[0_0_15px_-5px_rgba(245,158,11,0.5)]' : 'bg-white/5 border-white/10 text-white/40'}`}
+            >
+              <Clock size={10} className={isAutoApproveEnabled ? "animate-pulse text-amber-400" : ""} />
+              <span className="text-[9px] font-black uppercase tracking-tighter">
+                {isAutoApproveEnabled ? 'Auto 10s ON' : 'Auto OFF'}
+              </span>
+            </button>
           </div>
         </div>
         
@@ -532,10 +611,21 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
 
                       {/* 📱 정보 영역: 모바일 가독성 중심 */}
                       <div className="flex flex-col gap-1.5 text-left flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className="text-white font-bold text-lg leading-none tracking-tight">{formatPhone(order.phone_number)}</span>
                           {order.ip_address && (
                             <span className="text-[10px] text-tech-blue/60 font-mono font-black italic">{order.ip_address}</span>
+                          )}
+                          {/* ⏱️ 10초 자동 승인 뱃지 */}
+                          {isAutoApproveEnabled && (
+                            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 rounded-lg shadow-[0_0_10px_-3px_rgba(245,158,11,0.3)]">
+                              <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                              <span className="text-[9px] font-mono font-black text-amber-400">
+                                {remainingTimes[order.req_id] !== undefined && remainingTimes[order.req_id] > 0
+                                  ? `${remainingTimes[order.req_id]}s 후 자동 승인`
+                                  : isGenerating[order.req_id] ? '자동 승인 중...' : '10s 후 자동 승인'}
+                              </span>
+                            </div>
                           )}
                         </div>
                         <div className="flex items-center gap-2 mb-1">
@@ -566,6 +656,16 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
                             "{(order.question && order.question.trim()) ? order.question : '오늘의 운세 알려줘'}"
                           </p>
                         </div>
+
+                        {/* ⏱️ 자동 승인 게이지 바 */}
+                        {isAutoApproveEnabled && remainingTimes[order.req_id] !== undefined && (
+                          <div className="mt-3 w-full bg-white/5 h-1 rounded-full overflow-hidden">
+                            <div 
+                              className="bg-gradient-to-r from-tech-blue via-amber-400 to-green-400 h-full transition-all duration-500 ease-linear rounded-full"
+                              style={{ width: `${Math.max(0, Math.min(100, (remainingTimes[order.req_id] / 10) * 100))}%` }}
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -584,7 +684,11 @@ const BaristaDashboard = ({ onLogout, cards = [], backImage }) => {
                       >
                         {isGenerating[order.req_id] ? <RefreshCcw size={16} className="animate-spin" /> : <Check size={16} />}
                         <span className="text-[10px] uppercase italic tracking-tighter">
-                          {isGenerating[order.req_id] ? '마스터가 카드를 해석 중입니다...' : '승인'}
+                          {isGenerating[order.req_id] 
+                            ? '마스터가 카드를 해석 중입니다...' 
+                            : (isAutoApproveEnabled && remainingTimes[order.req_id] !== undefined && remainingTimes[order.req_id] > 0
+                                ? `승인 (${remainingTimes[order.req_id]}s)` 
+                                : '승인')}
                         </span>
                       </button>
                     </div>
