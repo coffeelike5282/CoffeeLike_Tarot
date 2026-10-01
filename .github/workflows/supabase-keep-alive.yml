@@ -11,7 +11,7 @@ jobs:
     name: Keep Alive CoffeeLike Tarot
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase REST API
+      - name: Ping Supabase Services
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
@@ -25,23 +25,30 @@ jobs:
             exit 1
           fi
 
-          # URL 끝의 슬래시(/) 제거 후 /rest/v1/ 엔드포인트 구성
           CLEAN_URL="${SUPABASE_URL%/}"
-          TARGET_URL="${CLEAN_URL}/rest/v1/"
-          echo "Target Endpoint: ${TARGET_URL}"
 
-          # curl 요청 실행 및 HTTP 상태 코드 수집
-          HTTP_STATUS=$(curl -s -S -o /tmp/response.txt -w "%{http_code}" -X GET "${TARGET_URL}" \
+          # 1. Auth 헬스체크 엔드포인트 호출 (Supabase 서버 활성화)
+          echo "1️⃣ Auth Health Check: ${CLEAN_URL}/auth/v1/health"
+          AUTH_STATUS=$(curl -s -S -o /tmp/auth_res.txt -w "%{http_code}" -X GET "${CLEAN_URL}/auth/v1/health" \
             -H "apikey: ${SUPABASE_ANON_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" || echo "CURL_FAILED")
+          echo "Auth Status Code: ${AUTH_STATUS}"
 
-          echo "HTTP Status Code: ${HTTP_STATUS}"
+          # 2. Database REST API 호출 (PostgreSQL 데이터베이스 쿼리 활성화)
+          echo "2️⃣ Database Ping: ${CLEAN_URL}/rest/v1/tb_customer?select=cust_id&limit=1"
+          DB_STATUS=$(curl -s -S -o /tmp/db_res.txt -w "%{http_code}" -X GET "${CLEAN_URL}/rest/v1/tb_customer?select=cust_id&limit=1" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" || echo "CURL_FAILED")
+          echo "Database Status Code: ${DB_STATUS}"
 
-          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
+          # 둘 중 하나라도 성공(200~399)하면 프로젝트 활성화 성공 판정
+          if ([ "$AUTH_STATUS" -ge 200 ] && [ "$AUTH_STATUS" -lt 400 ]) || ([ "$DB_STATUS" -ge 200 ] && [ "$DB_STATUS" -lt 400 ]); then
             echo "✅ [CoffeeLike Tarot] Supabase 프로젝트 활성 상태 유지 성공!"
           else
-            echo "::error::[CoffeeLike Tarot] Supabase 요청 실패 (상태 코드: ${HTTP_STATUS})"
-            echo "응답 본문:"
-            cat /tmp/response.txt 2>/dev/null || echo "(응답 없음)"
+            echo "::error::[CoffeeLike Tarot] Supabase 요청 실패 (Auth: ${AUTH_STATUS}, DB: ${DB_STATUS})"
+            echo "Auth 응답:"
+            cat /tmp/auth_res.txt 2>/dev/null || echo "(없음)"
+            echo "DB 응답:"
+            cat /tmp/db_res.txt 2>/dev/null || echo "(없음)"
             exit 1
           fi
