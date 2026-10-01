@@ -1,0 +1,47 @@
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    # 3일마다 1회 실행 (매 3일째 00:00 UTC / 09:00 KST)
+    - cron: '0 0 */3 * *'
+  workflow_dispatch: # GitHub Actions 탭에서 수동 즉시 실행 가능
+
+jobs:
+  keep-alive:
+    name: Keep Alive CoffeeLike Tarot
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          echo "============================================================"
+          echo "🚀 [CoffeeLike Tarot] Supabase 핑(Keep-Alive) 요청 시작"
+          echo "============================================================"
+          
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::[CoffeeLike Tarot] SUPABASE_URL 또는 SUPABASE_ANON_KEY 시크릿이 설정되지 않았습니다."
+            exit 1
+          fi
+
+          # URL 끝의 슬래시(/) 제거 후 /rest/v1/ 엔드포인트 구성
+          CLEAN_URL="${SUPABASE_URL%/}"
+          TARGET_URL="${CLEAN_URL}/rest/v1/"
+          echo "Target Endpoint: ${TARGET_URL}"
+
+          # curl 요청 실행 및 HTTP 상태 코드 수집
+          HTTP_STATUS=$(curl -s -S -o /tmp/response.txt -w "%{http_code}" -X GET "${TARGET_URL}" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" || echo "CURL_FAILED")
+
+          echo "HTTP Status Code: ${HTTP_STATUS}"
+
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
+            echo "✅ [CoffeeLike Tarot] Supabase 프로젝트 활성 상태 유지 성공!"
+          else
+            echo "::error::[CoffeeLike Tarot] Supabase 요청 실패 (상태 코드: ${HTTP_STATUS})"
+            echo "응답 본문:"
+            cat /tmp/response.txt 2>/dev/null || echo "(응답 없음)"
+            exit 1
+          fi
